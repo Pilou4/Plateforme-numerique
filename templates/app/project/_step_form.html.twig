@@ -1,0 +1,29 @@
+{#
+    Formulaire d'ajout d'une tâche ou d'une sous-tâche, affiché dans la modal.
+    Une nouvelle tâche est toujours « pas commencée », avec 0 minute passée.
+#}
+<form class="step-form" data-step-add-form novalidate>
+    <div class="step-form__grid">
+        <label class="step-form__field">
+            <span class="step-form__label">Titre</span>
+            <input type="text" name="title" class="step-form__input" maxlength="255" required autofocus>
+        </label>
+        <label class="step-form__field">
+            <span class="step-form__label">Description <span class="step-form__optional">(facultatif)</span></span>
+            <textarea name="description" class="step-form__input step-form__input--textarea" rows="3"></textarea>
+        </label>
+        <label class="step-form__field">
+            <span class="step-form__label">Priorité</span>
+            <select name="priority" class="step-form__input">
+                {% for priority in priorities %}
+                    <option value="{{ priority.value }}" {{ priority.value == 'normal' ? 'selected' }}>{{ priority.label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+    </div>
+    <p class="step-form__error" data-form-error role="alert"></p>
+    <div class="modal__actions">
+        <button type="button" class="steps__button steps__button--ghost" data-modal-close>Annuler</button>
+        <button type="submit" class="steps__button">Ajouter</button>
+    </div>
+</form>

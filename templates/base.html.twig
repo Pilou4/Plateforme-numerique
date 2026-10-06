@@ -14,7 +14,9 @@
         {% block url %}
             <link rel="canonical" href="#" />
         {% endblock %}
-        {% block stylesheets %}{% endblock %}
+        {% block stylesheets %}
+            <link rel="stylesheet" href="{{ asset('styles/composants/modal.css') }}">
+        {% endblock %}
         {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
@@ -30,5 +32,6 @@
         {% include "_partials/_header.html.twig" %}
         {% block body %}{% endblock %}
         {% include "_partials/_footer.html.twig" %}
+        {% include "_partials/_modal.html.twig" %}
     </body>
 </html>

@@ -1,9 +1,5 @@
 {% set current_route = app.current_route %}
 
-{# Pages du sous-menu Projet : si on est sur l'une d'elles, le sous-menu est ouvert #}
-{% set project_submenu_routes = ['app_project_steps'] %}
-{% set is_in_project_submenu = current_route in project_submenu_routes %}
-
 {# Pages du sous-menu Documentation #}
 {% set documentation_submenu_routes = ['app_documentation_glossary'] %}
 {% set is_in_documentation_submenu = current_route in documentation_submenu_routes %}
@@ -20,24 +16,13 @@
 <aside class="app-sidebar">
     <nav class="app-sidebar__nav" aria-label="Menu de l'application">
         <ul class="app-sidebar__list">
-            {# Lien principal avec sous-menu #}
-            <li class="app-sidebar__item{% if is_in_project_submenu %} app-sidebar__item--open app-sidebar__item--current{% endif %}">
+            {# Lien principal sans sous-menu : Projet (actif sur la liste, le détail et les tâches d'un projet) #}
+            <li class="app-sidebar__item">
                 <div class="app-sidebar__row">
-                    <a href="{{ path('app_project') }}" class="app-sidebar__link" {% if current_route == 'app_project' %}aria-current="page"{% endif %}>
+                    <a href="{{ path('app_project') }}" class="app-sidebar__link" {% if current_route starts with 'app_project' %}aria-current="page"{% endif %}>
                         <img src="{{ asset('images/icones/project.svg') }}" alt="" class="app-sidebar__icon" width="18" height="18">
                         <span>Projet</span>
                     </a>
-                    <button type="button" class="app-sidebar__submenu-toggle" aria-controls="submenu-project" aria-expanded="{{ is_in_project_submenu ? 'true' : 'false' }}" aria-label="Afficher le sous-menu Projet">
-                        <img src="{{ asset('images/icones/chevron-down.svg') }}" alt="" class="app-sidebar__submenu-icon" width="16" height="16">
-                    </button>
-                </div>
-
-                <div class="app-sidebar__submenu" id="submenu-project">
-                    <ul class="app-sidebar__submenu-list">
-                        <li class="app-sidebar__submenu-item">
-                            <a href="{{ path('app_project_steps') }}" class="app-sidebar__submenu-link" {% if current_route == 'app_project_steps' %}aria-current="page"{% endif %}>Étapes</a>
-                        </li>
-                    </ul>
                 </div>
             </li>
 

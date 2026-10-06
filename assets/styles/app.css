@@ -765,3 +765,1277 @@
         gap: 0.4rem;
     }
 }
+
+/* ==========================================================================
+   Page Étapes du projet (#project-steps)
+   ========================================================================== */
+
+.steps {
+    padding: 2.5rem 2.5rem 4rem;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+    color: #1f2937;
+}
+
+/* --- En-tête --- */
+
+.steps__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.steps__eyebrow {
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #3b82f6;
+}
+
+.steps__title {
+    margin-bottom: 0.4rem;
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #0f172a;
+}
+
+.steps__lead {
+    color: #4b5563;
+}
+
+/* --- Boutons --- */
+
+.steps__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.65rem 1.1rem;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: #ffffff;
+    background-color: #3b82f6;
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 200ms ease;
+}
+
+.steps__button:hover {
+    background-color: #2563eb;
+}
+
+.steps__button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.steps__button:focus-visible {
+    outline: 2px solid #1e40af;
+    outline-offset: 2px;
+}
+
+.steps__button--ghost {
+    color: #374151;
+    background-color: #ffffff;
+    border-color: #d1d5db;
+}
+
+.steps__button--ghost:hover {
+    background-color: #f3f4f6;
+}
+
+/* --- Compteurs --- */
+
+.steps__stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.steps__stat {
+    padding: 1rem 1.25rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.steps__stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.steps__stat-label {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.steps__progress {
+    height: 8px;
+    margin-top: 0.6rem;
+    overflow: hidden;
+    background-color: #e5e7eb;
+    border-radius: 99px;
+}
+
+.steps__progress-bar {
+    display: block;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    transition: width 300ms ease;
+}
+
+/* --- Filtres et message --- */
+
+.steps__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.steps__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.steps__filter {
+    padding: 0.35rem 0.8rem;
+    font: inherit;
+    font-size: 0.85rem;
+    color: #4b5563;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 99px;
+    cursor: pointer;
+}
+
+.steps__filter:hover {
+    border-color: #9ca3af;
+}
+
+.steps__filter--active {
+    color: #ffffff;
+    background-color: #0f172a;
+    border-color: #0f172a;
+}
+
+.steps__filter:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+.steps__message {
+    font-size: 0.9rem;
+    color: #166534;
+}
+
+.steps__message--error {
+    color: #b91c1c;
+}
+
+.steps__empty {
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* --- Tableau --- */
+
+.steps-table__wrapper {
+    overflow-x: auto;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.steps-table {
+    width: 100%;
+    min-width: 900px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+.steps-table__sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.steps-table__head {
+    padding: 0.75rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-align: left;
+    text-transform: uppercase;
+    color: #6b7280;
+    background-color: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.steps-table__head--handle {
+    width: 32px;
+}
+
+.steps-table__head--number {
+    width: 44px;
+    text-align: center;
+}
+
+.steps-table__head--title {
+    width: 30%;
+}
+
+.steps-table__head--priority {
+    width: 120px;
+}
+
+.steps-table__head--status {
+    width: 170px;
+}
+
+.steps-table__head--time {
+    width: 130px;
+}
+
+.steps-table__head--actions {
+    width: 84px;
+}
+
+/* --- Tri : le titre de colonne est un bouton --- */
+
+.steps-table__sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+/* Flèche : discrète au survol, bleue sur la colonne triée */
+.steps-table__sort::after {
+    content: "↕";
+    font-size: 0.8rem;
+    opacity: 0;
+    transition: opacity 150ms ease;
+}
+
+.steps-table__sort:hover {
+    color: #0f172a;
+}
+
+.steps-table__sort:hover::after {
+    opacity: 0.5;
+}
+
+.steps-table__sort:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.steps-table__head--sorted {
+    color: #1e40af;
+}
+
+.steps-table__head--sorted .steps-table__sort::after {
+    opacity: 1;
+}
+
+.steps-table__head--sorted[aria-sort="ascending"] .steps-table__sort::after {
+    content: "↑";
+}
+
+.steps-table__head--sorted[aria-sort="descending"] .steps-table__sort::after {
+    content: "↓";
+}
+
+/* La colonne « # » n'affiche pas de flèche : elle sert à revenir à l'ordre manuel */
+.steps-table__head--number .steps-table__sort::after {
+    content: none;
+}
+
+.steps-table__row {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color 150ms ease;
+}
+
+.steps-table__row:last-child {
+    border-bottom: none;
+}
+
+.steps-table__row:hover {
+    background-color: #f8fafc;
+}
+
+.steps-table__cell {
+    padding: 0.45rem 0.6rem;
+    vertical-align: middle;
+}
+
+.steps-table__cell--number {
+    text-align: center;
+}
+
+/* --- Poignée et numéro --- */
+
+.steps-table__handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    visibility: hidden;
+    cursor: grab;
+}
+
+/* La poignée n'apparaît qu'au survol, et seulement si l'ordre peut être modifié */
+.steps-table__body--sortable .steps-table__row:hover .steps-table__handle {
+    visibility: visible;
+}
+
+.steps-table__number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #1e40af;
+    background-color: #eff6ff;
+    border-radius: 50%;
+}
+
+/* --- Champs modifiables : discrets, ils se révèlent au survol et à la saisie --- */
+
+.steps-table__input {
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    font: inherit;
+    color: #0f172a;
+    text-overflow: ellipsis;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.steps-table__input:hover {
+    border-color: #e5e7eb;
+}
+
+.steps-table__input:focus {
+    background-color: #ffffff;
+    border-color: #3b82f6;
+    outline: 2px solid rgba(59, 130, 246, 0.2);
+}
+
+.steps-table__input--title {
+    font-weight: 600;
+}
+
+.steps-table__input--description {
+    color: #4b5563;
+}
+
+.steps-table__input--description::placeholder {
+    color: #cbd5e1;
+}
+
+.steps-table__time {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.steps-table__input--time {
+    width: 2.6rem;
+    padding-right: 0.35rem;
+    padding-left: 0.35rem;
+    text-align: right;
+    text-overflow: clip;
+    font-variant-numeric: tabular-nums;
+    appearance: textfield;
+}
+
+/* Masque les petites flèches des champs numériques (gain de place) */
+.steps-table__input--time::-webkit-inner-spin-button,
+.steps-table__input--time::-webkit-outer-spin-button {
+    margin: 0;
+    appearance: none;
+}
+
+.steps-table__unit {
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+
+/* --- Listes priorité et statut : une pastille colorée selon la valeur --- */
+
+.steps-table__select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.steps-table__select {
+    width: 100%;
+    appearance: none;
+    padding: 0.3rem 1.8rem 0.3rem 0.75rem;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    border-radius: 99px;
+    cursor: pointer;
+    transition: filter 150ms ease;
+}
+
+.steps-table__select:hover {
+    filter: brightness(0.96);
+}
+
+.steps-table__select:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+.steps-table__select-arrow {
+    position: absolute;
+    right: 0.6rem;
+    filter: brightness(0.5);
+    pointer-events: none;
+}
+
+.steps-table__select--status-todo {
+    color: #4b5563;
+    background-color: #f3f4f6;
+}
+
+.steps-table__select--status-in_progress {
+    color: #92400e;
+    background-color: #fef3c7;
+}
+
+.steps-table__select--status-done {
+    color: #166534;
+    background-color: #dcfce7;
+}
+
+.steps-table__select--priority-high {
+    color: #991b1b;
+    background-color: #fee2e2;
+}
+
+.steps-table__select--priority-normal {
+    color: #3730a3;
+    background-color: #e0e7ff;
+}
+
+.steps-table__select--priority-low {
+    color: #6b7280;
+    background-color: #f3f4f6;
+}
+
+/* --- Boutons d'action (ajouter une sous-étape, supprimer) --- */
+
+.steps-table__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.15rem;
+}
+
+.steps-table__action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 150ms ease, background-color 150ms ease;
+}
+
+.steps-table__row:hover .steps-table__action,
+.steps-table__action:focus-visible {
+    opacity: 1;
+}
+
+.steps-table__action--add:hover {
+    background-color: #eff6ff;
+}
+
+.steps-table__action--delete:hover {
+    background-color: #fee2e2;
+}
+
+.steps-table__action:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 1px;
+}
+
+/* --- Sous-étapes --- */
+
+.steps-table__title {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Bouton pour déplier / replier les sous-étapes */
+.steps-table__toggle {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.steps-table__toggle[hidden] {
+    display: flex;
+    visibility: hidden;
+}
+
+.steps-table__toggle:hover {
+    background-color: #f1f5f9;
+}
+
+.steps-table__toggle:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 1px;
+}
+
+.steps-table__toggle-icon {
+    filter: brightness(0.5);
+    transform: rotate(-90deg);
+    transition: transform 150ms ease;
+}
+
+.steps-table__row--expanded .steps-table__toggle-icon {
+    transform: rotate(0deg);
+}
+
+/* Compteur « faites / total » des sous-étapes */
+.steps-table__count {
+    flex-shrink: 0;
+    padding: 0.1rem 0.45rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #6b7280;
+    background-color: #f1f5f9;
+    border-radius: 99px;
+}
+
+/* Tâche dépliée : titre en bleu */
+.steps-table__row--expanded .steps-table__input--title {
+    color: #1e3a8a;
+}
+
+/*
+ * Ligne de sous-tâche : panneau gris clair qui commence à la colonne Titre,
+ * avec une barre bleue à gauche ; les colonnes poignée et numéro restent blanches.
+ */
+.steps-table__row--sub {
+    font-size: 0.85rem;
+    border-bottom-color: #eef2f7;
+}
+
+.steps-table__row--sub .steps-table__cell {
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+    background-color: #f8fafc;
+}
+
+.steps-table__row--sub .steps-table__cell--handle,
+.steps-table__row--sub .steps-table__cell--number {
+    background-color: #ffffff;
+}
+
+.steps-table__row--sub .steps-table__cell--title {
+    border-left: 3px solid #93c5fd;
+}
+
+.steps-table__row--sub:hover .steps-table__cell:not(.steps-table__cell--handle, .steps-table__cell--number) {
+    background-color: #f1f5f9;
+}
+
+.steps-table__row--sub .steps-table__input--title {
+    font-weight: 400;
+    color: #334155;
+}
+
+.steps-table__row--sub .steps-table__select {
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+    font-size: 0.75rem;
+}
+
+/* Dernière sous-tâche du groupe : trait gris pour séparer de la tâche suivante */
+.steps-table__row--sub:has(+ .steps-table__row:not(.steps-table__row--sub)) {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.steps-table__title--sub {
+    padding-left: 0.4rem;
+}
+
+/*
+ * Tâche ou sous-tâche faite : fond vert très léger sur la ligne, texte inchangé.
+ * Placé après les règles des sous-tâches pour remplacer leur fond gris.
+ */
+.steps-table__row--done .steps-table__cell {
+    background-color: #f0fdf4;
+}
+
+.steps-table__row--done:hover .steps-table__cell:not(.steps-table__cell--handle, .steps-table__cell--number) {
+    background-color: #e3f9ea;
+}
+
+/* Sous-tâche faite : les colonnes poignée et numéro restent blanches, comme les autres sous-tâches */
+.steps-table__row--sub.steps-table__row--done .steps-table__cell--handle,
+.steps-table__row--sub.steps-table__row--done .steps-table__cell--number {
+    background-color: #ffffff;
+}
+
+.steps-table__number--sub {
+    width: auto;
+    min-width: 26px;
+    padding: 0 0.35rem;
+    font-weight: 600;
+    color: #64748b;
+    background-color: #f1f5f9;
+    border-radius: 99px;
+}
+
+/* Temps d'une étape avec sous-étapes : somme automatique, en lecture seule */
+.steps-table__time-total {
+    display: inline-block;
+    padding: 0.4rem 0.5rem;
+    font-weight: 600;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+    cursor: help;
+}
+
+/* L'attribut hidden doit gagner sur les display définis plus haut */
+.steps-table__time[hidden],
+.steps-table__time-total[hidden],
+.steps-table__count[hidden] {
+    display: none;
+}
+
+/* --- Retour visuel après enregistrement --- */
+
+.steps-table__row--saved {
+    animation: steps-row-saved 900ms ease-out;
+}
+
+@keyframes steps-row-saved {
+    from {
+        background-color: #dcfce7;
+    }
+
+    to {
+        background-color: transparent;
+    }
+}
+
+/* --- Glisser-déposer --- */
+
+.steps-table__row--dragging {
+    display: none;
+}
+
+.steps-table__placeholder td {
+    padding: 0;
+    background-color: #eff6ff;
+    border-top: 2px dashed #93c5fd;
+    border-bottom: 2px dashed #93c5fd;
+}
+
+/* --- Formulaire d'ajout (dans la modal) --- */
+
+.step-form__grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.step-form__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.step-form__label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.step-form__optional {
+    font-weight: 400;
+    color: #9ca3af;
+}
+
+.step-form__input {
+    padding: 0.55rem 0.7rem;
+    font: inherit;
+    font-size: 0.92rem;
+    color: #111827;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+}
+
+.step-form__input:focus {
+    border-color: #3b82f6;
+    outline: 2px solid rgba(59, 130, 246, 0.25);
+}
+
+.step-form__input--textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.step-form__error {
+    margin-top: 0.75rem;
+    font-size: 0.88rem;
+    color: #b91c1c;
+}
+
+.step-form__error:empty {
+    display: none;
+}
+
+/* --- Petits écrans --- */
+
+@media (max-width: 900px) {
+    .steps__stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 700px) {
+    .steps {
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    .steps__title {
+        font-size: 1.75rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .steps-table__row--saved {
+        animation: none;
+    }
+}
+
+/* ==========================================================================
+   Projets : liste des projets (#projects) et navigation entre les pages d'un projet
+   ========================================================================== */
+
+.projects {
+    padding: 2.5rem 2.5rem 4rem;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+    color: #1f2937;
+}
+
+.projects__header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.projects__eyebrow {
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #3b82f6;
+}
+
+.projects__title {
+    margin-bottom: 0.4rem;
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #0f172a;
+}
+
+.projects__lead {
+    color: #4b5563;
+}
+
+.projects__empty {
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+    background-color: #f9fafb;
+    border: 1px dashed #d1d5db;
+    border-radius: 10px;
+}
+
+.projects__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+    list-style: none;
+}
+
+/* --- Carte d'un projet --- */
+
+.project-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.5rem;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-top: 3px solid #3b82f6;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    transition: box-shadow 200ms ease;
+}
+
+.project-card:hover {
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.project-card__title {
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.project-card__summary {
+    flex: 1;
+    margin-bottom: 1.25rem;
+    color: #4b5563;
+}
+
+.project-card__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.project-card__link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.55rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+    text-decoration: none;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    transition: background-color 200ms ease;
+}
+
+.project-card__link:hover {
+    background-color: #f3f4f6;
+}
+
+.project-card__link--primary {
+    color: #ffffff;
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.project-card__link--primary:hover {
+    background-color: #2563eb;
+}
+
+.project-card__link:focus-visible {
+    outline: 2px solid #1e40af;
+    outline-offset: 2px;
+}
+
+/* --- Page d'un projet : retour à la liste et lien vers les tâches --- */
+
+#project .project__nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+#project .project__back,
+.steps__back {
+    font-size: inherit;
+    color: inherit;
+    text-decoration: none;
+}
+
+#project .project__back {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #3b82f6;
+}
+
+#project .project__back::before,
+.steps__back::before {
+    content: "← ";
+}
+
+#project .project__back:hover,
+.steps__back:hover {
+    text-decoration: underline;
+}
+
+#project .project__nav-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.6rem 1.1rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #ffffff;
+    text-decoration: none;
+    background-color: #3b82f6;
+    border-radius: 8px;
+    transition: background-color 200ms ease;
+}
+
+#project .project__nav-button:hover {
+    background-color: #2563eb;
+}
+
+#project .project__nav-button:focus-visible,
+#project .project__back:focus-visible {
+    outline: 2px solid #1e40af;
+    outline-offset: 2px;
+}
+
+#project .project__empty {
+    padding: 2rem 0;
+    color: #6b7280;
+}
+
+@media (max-width: 700px) {
+    .projects {
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    .projects__title {
+        font-size: 1.75rem;
+    }
+}
+
+/* ==========================================================================
+   Projets : bouton et formulaire d'ajout, logos
+   ========================================================================== */
+
+/* L'en-tête de la liste accueille le bouton « Ajouter un projet » à droite */
+.projects__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.projects__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.65rem 1.1rem;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: #ffffff;
+    background-color: #3b82f6;
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 200ms ease;
+}
+
+.projects__button:hover {
+    background-color: #2563eb;
+}
+
+.projects__button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.projects__button:focus-visible {
+    outline: 2px solid #1e40af;
+    outline-offset: 2px;
+}
+
+.projects__button--ghost {
+    color: #374151;
+    background-color: #ffffff;
+    border-color: #d1d5db;
+}
+
+.projects__button--ghost:hover {
+    background-color: #f3f4f6;
+}
+
+/* --- Logo sur la carte d'un projet --- */
+
+.project-card__header {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.project-card__header .project-card__title {
+    margin-bottom: 0;
+}
+
+.project-card__logo {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+/* Sans logo : l'initiale du projet dans une pastille */
+.project-card__logo--initial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1e40af;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border-color: #dbeafe;
+}
+
+/* --- Logo sur la page d'un projet --- */
+
+#project .project__identity {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+#project .project__identity .project__title {
+    margin-bottom: 0;
+}
+
+#project .project__logo {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+/* --- Formulaire d'ajout d'un projet (dans la modal) --- */
+
+.project-form__fields {
+    display: grid;
+    gap: 1.1rem;
+}
+
+.project-form__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.project-form__label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.project-form__optional {
+    font-weight: 400;
+    color: #9ca3af;
+}
+
+.project-form__input {
+    padding: 0.55rem 0.7rem;
+    font: inherit;
+    font-size: 0.92rem;
+    color: #111827;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+}
+
+.project-form__input:focus {
+    border-color: #3b82f6;
+    outline: 2px solid rgba(59, 130, 246, 0.25);
+}
+
+.project-form__input--file {
+    padding: 0.45rem;
+    background-color: #f9fafb;
+    border-style: dashed;
+    cursor: pointer;
+}
+
+.project-form__input--file::file-selector-button {
+    margin-right: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1e40af;
+    background-color: #eff6ff;
+    border: 1px solid #dbeafe;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.project-form__help {
+    font-size: 0.78rem;
+    color: #6b7280;
+}
+
+.project-form__error {
+    margin-top: 0.75rem;
+    font-size: 0.88rem;
+    color: #b91c1c;
+}
+
+.project-form__error:empty {
+    display: none;
+}
+
+/* ==========================================================================
+   Projets : modification (bouton crayon, bouton de la page projet, logo actuel)
+   ========================================================================== */
+
+/* Bouton crayon sur la carte, poussé à droite de l'en-tête */
+.project-card__edit {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    margin-left: auto;
+    padding: 0;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 200ms ease, border-color 200ms ease;
+}
+
+.project-card__edit:hover {
+    background-color: #f3f4f6;
+    border-color: #e5e7eb;
+}
+
+.project-card__edit:focus-visible {
+    outline: 2px solid #1e40af;
+    outline-offset: 2px;
+}
+
+/* Page d'un projet : « Modifier le projet » et « Voir les tâches » côte à côte */
+#project .project__nav-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+/* Le bouton « Modifier » est un <button> : on retire le style du navigateur */
+#project .project__nav-button {
+    font-family: inherit;
+    line-height: inherit;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+/* Variante claire, pour l'action secondaire */
+#project .project__nav-button--ghost {
+    color: #1f2937;
+    background-color: #ffffff;
+    border-color: #d1d5db;
+}
+
+#project .project__nav-button--ghost:hover {
+    background-color: #f3f4f6;
+}
+
+/* Formulaire de modification : logo actuel + case « Supprimer le logo » */
+.project-form__current-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 0.4rem;
+}
+
+.project-form__logo-preview {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.project-form__checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.88rem;
+    color: #374151;
+    cursor: pointer;
+}
+
+.project-form__checkbox input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #b91c1c;
+}

@@ -1,0 +1,15 @@
+{#
+    Modal unique du site, remplie par assets/js/composants/Modal.js.
+    Mode d'emploi en haut de Modal.js.
+#}
+<dialog class="modal modal--medium" id="app-modal" aria-labelledby="app-modal-title">
+    <div class="modal__box" data-modal-box>
+        <header class="modal__header">
+            <h2 class="modal__title" id="app-modal-title" data-modal-title></h2>
+            <button type="button" class="modal__close" data-modal-close aria-label="Fermer">
+                <img src="{{ asset('images/icones/close.svg') }}" alt="" width="18" height="18">
+            </button>
+        </header>
+        <div class="modal__body" data-modal-body></div>
+    </div>
+</dialog>

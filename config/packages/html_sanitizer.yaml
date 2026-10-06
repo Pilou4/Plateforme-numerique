@@ -6,3 +6,10 @@ framework:
             # et retire tout ce qui est dangereux (scripts, événements onclick…).
             app.documentation_sanitizer:
                 allow_safe_elements: true
+
+            # Présentation des projets : comme la documentation, en gardant en plus
+            # les classes CSS du contenu (project__text, project__tags…)
+            app.project_sanitizer:
+                allow_safe_elements: true
+                allow_attributes:
+                    class: '*'

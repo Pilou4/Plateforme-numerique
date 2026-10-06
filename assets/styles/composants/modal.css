@@ -1,0 +1,187 @@
+/* ==========================================================================
+   Composant : modal (site public et app)
+   HTML : templates/_partials/_modal.html.twig — JS : assets/js/composants/Modal.js
+   ========================================================================== */
+
+.modal {
+    /* margin: auto centre la modal (le reset de styles.css le met à 0) */
+    margin: auto;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 2rem);
+    padding: 0;
+    overflow: visible;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+    color: #1f2937;
+    background: transparent;
+    border: none;
+}
+
+.modal::backdrop {
+    background-color: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(3px);
+}
+
+.modal__box {
+    display: flex;
+    flex-direction: column;
+    width: 560px;
+    max-width: 100%;
+    max-height: calc(100vh - 2rem);
+    overflow: hidden;
+    background-color: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.3);
+}
+
+/* --- Tailles --- */
+
+.modal--small .modal__box {
+    width: 400px;
+}
+
+.modal--large .modal__box {
+    width: 860px;
+}
+
+/* --- En-tête --- */
+
+.modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem 1.1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal__title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #0f172a;
+}
+
+.modal__close {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+.modal__close:hover {
+    background-color: #f3f4f6;
+}
+
+.modal__close:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* --- Contenu --- */
+
+.modal__body {
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+/* Boutons d'action en bas du contenu (à utiliser dans les templates de contenu) */
+.modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* --- Animations --- */
+
+.modal[open] .modal__box {
+    animation: modal-box-in 180ms ease-out;
+}
+
+.modal[open]::backdrop {
+    animation: modal-backdrop-in 180ms ease-out;
+}
+
+.modal--closing .modal__box {
+    animation: modal-box-out 140ms ease-in forwards;
+}
+
+.modal--closing::backdrop {
+    animation: modal-backdrop-out 140ms ease-in forwards;
+}
+
+@keyframes modal-box-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes modal-box-out {
+    from {
+        opacity: 1;
+        transform: none;
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
+    }
+}
+
+@keyframes modal-backdrop-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modal-backdrop-out {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .modal[open] .modal__box,
+    .modal[open]::backdrop,
+    .modal--closing .modal__box,
+    .modal--closing::backdrop {
+        animation: none;
+    }
+}
+
+/* --- Petits écrans --- */
+
+@media (max-width: 600px) {
+    .modal__header {
+        padding: 1rem;
+    }
+
+    .modal__body {
+        padding: 1rem;
+    }
+}

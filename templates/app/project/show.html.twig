@@ -1,0 +1,51 @@
+{% extends 'app/base.html.twig' %}
+
+{% block title %}{{ project.name }} · Projet{% endblock %}
+
+{# JavaScript de l'app + celui des projets (formulaire de modification) #}
+{% block importmap %}{{ importmap(['app', 'app-space', 'app-projects']) }}{% endblock %}
+
+{% block app_body %}
+<main id="project">
+    <article class="project">
+        <nav class="project__nav" aria-label="Navigation du projet">
+            <a href="{{ path('app_project') }}" class="project__back">Tous les projets</a>
+            <div class="project__nav-actions">
+                <button type="button" class="project__nav-button project__nav-button--ghost"
+                        data-modal-open="project-edit"
+                        data-modal-title="Modifier le projet">
+                    Modifier le projet
+                </button>
+                <a href="{{ path('app_project_steps', {slug: project.slug}) }}" class="project__nav-button">Voir les tâches</a>
+            </div>
+        </nav>
+
+        <header class="project__header">
+            <p class="project__eyebrow">Présentation</p>
+            <div class="project__identity">
+                {% if project.logo %}
+                    <img src="{{ path('app_project_logo', {slug: project.slug}) }}" alt="Logo de {{ project.name }}" class="project__logo" width="64" height="64">
+                {% endif %}
+                <h1 class="project__title">{{ project.name }}</h1>
+            </div>
+            {% if project.summary %}
+                <p class="project__lead">{{ project.summary }}</p>
+            {% endif %}
+        </header>
+
+        {% for section in project.sections %}
+            <section class="project__section" aria-labelledby="project-section-{{ section.id }}">
+                <h2 class="project__heading" id="project-section-{{ section.id }}">{{ section.title }}</h2>
+                {{ section.content|sanitize_html('app.project_sanitizer') }}
+            </section>
+        {% else %}
+            <p class="project__empty">Ce projet n'a pas encore de présentation.</p>
+        {% endfor %}
+    </article>
+
+    {# Formulaire de modification, affiché dans la modal (bouton « Modifier le projet ») #}
+    <template id="project-edit">
+        {{ include('app/project/_project_form.html.twig', {project: project, redirect_to_project: true}) }}
+    </template>
+</main>
+{% endblock %}

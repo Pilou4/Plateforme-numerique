@@ -1,0 +1,53 @@
+{#
+    Formulaire d'un projet, affiché dans la modal.
+    - project = null : création
+    - project = un projet : modification (champs pré-remplis, logo actuel affiché)
+    - redirect_to_project = true : après l'enregistrement, on va sur la page du projet
+      (utile en modification, car l'URL change si le nom change)
+#}
+{% set project = project ?? null %}
+<form class="project-form"
+      data-project-form
+      data-api-url="{{ project ? path('api_projects_update', {slug: project.slug}) : path('api_projects_create') }}"
+      {% if redirect_to_project ?? false %}data-redirect-to-project{% endif %}
+      novalidate>
+    <div class="project-form__fields">
+        <label class="project-form__field">
+            <span class="project-form__label">Nom du projet</span>
+            <input type="text" name="name" class="project-form__input" maxlength="255" value="{{ project.name ?? '' }}" required autofocus>
+            <span class="project-form__help">
+                L'adresse de la page est créée à partir du nom{{ project ? ' : la changer modifie aussi l\'adresse' }}.
+            </span>
+        </label>
+        <label class="project-form__field">
+            <span class="project-form__label">Résumé <span class="project-form__optional">(facultatif)</span></span>
+            <input type="text" name="summary" class="project-form__input" maxlength="255" value="{{ project.summary ?? '' }}">
+            <span class="project-form__help">Une phrase, affichée dans la liste des projets.</span>
+        </label>
+
+        <div class="project-form__field">
+            <label class="project-form__label" for="project-logo-{{ project.id ?? 'new' }}">
+                {{ project and project.logo ? 'Remplacer le logo' : 'Logo' }}
+                <span class="project-form__optional">(facultatif)</span>
+            </label>
+
+            {% if project and project.logo %}
+                <div class="project-form__current-logo">
+                    <img src="{{ path('app_project_logo', {slug: project.slug}) }}" alt="Logo actuel" class="project-form__logo-preview" width="48" height="48">
+                    <label class="project-form__checkbox">
+                        <input type="checkbox" name="removeLogo" value="1">
+                        <span>Supprimer le logo</span>
+                    </label>
+                </div>
+            {% endif %}
+
+            <input type="file" id="project-logo-{{ project.id ?? 'new' }}" name="logo" class="project-form__input project-form__input--file" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+            <span class="project-form__help">PNG, JPG, WebP ou SVG, 2 Mo maximum.</span>
+        </div>
+    </div>
+    <p class="project-form__error" data-form-error role="alert"></p>
+    <div class="modal__actions">
+        <button type="button" class="projects__button projects__button--ghost" data-modal-close>Annuler</button>
+        <button type="submit" class="projects__button">{{ project ? 'Enregistrer' : 'Créer le projet' }}</button>
+    </div>
+</form>

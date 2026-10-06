@@ -1,9 +1,224 @@
 {% extends 'app/base.html.twig' %}
 
-{% block title %}Étapes du projet{% endblock %}
+{% block title %}Tâches · {{ project.name }}{% endblock %}
+
+{# JavaScript de l'app + celui de cette page uniquement #}
+{% block importmap %}{{ importmap(['app', 'app-space', 'app-project-steps']) }}{% endblock %}
 
 {% block app_body %}
 <main id="project-steps">
-    <h1>Étapes du projet</h1>
+    <div class="steps"
+         data-project-steps
+         data-api-url="{{ path('api_project_steps_list', {slug: project.slug}) }}">
+
+        <header class="steps__header">
+            <div class="steps__intro">
+                <p class="steps__eyebrow">
+                    <a href="{{ path('app_project_show', {slug: project.slug}) }}" class="steps__back">{{ project.name }}</a>
+                </p>
+                <h1 class="steps__title">Tâches du projet</h1>
+                <p class="steps__lead">Clique sur une cellule pour la modifier, et fais glisser une ligne pour changer l'ordre.</p>
+            </div>
+            <button type="button" class="steps__button"
+                    data-modal-open="project-step-add"
+                    data-modal-title="Nouvelle tâche"
+                    data-modal-size="medium">
+                <img src="{{ asset('images/icones/plus.svg') }}" alt="" width="16" height="16">
+                <span>Ajouter une tâche</span>
+            </button>
+        </header>
+
+        <section class="steps__stats" aria-label="Avancement du projet">
+            <div class="steps__stat">
+                <p class="steps__stat-value" data-stat="done">0 / 0</p>
+                <p class="steps__stat-label">tâches faites</p>
+                <div class="steps__progress" data-progress role="progressbar" aria-label="Tâches faites" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <span class="steps__progress-bar" data-progress-bar></span>
+                </div>
+            </div>
+            <div class="steps__stat">
+                <p class="steps__stat-value" data-stat="in-progress">0</p>
+                <p class="steps__stat-label">en cours</p>
+            </div>
+            <div class="steps__stat">
+                <p class="steps__stat-value" data-stat="todo">0</p>
+                <p class="steps__stat-label">pas commencées</p>
+            </div>
+            <div class="steps__stat">
+                <p class="steps__stat-value" data-stat="time">0 min</p>
+                <p class="steps__stat-label">temps passé au total</p>
+            </div>
+        </section>
+
+        <div class="steps__toolbar">
+            <div class="steps__filters" role="group" aria-label="Filtrer les tâches par statut">
+                <button type="button" class="steps__filter steps__filter--active" data-filter="all" aria-pressed="true">Toutes</button>
+                {% for status in statuses %}
+                    <button type="button" class="steps__filter" data-filter="{{ status.value }}" aria-pressed="false">{{ status.pluralLabel }}</button>
+                {% endfor %}
+            </div>
+            <p class="steps__message" data-message role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="steps-table__wrapper">
+            <table class="steps-table">
+                <thead>
+                    <tr>
+                        <th scope="col" class="steps-table__head steps-table__head--handle"><span class="steps-table__sr-only">Déplacer</span></th>
+                        {# Clic sur un en-tête : tri croissant, puis décroissant ; « # » revient à l'ordre manuel #}
+                        <th scope="col" class="steps-table__head steps-table__head--number" data-sort-head="position" aria-sort="ascending">
+                            <button type="button" class="steps-table__sort" data-sort="position" title="Revenir à l'ordre manuel">#</button>
+                        </th>
+                        <th scope="col" class="steps-table__head steps-table__head--title" data-sort-head="title" aria-sort="none">
+                            <button type="button" class="steps-table__sort" data-sort="title">Titre</button>
+                        </th>
+                        <th scope="col" class="steps-table__head steps-table__head--description" data-sort-head="description" aria-sort="none">
+                            <button type="button" class="steps-table__sort" data-sort="description">Description</button>
+                        </th>
+                        <th scope="col" class="steps-table__head steps-table__head--priority" data-sort-head="priority" aria-sort="none">
+                            <button type="button" class="steps-table__sort" data-sort="priority">Priorité</button>
+                        </th>
+                        <th scope="col" class="steps-table__head steps-table__head--status" data-sort-head="status" aria-sort="none">
+                            <button type="button" class="steps-table__sort" data-sort="status">Statut</button>
+                        </th>
+                        <th scope="col" class="steps-table__head steps-table__head--time" data-sort-head="time" aria-sort="none">
+                            <button type="button" class="steps-table__sort" data-sort="time">Temps passé</button>
+                        </th>
+                        <th scope="col" class="steps-table__head steps-table__head--actions"><span class="steps-table__sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody data-list class="steps-table__body"></tbody>
+            </table>
+            <p class="steps__empty" data-empty hidden></p>
+        </div>
+
+        {# Modèle d'une ligne « tâche », rempli par le JavaScript #}
+        <template data-template="step">
+            <tr class="steps-table__row" data-step>
+                <td class="steps-table__cell steps-table__cell--handle">
+                    <span class="steps-table__handle" data-handle title="Glisser pour déplacer">
+                        <img src="{{ asset('images/icones/drag-handle.svg') }}" alt="" width="16" height="16" draggable="false">
+                    </span>
+                </td>
+                <td class="steps-table__cell steps-table__cell--number">
+                    <span class="steps-table__number" data-field="number"></span>
+                </td>
+                <td class="steps-table__cell steps-table__cell--title">
+                    <div class="steps-table__title">
+                        <button type="button" class="steps-table__toggle" data-action="toggle" aria-expanded="false">
+                            <img src="{{ asset('images/icones/chevron-down.svg') }}" alt="" class="steps-table__toggle-icon" width="14" height="14">
+                        </button>
+                        <input type="text" class="steps-table__input steps-table__input--title" data-edit="title" maxlength="255" aria-label="Titre">
+                        <span class="steps-table__count" data-field="count" title="Sous-tâches faites"></span>
+                    </div>
+                </td>
+                <td class="steps-table__cell steps-table__cell--description">
+                    <input type="text" class="steps-table__input steps-table__input--description" data-edit="description" placeholder="Ajouter une description…" aria-label="Description">
+                </td>
+                <td class="steps-table__cell steps-table__cell--priority">
+                    <span class="steps-table__select-wrapper">
+                        <select class="steps-table__select" data-edit="priority" aria-label="Priorité">
+                            {% for priority in priorities %}
+                                <option value="{{ priority.value }}">{{ priority.label }}</option>
+                            {% endfor %}
+                        </select>
+                        <img src="{{ asset('images/icones/chevron-down.svg') }}" alt="" class="steps-table__select-arrow" width="14" height="14">
+                    </span>
+                </td>
+                <td class="steps-table__cell steps-table__cell--status">
+                    <span class="steps-table__select-wrapper">
+                        <select class="steps-table__select" data-edit="status" aria-label="Statut">
+                            {% for status in statuses %}
+                                <option value="{{ status.value }}">{{ status.label }}</option>
+                            {% endfor %}
+                        </select>
+                        <img src="{{ asset('images/icones/chevron-down.svg') }}" alt="" class="steps-table__select-arrow" width="14" height="14">
+                    </span>
+                </td>
+                <td class="steps-table__cell steps-table__cell--time">
+                    <span class="steps-table__time" data-time-inputs>
+                        <input type="number" class="steps-table__input steps-table__input--time" data-edit="hours" min="0" step="1" aria-label="Heures passées">
+                        <span class="steps-table__unit">h</span>
+                        <input type="number" class="steps-table__input steps-table__input--time" data-edit="minutes" min="0" max="59" step="1" aria-label="Minutes passées">
+                        <span class="steps-table__unit">min</span>
+                    </span>
+                    {# Tâche avec sous-tâches : somme automatique, non modifiable #}
+                    <span class="steps-table__time-total" data-time-total title="Somme des sous-tâches" hidden></span>
+                </td>
+                <td class="steps-table__cell steps-table__cell--actions">
+                    <div class="steps-table__actions">
+                        <button type="button" class="steps-table__action steps-table__action--add" data-action="add-sub-step">
+                            <img src="{{ asset('images/icones/plus-dark.svg') }}" alt="" width="16" height="16">
+                        </button>
+                        <button type="button" class="steps-table__action steps-table__action--delete" data-action="delete">
+                            <img src="{{ asset('images/icones/delete.svg') }}" alt="" width="16" height="16">
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        </template>
+
+        {# Modèle d'une ligne « sous-tâche », affichée sous sa tâche #}
+        <template data-template="sub-step">
+            <tr class="steps-table__row steps-table__row--sub" data-sub-step>
+                <td class="steps-table__cell steps-table__cell--handle">
+                    <span class="steps-table__handle" data-handle title="Glisser pour déplacer">
+                        <img src="{{ asset('images/icones/drag-handle.svg') }}" alt="" width="16" height="16" draggable="false">
+                    </span>
+                </td>
+                <td class="steps-table__cell steps-table__cell--number">
+                    <span class="steps-table__number steps-table__number--sub" data-field="number"></span>
+                </td>
+                <td class="steps-table__cell steps-table__cell--title">
+                    <div class="steps-table__title steps-table__title--sub">
+                        <input type="text" class="steps-table__input steps-table__input--title" data-edit="title" maxlength="255" aria-label="Titre de la sous-tâche">
+                    </div>
+                </td>
+                <td class="steps-table__cell steps-table__cell--description">
+                    <input type="text" class="steps-table__input steps-table__input--description" data-edit="description" placeholder="Ajouter une description…" aria-label="Description de la sous-tâche">
+                </td>
+                <td class="steps-table__cell steps-table__cell--priority">
+                    <span class="steps-table__select-wrapper">
+                        <select class="steps-table__select" data-edit="priority" aria-label="Priorité">
+                            {% for priority in priorities %}
+                                <option value="{{ priority.value }}">{{ priority.label }}</option>
+                            {% endfor %}
+                        </select>
+                        <img src="{{ asset('images/icones/chevron-down.svg') }}" alt="" class="steps-table__select-arrow" width="14" height="14">
+                    </span>
+                </td>
+                <td class="steps-table__cell steps-table__cell--status">
+                    <span class="steps-table__select-wrapper">
+                        <select class="steps-table__select" data-edit="status" aria-label="Statut">
+                            {% for status in statuses %}
+                                <option value="{{ status.value }}">{{ status.label }}</option>
+                            {% endfor %}
+                        </select>
+                        <img src="{{ asset('images/icones/chevron-down.svg') }}" alt="" class="steps-table__select-arrow" width="14" height="14">
+                    </span>
+                </td>
+                <td class="steps-table__cell steps-table__cell--time">
+                    <span class="steps-table__time" data-time-inputs>
+                        <input type="number" class="steps-table__input steps-table__input--time" data-edit="hours" min="0" step="1" aria-label="Heures passées">
+                        <span class="steps-table__unit">h</span>
+                        <input type="number" class="steps-table__input steps-table__input--time" data-edit="minutes" min="0" max="59" step="1" aria-label="Minutes passées">
+                        <span class="steps-table__unit">min</span>
+                    </span>
+                </td>
+                <td class="steps-table__cell steps-table__cell--actions">
+                    <div class="steps-table__actions">
+                        <button type="button" class="steps-table__action steps-table__action--delete" data-action="delete">
+                            <img src="{{ asset('images/icones/delete.svg') }}" alt="" width="16" height="16">
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        </template>
+
+        {# Formulaire d'ajout, affiché dans la modal (tâche ou sous-tâche) #}
+        <template id="project-step-add">
+            {{ include('app/project/_step_form.html.twig') }}
+        </template>
+    </div>
 </main>
 {% endblock %}
