@@ -1,8 +1,14 @@
+{% set current_route = app.current_route %}
+
 <header class="site-header">
-    <nav class="main-nav">
-        <ul>
-            <li><a href="{{ path('home') }}">Accueil</a></li>
-            <li><a href="{{ path('app_dashboard') }}">Dashboard</a></li>
+    <nav class="main-nav" aria-label="Navigation principale">
+        <ul class="main-nav__list">
+            <li class="main-nav__item">
+                <a href="{{ path('home') }}" class="main-nav__link" {% if current_route == 'home' %}aria-current="page"{% endif %}>Accueil</a>
+            </li>
+            <li class="main-nav__item">
+                <a href="{{ path('app_dashboard') }}" class="main-nav__link" {% if current_route starts with 'app_' %}aria-current="page"{% endif %}>App</a>
+            </li>
         </ul>
     </nav>
 </header>

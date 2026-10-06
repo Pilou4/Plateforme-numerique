@@ -1,0 +1,767 @@
+/* ==========================================================================
+   App (partie connectée) : layout et menu de gauche
+   Ce fichier n'est chargé que sur les pages de l'app (templates/app/base.html.twig).
+   ========================================================================== */
+
+/* 72px = hauteur du header : le menu commence sous la nav et va jusqu'en bas de l'écran */
+.app-layout {
+    display: flex;
+    min-height: calc(100vh - 72px);
+}
+
+.app-sidebar {
+    flex: 0 0 240px;
+    background-color: #0f172a;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.app-sidebar__nav {
+    padding: 1rem 0.75rem;
+}
+
+.app-sidebar__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    list-style: none;
+}
+
+.app-sidebar__link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.6rem 0.9rem;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #a9b8d9;
+    text-decoration: none;
+    transition: color 200ms ease;
+}
+
+.app-sidebar__icon {
+    display: block;
+    flex-shrink: 0;
+}
+
+.app-sidebar__link:hover {
+    color: #ffffff;
+}
+
+/* Page en cours : texte blanc en gras + petite barre bleue à gauche */
+.app-sidebar__link[aria-current="page"] {
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.app-sidebar__link[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 3px;
+    height: 1.1rem;
+    background-color: #3b82f6;
+    border-radius: 3px;
+    transform: translateY(-50%);
+}
+
+/* Lien principal dont une page du sous-menu est en cours */
+.app-sidebar__item--current > .app-sidebar__row .app-sidebar__link {
+    color: #ffffff;
+}
+
+.app-sidebar__link:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 2px;
+}
+
+.app-layout__content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ==========================================================================
+   App : sous-menus déroulants du menu de gauche
+   ========================================================================== */
+
+.app-sidebar__row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.app-sidebar__row .app-sidebar__link {
+    flex: 1;
+    min-width: 0;
+}
+
+.app-sidebar__submenu-toggle {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.app-sidebar__submenu-toggle:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 2px;
+}
+
+/* Sous-menu fermé : la flèche pointe vers la droite */
+.app-sidebar__submenu-icon {
+    display: block;
+    transform: rotate(-90deg);
+    transition: transform 200ms ease;
+}
+
+/* Sous-menu ouvert : la flèche pointe vers le bas */
+.app-sidebar__item--open .app-sidebar__submenu-icon {
+    transform: rotate(0deg);
+}
+
+/* Animation d'ouverture : la ligne de grille passe de 0 à la hauteur du contenu */
+.app-sidebar__submenu {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 200ms ease;
+}
+
+.app-sidebar__item--open .app-sidebar__submenu {
+    grid-template-rows: 1fr;
+}
+
+.app-sidebar__submenu-list {
+    min-height: 0;
+    overflow: hidden;
+    visibility: hidden;
+    list-style: none;
+    transition: visibility 0s linear 200ms;
+}
+
+.app-sidebar__item--open .app-sidebar__submenu-list {
+    visibility: visible;
+    transition: visibility 0s linear 0s;
+}
+
+.app-sidebar__submenu-item:first-child {
+    margin-top: 0.25rem;
+}
+
+.app-sidebar__submenu-link {
+    display: block;
+    margin-left: 1.45rem;
+    padding: 0.5rem 0.9rem;
+    border-left: 1px solid rgba(147, 197, 253, 0.15);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.9rem;
+    color: #8193b8;
+    text-decoration: none;
+    transition: color 200ms ease, border-color 200ms ease;
+}
+
+.app-sidebar__submenu-link:hover {
+    color: #ffffff;
+}
+
+/* Page en cours dans le sous-menu : texte blanc en gras + trait bleu plus épais */
+.app-sidebar__submenu-link[aria-current="page"] {
+    padding-left: calc(0.9rem - 1px);
+    border-left: 2px solid #3b82f6;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.app-sidebar__submenu-link:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Page Projet (#project)
+   ========================================================================== */
+
+#project .project {
+    max-width: 880px;
+    padding: 2.5rem 2.5rem 4rem;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+    color: #1f2937;
+}
+
+/* --- En-tête --- */
+
+#project .project__header {
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#project .project__eyebrow {
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #3b82f6;
+}
+
+#project .project__title {
+    margin-bottom: 0.75rem;
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #0f172a;
+}
+
+#project .project__lead {
+    max-width: 640px;
+    font-size: 1.1rem;
+    color: #4b5563;
+}
+
+/* --- Sections --- */
+
+#project .project__section {
+    padding: 2rem 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#project .project__heading {
+    position: relative;
+    margin-bottom: 1rem;
+    padding-left: 0.9rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+#project .project__heading::before {
+    content: "";
+    position: absolute;
+    top: 0.2em;
+    bottom: 0.2em;
+    left: 0;
+    width: 4px;
+    background-color: #3b82f6;
+    border-radius: 4px;
+}
+
+#project .project__subheading {
+    margin-bottom: 0.6rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+#project .project__text {
+    margin-bottom: 0.9rem;
+}
+
+#project .project__text:last-child {
+    margin-bottom: 0;
+}
+
+#project .project__highlight {
+    margin-top: 1.25rem;
+    padding: 1rem 1.25rem;
+    background-color: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    border-radius: 0 8px 8px 0;
+    color: #1e3a8a;
+}
+
+/* --- Listes --- */
+
+#project .project__list {
+    margin: 0 0 1rem 1.25rem;
+}
+
+#project .project__list-item {
+    margin-bottom: 0.25rem;
+}
+
+#project .project__steps {
+    display: grid;
+    gap: 0.5rem;
+    list-style: none;
+    counter-reset: project-step;
+}
+
+#project .project__step {
+    position: relative;
+    padding: 0.6rem 1rem 0.6rem 3rem;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    counter-increment: project-step;
+}
+
+#project .project__step::before {
+    content: counter(project-step);
+    position: absolute;
+    top: 50%;
+    left: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    background-color: #3b82f6;
+    border-radius: 50%;
+    transform: translateY(-50%);
+}
+
+/* --- Définitions (terme : description) --- */
+
+#project .project__definitions {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+#project .project__definition {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 1rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px dashed #e5e7eb;
+}
+
+#project .project__term {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+#project .project__description {
+    color: #4b5563;
+}
+
+/* --- Étiquettes --- */
+
+#project .project__groups {
+    display: grid;
+    gap: 1.5rem;
+}
+
+#project .project__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+}
+
+#project .project__tag {
+    padding: 0.3rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #1e40af;
+    background-color: #eff6ff;
+    border: 1px solid #dbeafe;
+    border-radius: 999px;
+}
+
+/* --- Tableau --- */
+
+#project .project__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+#project .project__table-caption {
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    text-align: left;
+    color: #6b7280;
+}
+
+#project .project__table-head {
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    text-align: left;
+    color: #ffffff;
+    background-color: #0f172a;
+}
+
+#project .project__table-cell {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#project .project__table-cell--label {
+    font-weight: 600;
+    text-align: left;
+    color: #0f172a;
+}
+
+#project .project__code {
+    padding: 0.15rem 0.4rem;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    color: #0f172a;
+    background-color: #f1f5f9;
+    border-radius: 4px;
+}
+
+/* --- Cartes --- */
+
+#project .project__cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+#project .project__card {
+    padding: 1.25rem;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-top: 3px solid #3b82f6;
+    border-radius: 8px;
+}
+
+/* --- Pied de page --- */
+
+#project .project__footer {
+    padding-top: 1rem;
+}
+
+/* --- Petits écrans --- */
+
+@media (max-width: 700px) {
+    #project .project {
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    #project .project__title {
+        font-size: 1.75rem;
+    }
+
+    #project .project__definition {
+        grid-template-columns: 1fr;
+        gap: 0.25rem;
+    }
+}
+
+/* ==========================================================================
+   Documentation : pages Tutoriels, Tutoriel et Glossaire (.doc-page)
+   ========================================================================== */
+
+.doc-page {
+    max-width: 880px;
+    padding: 2.5rem 2.5rem 4rem;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+    color: #1f2937;
+}
+
+/* --- En-tête --- */
+
+.doc-page__header {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.doc-page__eyebrow {
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #3b82f6;
+}
+
+.doc-page__back {
+    color: inherit;
+    text-decoration: none;
+}
+
+.doc-page__back::before {
+    content: "← ";
+}
+
+.doc-page__back:hover {
+    text-decoration: underline;
+}
+
+.doc-page__title {
+    margin-bottom: 0.75rem;
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #0f172a;
+}
+
+.doc-page__lead {
+    max-width: 640px;
+    font-size: 1.1rem;
+    color: #4b5563;
+}
+
+.doc-page__empty {
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+    background-color: #f9fafb;
+    border: 1px dashed #d1d5db;
+    border-radius: 8px;
+}
+
+/* --- Liste des tutoriels --- */
+
+.doc-topics {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+    list-style: none;
+}
+
+.doc-topics__link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.25rem;
+    color: inherit;
+    text-decoration: none;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-top: 3px solid #3b82f6;
+    border-radius: 8px;
+    transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.doc-topics__link:hover {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    transform: translateY(-2px);
+}
+
+.doc-topics__link:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+.doc-topics__title {
+    margin-bottom: 0.4rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.doc-topics__summary {
+    flex: 1;
+    margin-bottom: 0.75rem;
+    color: #4b5563;
+}
+
+.doc-topics__meta {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+/* --- Sommaire d'un tutoriel --- */
+
+.doc-toc {
+    margin-bottom: 1rem;
+    padding: 1.25rem 1.5rem;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.doc-toc__title {
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b7280;
+}
+
+.doc-toc__list {
+    margin-left: 1.25rem;
+}
+
+.doc-toc__item {
+    margin-bottom: 0.25rem;
+}
+
+.doc-toc__link {
+    color: #1e40af;
+    text-decoration: none;
+}
+
+.doc-toc__link:hover {
+    text-decoration: underline;
+}
+
+/* --- Sections d'un tutoriel --- */
+
+.doc-section {
+    padding: 2rem 0;
+    border-bottom: 1px solid #e5e7eb;
+    scroll-margin-top: 1rem;
+}
+
+.doc-section__title {
+    position: relative;
+    margin-bottom: 1rem;
+    padding-left: 0.9rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.doc-section__title::before {
+    content: "";
+    position: absolute;
+    top: 0.2em;
+    bottom: 0.2em;
+    left: 0;
+    width: 4px;
+    background-color: #3b82f6;
+    border-radius: 4px;
+}
+
+/* --- Glossaire --- */
+
+.doc-glossary__group {
+    margin-bottom: 2rem;
+}
+
+.doc-glossary__letter {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.4rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #3b82f6;
+    border-bottom: 2px solid #dbeafe;
+}
+
+.doc-glossary__entry {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 1.5rem;
+    padding: 1rem 0;
+    border-bottom: 1px dashed #e5e7eb;
+}
+
+.doc-glossary__term {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* --- Contenu HTML saisi (sections et définitions) ---
+   Les balises sont stylées uniquement à l'intérieur de .doc-content */
+
+.doc-content > * + * {
+    margin-top: 0.9rem;
+}
+
+.doc-content h3 {
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.doc-content h4 {
+    margin-top: 1.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.doc-content ul,
+.doc-content ol {
+    margin-left: 1.25rem;
+}
+
+.doc-content li + li {
+    margin-top: 0.25rem;
+}
+
+.doc-content a {
+    color: #1e40af;
+}
+
+.doc-content strong {
+    color: #0f172a;
+}
+
+.doc-content code {
+    padding: 0.15rem 0.4rem;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    color: #0f172a;
+    background-color: #f1f5f9;
+    border-radius: 4px;
+}
+
+.doc-content pre {
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    background-color: #0f172a;
+    border-radius: 8px;
+}
+
+.doc-content pre code {
+    padding: 0;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #e2e8f0;
+    background: none;
+}
+
+.doc-content blockquote {
+    padding: 1rem 1.25rem;
+    color: #1e3a8a;
+    background-color: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    border-radius: 0 8px 8px 0;
+}
+
+.doc-content table {
+    width: 100%;
+    font-size: 0.95rem;
+    border-collapse: collapse;
+}
+
+.doc-content th {
+    padding: 0.6rem 0.9rem;
+    font-weight: 600;
+    text-align: left;
+    color: #ffffff;
+    background-color: #0f172a;
+}
+
+.doc-content td {
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* --- Petits écrans --- */
+
+@media (max-width: 700px) {
+    .doc-page {
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    .doc-page__title {
+        font-size: 1.75rem;
+    }
+
+    .doc-glossary__entry {
+        grid-template-columns: 1fr;
+        gap: 0.4rem;
+    }
+}

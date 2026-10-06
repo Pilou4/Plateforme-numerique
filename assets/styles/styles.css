@@ -13,3 +13,86 @@ html, body {
 body {
     overflow: hidden;
 }
+
+/* ==========================================================================
+   Header et navigation principale
+   ========================================================================== */
+
+.site-header {
+    position: relative;
+    background: linear-gradient(120deg, #0a1128 0%, #0f1e45 55%, #142a63 100%);
+    border-bottom: 1px solid rgba(96, 165, 250, 0.18);
+    box-shadow: 0 6px 24px rgba(10, 17, 40, 0.45);
+    overflow: hidden;
+}
+
+/* Halo bleu décoratif dans le fond */
+.site-header::before {
+    content: "";
+    position: absolute;
+    top: -140px;
+    right: 8%;
+    width: 420px;
+    height: 280px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.35) 0%, rgba(59, 130, 246, 0) 70%);
+    pointer-events: none;
+}
+
+.main-nav {
+    position: relative;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 72px;
+    padding: 0 2rem;
+}
+
+.main-nav__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+}
+
+.main-nav__link {
+    display: block;
+    padding: 0.6rem 1.3rem;
+    border-radius: 999px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #a9b8d9;
+    text-decoration: none;
+    transition: background-color 200ms ease, color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+}
+
+.main-nav__link:hover {
+    background-color: rgba(147, 197, 253, 0.12);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.main-nav__link[aria-current="page"] {
+    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+    color: #ffffff;
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+}
+
+.main-nav__link:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+    .main-nav {
+        min-height: 60px;
+        padding: 0 1rem;
+    }
+
+    .main-nav__link {
+        padding: 0.45rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+

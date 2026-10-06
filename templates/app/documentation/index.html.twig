@@ -1,0 +1,37 @@
+{% extends 'app/base.html.twig' %}
+
+{% block title %}Documentation{% endblock %}
+
+{% block app_body %}
+<main id="documentation">
+    <article class="doc-page">
+        <header class="doc-page__header">
+            <p class="doc-page__eyebrow">Documentation</p>
+            <h1 class="doc-page__title">Tutoriels</h1>
+            <p class="doc-page__lead">
+                Les notions et outils appris au fil du projet, expliqués étape par étape.
+            </p>
+        </header>
+
+        {% if topics is empty %}
+            <p class="doc-page__empty">Aucun tutoriel pour l'instant.</p>
+        {% else %}
+            <ul class="doc-topics">
+                {% for topic in topics %}
+                    <li class="doc-topics__item">
+                        <a href="{{ path('app_documentation_show', {slug: topic.slug}) }}" class="doc-topics__link">
+                            <h2 class="doc-topics__title">{{ topic.title }}</h2>
+                            {% if topic.summary %}
+                                <p class="doc-topics__summary">{{ topic.summary }}</p>
+                            {% endif %}
+                            <p class="doc-topics__meta">
+                                {{ topic.sections|length }} section{{ topic.sections|length > 1 ? 's' }}
+                            </p>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </article>
+</main>
+{% endblock %}

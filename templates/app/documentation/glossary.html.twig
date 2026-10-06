@@ -1,0 +1,45 @@
+{% extends 'app/base.html.twig' %}
+
+{% block title %}Glossaire · Documentation{% endblock %}
+
+{% block app_body %}
+<main id="glossary">
+    <article class="doc-page">
+        <header class="doc-page__header">
+            <p class="doc-page__eyebrow">Documentation</p>
+            <h1 class="doc-page__title">Glossaire</h1>
+            <p class="doc-page__lead">Les définitions des termes techniques rencontrés dans le projet.</p>
+        </header>
+
+        {% if terms is empty %}
+            <p class="doc-page__empty">Aucune définition pour l'instant.</p>
+        {% else %}
+            {# Regroupe les termes par première lettre (le préfixe "_" évite que Twig
+               renumérote les clés quand un terme commence par un chiffre) #}
+            {% set groups = {} %}
+            {% for term in terms %}
+                {% set key = '_' ~ term.term|first|upper %}
+                {% set groups = groups|merge({(key): (groups[key] ?? [])|merge([term])}) %}
+            {% endfor %}
+
+            <div class="doc-glossary">
+                {% for key, letter_terms in groups %}
+                    <section class="doc-glossary__group" aria-labelledby="glossary-letter-{{ loop.index }}">
+                        <h2 class="doc-glossary__letter" id="glossary-letter-{{ loop.index }}">{{ key|slice(1) }}</h2>
+                        <dl class="doc-glossary__list">
+                            {% for term in letter_terms %}
+                                <div class="doc-glossary__entry">
+                                    <dt class="doc-glossary__term">{{ term.term }}</dt>
+                                    <dd class="doc-glossary__definition doc-content">
+                                        {{ term.definition|sanitize_html('app.documentation_sanitizer') }}
+                                    </dd>
+                                </div>
+                            {% endfor %}
+                        </dl>
+                    </section>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </article>
+</main>
+{% endblock %}

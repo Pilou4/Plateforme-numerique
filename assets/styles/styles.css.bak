@@ -1,0 +1,329 @@
+*, ::before, ::after {
+    box-sizing: border-box;
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+}
+
+body {
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   Header et navigation principale
+   ========================================================================== */
+
+.site-header {
+    position: relative;
+    background: linear-gradient(120deg, #0a1128 0%, #0f1e45 55%, #142a63 100%);
+    border-bottom: 1px solid rgba(96, 165, 250, 0.18);
+    box-shadow: 0 6px 24px rgba(10, 17, 40, 0.45);
+    overflow: hidden;
+}
+
+/* Halo bleu décoratif dans le fond */
+.site-header::before {
+    content: "";
+    position: absolute;
+    top: -140px;
+    right: 8%;
+    width: 420px;
+    height: 280px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.35) 0%, rgba(59, 130, 246, 0) 70%);
+    pointer-events: none;
+}
+
+.main-nav {
+    position: relative;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 72px;
+    padding: 0 2rem;
+}
+
+.main-nav__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+}
+
+.main-nav__link {
+    display: block;
+    padding: 0.6rem 1.3rem;
+    border-radius: 999px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #a9b8d9;
+    text-decoration: none;
+    transition: background-color 200ms ease, color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+}
+
+.main-nav__link:hover {
+    background-color: rgba(147, 197, 253, 0.12);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.main-nav__link[aria-current="page"] {
+    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+    color: #ffffff;
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+}
+
+.main-nav__link:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+    .main-nav {
+        min-height: 60px;
+        padding: 0 1rem;
+    }
+
+    .main-nav__link {
+        padding: 0.45rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* ==========================================================================
+   App : layout et menu de gauche
+   ========================================================================== */
+
+/* 72px = hauteur du header : le menu commence sous la nav et va jusqu'en bas de l'écran */
+.app-layout {
+    display: flex;
+    min-height: calc(100vh - 72px);
+}
+
+.app-sidebar {
+    flex: 0 0 240px;
+    padding: 1.5rem 1rem;
+    background-color: #0f172a;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.app-sidebar__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    list-style: none;
+}
+
+.app-sidebar__link {
+    display: block;
+    padding: 0.6rem 0.9rem;
+    border-radius: 8px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #a9b8d9;
+    text-decoration: none;
+    transition: background-color 200ms ease, color 200ms ease;
+}
+
+.app-sidebar__link:hover {
+    background-color: rgba(147, 197, 253, 0.1);
+    color: #ffffff;
+}
+
+.app-sidebar__link[aria-current="page"] {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #ffffff;
+}
+
+.app-sidebar__link:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 2px;
+}
+
+.app-layout__content {
+    flex: 1;
+    min-width: 0;
+}
+/* ==========================================================================
+   App : layout et menu de gauche
+   ========================================================================== */
+
+/* --header-height = hauteur du header : le layout occupe tout l'écran sous la nav.
+   Le menu et le contenu ont chacun leur propre scroll. */
+.app-layout {
+    --header-height: 72px;
+    --sidebar-width: 240px;
+    position: relative;
+    display: flex;
+    height: calc(100vh - var(--header-height));
+}
+
+.app-sidebar {
+    flex: 0 0 var(--sidebar-width);
+    width: var(--sidebar-width);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background-color: #0f172a;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    transition: flex-basis 250ms ease, width 250ms ease, visibility 0s linear 0s;
+}
+
+.app-sidebar__nav {
+    /* Largeur fixe : le texte ne se replie pas pendant l'animation */
+    width: var(--sidebar-width);
+    padding: 3.5rem 1rem 1.5rem;
+}
+
+.app-sidebar__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    list-style: none;
+}
+
+.app-sidebar__link {
+    display: block;
+    padding: 0.6rem 0.9rem;
+    border-radius: 8px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #a9b8d9;
+    text-decoration: none;
+    transition: background-color 200ms ease, color 200ms ease;
+}
+
+.app-sidebar__link:hover {
+    background-color: rgba(147, 197, 253, 0.1);
+    color: #ffffff;
+}
+
+.app-sidebar__link[aria-current="page"] {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #ffffff;
+}
+
+.app-sidebar__link:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 2px;
+}
+
+/* Bouton dans l'angle haut droit du menu */
+.app-sidebar__toggle {
+    position: absolute;
+    top: 0.75rem;
+    left: calc(var(--sidebar-width) - 2.75rem);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    background-color: rgba(147, 197, 253, 0.08);
+    border: 1px solid rgba(147, 197, 253, 0.15);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: left 250ms ease, background-color 200ms ease;
+}
+
+.app-sidebar__toggle:hover {
+    background-color: rgba(147, 197, 253, 0.18);
+}
+
+.app-sidebar__toggle:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 2px;
+}
+
+.app-sidebar__toggle-icon {
+    display: block;
+    transition: transform 250ms ease;
+}
+
+.app-layout__content {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+}
+
+/* Menu fermé */
+.app-layout--sidebar-closed .app-sidebar {
+    flex-basis: 0;
+    width: 0;
+    visibility: hidden;
+    transition: flex-basis 250ms ease, width 250ms ease, visibility 0s linear 250ms;
+}
+
+.app-layout--sidebar-closed .app-sidebar__toggle {
+    left: 0.5rem;
+    background-color: #0f172a;
+}
+
+.app-layout--sidebar-closed .app-sidebar__toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* ==========================================================================
+   App : layout et menu de gauche
+   ========================================================================== */
+
+/* 72px = hauteur du header : le menu commence sous la nav et va jusqu'en bas de l'écran */
+.app-layout {
+    display: flex;
+    min-height: calc(100vh - 72px);
+}
+
+.app-sidebar {
+    flex: 0 0 240px;
+    padding: 1.5rem 1rem;
+    background-color: #0f172a;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.app-sidebar__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    list-style: none;
+}
+
+.app-sidebar__link {
+    display: block;
+    padding: 0.6rem 0.9rem;
+    border-radius: 8px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #a9b8d9;
+    text-decoration: none;
+    transition: background-color 200ms ease, color 200ms ease;
+}
+
+.app-sidebar__link:hover {
+    background-color: rgba(147, 197, 253, 0.1);
+    color: #ffffff;
+}
+
+.app-sidebar__link[aria-current="page"] {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #ffffff;
+}
+
+.app-sidebar__link:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 2px;
+}
+
+.app-layout__content {
+    flex: 1;
+    min-width: 0;
+}

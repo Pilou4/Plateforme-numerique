@@ -1,0 +1,43 @@
+{% extends 'app/base.html.twig' %}
+
+{% block title %}{{ topic.title }} · Documentation{% endblock %}
+
+{% block app_body %}
+<main id="documentation-topic">
+    <article class="doc-page">
+        <header class="doc-page__header">
+            <p class="doc-page__eyebrow">
+                <a href="{{ path('app_documentation') }}" class="doc-page__back">Tutoriels</a>
+            </p>
+            <h1 class="doc-page__title">{{ topic.title }}</h1>
+            {% if topic.summary %}
+                <p class="doc-page__lead">{{ topic.summary }}</p>
+            {% endif %}
+        </header>
+
+        {% if topic.sections is empty %}
+            <p class="doc-page__empty">Ce tutoriel n'a pas encore de contenu.</p>
+        {% else %}
+            <nav class="doc-toc" aria-label="Sommaire">
+                <h2 class="doc-toc__title">Sommaire</h2>
+                <ol class="doc-toc__list">
+                    {% for section in topic.sections %}
+                        <li class="doc-toc__item">
+                            <a href="#section-{{ section.id }}" class="doc-toc__link">{{ section.title }}</a>
+                        </li>
+                    {% endfor %}
+                </ol>
+            </nav>
+
+            {% for section in topic.sections %}
+                <section class="doc-section" id="section-{{ section.id }}" aria-labelledby="section-{{ section.id }}-title">
+                    <h2 class="doc-section__title" id="section-{{ section.id }}-title">{{ section.title }}</h2>
+                    <div class="doc-content">
+                        {{ section.content|sanitize_html('app.documentation_sanitizer') }}
+                    </div>
+                </section>
+            {% endfor %}
+        {% endif %}
+    </article>
+</main>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% set current_route = app.current_route %}
+
+{# Pages du sous-menu Projet : si on est sur l'une d'elles, le sous-menu est ouvert #}
+{% set project_submenu_routes = ['app_project_steps'] %}
+{% set is_in_project_submenu = current_route in project_submenu_routes %}
+
+{# Pages du sous-menu Documentation #}
+{% set documentation_submenu_routes = ['app_documentation_glossary'] %}
+{% set is_in_documentation_submenu = current_route in documentation_submenu_routes %}
+
+{#
+    Règle du menu :
+    - chaque lien principal a une icône SVG (public/images/icones/) ;
+    - le bouton flèche et le bloc .app-sidebar__submenu ne sont ajoutés
+      QUE sur un lien principal qui a un sous-menu ;
+    - les sous-menus sont fermés au chargement de la page, sauf si la page
+      en cours fait partie du sous-menu (il est alors ouvert).
+#}
+
+<aside class="app-sidebar">
+    <nav class="app-sidebar__nav" aria-label="Menu de l'application">
+        <ul class="app-sidebar__list">
+            {# Lien principal avec sous-menu #}
+            <li class="app-sidebar__item{% if is_in_project_submenu %} app-sidebar__item--open app-sidebar__item--current{% endif %}">
+                <div class="app-sidebar__row">
+                    <a href="{{ path('app_project') }}" class="app-sidebar__link" {% if current_route == 'app_project' %}aria-current="page"{% endif %}>
+                        <img src="{{ asset('images/icones/project.svg') }}" alt="" class="app-sidebar__icon" width="18" height="18">
+                        <span>Projet</span>
+                    </a>
+                    <button type="button" class="app-sidebar__submenu-toggle" aria-controls="submenu-project" aria-expanded="{{ is_in_project_submenu ? 'true' : 'false' }}" aria-label="Afficher le sous-menu Projet">
+                        <img src="{{ asset('images/icones/chevron-down.svg') }}" alt="" class="app-sidebar__submenu-icon" width="16" height="16">
+                    </button>
+                </div>
+
+                <div class="app-sidebar__submenu" id="submenu-project">
+                    <ul class="app-sidebar__submenu-list">
+                        <li class="app-sidebar__submenu-item">
+                            <a href="{{ path('app_project_steps') }}" class="app-sidebar__submenu-link" {% if current_route == 'app_project_steps' %}aria-current="page"{% endif %}>Étapes</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
+            {# Lien principal avec sous-menu : Documentation (la page d'un tutoriel garde ce lien actif) #}
+            <li class="app-sidebar__item{% if is_in_documentation_submenu %} app-sidebar__item--open app-sidebar__item--current{% endif %}">
+                <div class="app-sidebar__row">
+                    <a href="{{ path('app_documentation') }}" class="app-sidebar__link" {% if current_route in ['app_documentation', 'app_documentation_show'] %}aria-current="page"{% endif %}>
+                        <img src="{{ asset('images/icones/documentation.svg') }}" alt="" class="app-sidebar__icon" width="18" height="18">
+                        <span>Documentation</span>
+                    </a>
+                    <button type="button" class="app-sidebar__submenu-toggle" aria-controls="submenu-documentation" aria-expanded="{{ is_in_documentation_submenu ? 'true' : 'false' }}" aria-label="Afficher le sous-menu Documentation">
+                        <img src="{{ asset('images/icones/chevron-down.svg') }}" alt="" class="app-sidebar__submenu-icon" width="16" height="16">
+                    </button>
+                </div>
+
+                <div class="app-sidebar__submenu" id="submenu-documentation">
+                    <ul class="app-sidebar__submenu-list">
+                        <li class="app-sidebar__submenu-item">
+                            <a href="{{ path('app_documentation_glossary') }}" class="app-sidebar__submenu-link" {% if current_route == 'app_documentation_glossary' %}aria-current="page"{% endif %}>Glossaire</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+        </ul>
+    </nav>
+</aside>

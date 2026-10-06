@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
+{% endblock %}
+
+{% block importmap %}{{ importmap(['app', 'app-space']) }}{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+    {% include 'app/_partials/_sidebar.html.twig' %}
+
+    <div class="app-layout__content">
+        {% block app_body %}{% endblock %}
+    </div>
+</div>
+{% endblock %}
