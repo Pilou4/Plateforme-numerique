@@ -1,0 +1,28 @@
+{#
+    Formulaire d'un tutoriel (titre et résumé), affiché dans la modal.
+    topic = null : ajout ; topic = un tutoriel : modification (champs pré-remplis).
+    Géré par assets/js/app/documentation/TopicEditor.js.
+#}
+{% set topic = topic ?? null %}
+<form class="project-form" data-topic-form
+      data-api-url="{{ topic ? path('api_documentation_topics_update', {id: topic.id}) : path('api_documentation_topics_create') }}"
+      data-method="{{ topic ? 'PATCH' : 'POST' }}"
+      novalidate>
+    <div class="project-form__fields">
+        <label class="project-form__field">
+            <span class="project-form__label">Titre</span>
+            <input type="text" name="title" class="project-form__input" maxlength="255" value="{{ topic.title ?? '' }}" required autofocus>
+            <span class="project-form__help">L'adresse de la page est créée à partir du titre{{ topic ? ' : le changer modifie aussi l\'adresse' }}.</span>
+        </label>
+        <label class="project-form__field">
+            <span class="project-form__label">Résumé <span class="project-form__optional">(facultatif)</span></span>
+            <input type="text" name="summary" class="project-form__input" maxlength="255" value="{{ topic.summary ?? '' }}">
+            <span class="project-form__help">Une phrase, affichée dans la liste des tutoriels.</span>
+        </label>
+    </div>
+    <p class="project-form__error" data-form-error role="alert"></p>
+    <div class="modal__actions">
+        <button type="button" class="projects__button projects__button--ghost" data-modal-close>Annuler</button>
+        <button type="submit" class="projects__button">{{ topic ? 'Enregistrer' : 'Créer le tutoriel' }}</button>
+    </div>
+</form>

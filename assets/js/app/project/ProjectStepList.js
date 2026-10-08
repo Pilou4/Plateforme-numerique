@@ -1,6 +1,8 @@
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '../../fonctions/api.js';
 import { formatDuration, joinDuration, splitDuration } from '../../fonctions/duration.js';
 import { getModal, openModalFromTemplate } from '../../composants/Modal.js';
+import { showNotice } from '../../composants/Notice.js';
+import { matchesSearch, PAGE_SEARCH_EVENT } from '../../composants/PageSearch.js';
 
 const FILTER_ALL = 'all';
 const STATUS_TODO = 'todo';
@@ -20,7 +22,7 @@ const STATUS_RANK = { todo: 0, in_progress: 1, done: 2 };
 /**
  * Tableau des tâches du projet et de leurs sous-tâches :
  * chargement, ajout (dans la modal), modification directe dans les cellules,
- * suppression, filtres, tri par colonne, dépliage des sous-tâches et glisser-déposer.
+ * suppression, filtres, recherche, tri par colonne, dépliage des sous-tâches et glisser-déposer.
  *
  * Une ligne de tâche porte data-step, une ligne de sous-tâche porte data-sub-step
  * (et data-parent-id = l'identifiant de son tâche).
@@ -32,7 +34,6 @@ export class ProjectStepList {
 
         this.list = root.querySelector('[data-list]');
         this.emptyMessage = root.querySelector('[data-empty]');
-        this.message = root.querySelector('[data-message]');
         this.stepTemplate = root.querySelector('[data-template="step"]');
         this.subStepTemplate = root.querySelector('[data-template="sub-step"]');
         this.filterButtons = root.querySelectorAll('[data-filter]');
@@ -45,6 +46,8 @@ export class ProjectStepList {
         // Tri affiché (non enregistré) : "position" = ordre manuel du glisser-déposer
         this.sortKey = SORT_MANUAL;
         this.sortDirection = SORT_ASCENDING;
+        // Recherche de l'en-tête de la page (texte normalisé, '' = pas de recherche)
+        this.searchQuery = '';
         // Identifiants des tâches dont les sous-tâches sont dépliées
         this.expandedStepIds = new Set();
         this.draggedRow = null;
@@ -52,6 +55,7 @@ export class ProjectStepList {
 
         // Les méthodes branchées sur des événements gardent "this" = l'instance
         this.handleClick = this.handleClick.bind(this);
+        this.handleSearch = this.handleSearch.bind(this);
         this.handleAddSubmit = this.handleAddSubmit.bind(this);
         this.handleFocusIn = this.handleFocusIn.bind(this);
         this.handleFocusOut = this.handleFocusOut.bind(this);
@@ -68,6 +72,8 @@ export class ProjectStepList {
 
     async init() {
         this.root.addEventListener('click', this.handleClick);
+        // La barre de recherche est dans l'en-tête de la page, hors de this.root
+        document.addEventListener(PAGE_SEARCH_EVENT, this.handleSearch);
         // Le formulaire d'ajout est dans la modal, en dehors de la page : écoute sur document
         document.addEventListener('submit', this.handleAddSubmit);
 
@@ -89,13 +95,14 @@ export class ProjectStepList {
     }
 
     async load() {
-        this.showMessage('Chargement des tâches…');
+        // Pendant le chargement, le message vide du tableau sert d'indication
+        this.emptyMessage.hidden = false;
+        this.emptyMessage.textContent = 'Chargement des tâches…';
 
         try {
             this.steps = await apiGet(this.apiUrl);
-            this.showMessage('');
         } catch (error) {
-            this.showMessage(`Impossible de charger les tâches : ${error.message}`, true);
+            showNotice('error', `Impossible de charger les tâches : ${error.message}`);
         }
 
         this.render();
@@ -149,20 +156,15 @@ export class ProjectStepList {
 
         for (const step of visibleSteps) {
             rows.push(this.createStepRow(step));
-
-            if (this.expandedStepIds.has(step.id)) {
-                rows.push(...this.sortItems(step.subSteps).map((subStep) => this.createSubStepRow(step, subStep)));
-            }
+            rows.push(...this.sortItems(this.getVisibleSubSteps(step)).map((subStep) => this.createSubStepRow(step, subStep)));
         }
 
         this.list.replaceChildren(...rows);
-        // Le glisser-déposer n'est possible que sur la liste complète, dans l'ordre manuel
+        // Le glisser-déposer n'est possible que sur la liste complète, dans l'ordre manuel, sans recherche
         this.list.classList.toggle('steps-table__body--sortable', this.isReorderable());
 
         this.emptyMessage.hidden = visibleSteps.length > 0;
-        this.emptyMessage.textContent = this.steps.length === 0
-            ? 'Aucune tâche pour l\'instant. Ajoute la première avec le bouton « Ajouter une tâche ».'
-            : 'Aucune tâche ne correspond à ce filtre.';
+        this.emptyMessage.textContent = this.getEmptyMessage();
     }
 
     createStepRow(step) {
@@ -320,6 +322,19 @@ export class ProjectStepList {
         }
     }
 
+    getEmptyMessage() {
+        if (this.steps.length === 0) {
+            return 'Aucune tâche pour l\'instant. Ajoute la première avec le bouton « Ajouter une tâche ».';
+        }
+
+        return this.searchQuery !== '' ? 'Aucune tâche ne correspond à la recherche.' : 'Aucune tâche ne correspond à ce filtre.';
+    }
+
+    handleSearch(event) {
+        this.searchQuery = event.detail.normalizedQuery;
+        this.renderList();
+    }
+
     setFilter(filter) {
         this.filter = filter;
         this.render();
@@ -341,7 +356,9 @@ export class ProjectStepList {
         this.sortKey = key;
         this.renderSortHeads();
         this.renderList();
-        this.showMessage(key === SORT_MANUAL ? '' : 'Tableau trié : le glisser-déposer revient avec la colonne « # ».');
+        if (key !== SORT_MANUAL) {
+            showNotice('info', 'Tableau trié : le glisser-déposer revient avec la colonne « # ».');
+        }
     }
 
     toggleSubSteps(step) {
@@ -401,11 +418,11 @@ export class ProjectStepList {
                 const updatedStep = await apiPost(this.getSubStepCreateUrl(parentId), data);
                 this.replaceStep(updatedStep);
                 this.expandedStepIds.add(parentId);
-                this.showMessage('Sous-tâche ajoutée.');
+                showNotice('success', 'Sous-tâche ajoutée.');
             } else {
                 const createdStep = await apiPost(this.apiUrl, data);
                 this.steps.push(createdStep);
-                this.showMessage('Tâche ajoutée.');
+                showNotice('success', 'Tâche ajoutée.');
             }
 
             getModal().close();
@@ -494,7 +511,7 @@ export class ProjectStepList {
 
         if (title === '') {
             field.value = target.item.title;
-            this.showMessage('Le titre ne peut pas être vide.', true);
+            showNotice('warning', 'Le titre ne peut pas être vide.');
 
             return;
         }
@@ -537,11 +554,11 @@ export class ProjectStepList {
                 this.flashRow(target.subStep ? this.findSubStepRow(target.subStep.id) : this.findStepRow(updatedStep.id));
             }
 
-            this.showMessage('Modification enregistrée.');
+            showNotice('success', 'Modification enregistrée.');
         } catch (error) {
             // Échec : les lignes reprennent les valeurs enregistrées
             this.refreshStepRows(target.step);
-            this.showMessage(`Modification non enregistrée : ${error.message}`, true);
+            showNotice('error', `Modification non enregistrée : ${error.message}`);
         }
     }
 
@@ -580,9 +597,9 @@ export class ProjectStepList {
             this.steps = this.steps.filter((item) => item.id !== step.id);
             this.expandedStepIds.delete(step.id);
             this.render();
-            this.showMessage('Tâche supprimée.');
+            showNotice('success', 'Tâche supprimée.');
         } catch (error) {
-            this.showMessage(`Suppression impossible : ${error.message}`, true);
+            showNotice('error', `Suppression impossible : ${error.message}`);
         }
     }
 
@@ -595,9 +612,9 @@ export class ProjectStepList {
             const updatedStep = await apiDelete(this.getSubStepUrl(step.id, subStep.id));
             this.replaceStep(updatedStep);
             this.render();
-            this.showMessage('Sous-tâche supprimée.');
+            showNotice('success', 'Sous-tâche supprimée.');
         } catch (error) {
-            this.showMessage(`Suppression impossible : ${error.message}`, true);
+            showNotice('error', `Suppression impossible : ${error.message}`);
         }
     }
 
@@ -789,11 +806,11 @@ export class ProjectStepList {
 
         try {
             await apiPut(this.getOrderUrl(), { ids });
-            this.showMessage('Ordre enregistré.');
+            showNotice('success', 'Ordre enregistré.');
         } catch (error) {
             this.steps = previousSteps;
             this.render();
-            this.showMessage(`Ordre non enregistré : ${error.message}`, true);
+            showNotice('error', `Ordre non enregistré : ${error.message}`);
         }
     }
 
@@ -811,11 +828,11 @@ export class ProjectStepList {
             const updatedStep = await apiPut(this.getSubStepOrderUrl(stepId), { ids });
             this.replaceStep(updatedStep);
             this.renderList();
-            this.showMessage('Ordre enregistré.');
+            showNotice('success', 'Ordre enregistré.');
         } catch (error) {
             this.replaceStep(step);
             this.renderList();
-            this.showMessage(`Ordre non enregistré : ${error.message}`, true);
+            showNotice('error', `Ordre non enregistré : ${error.message}`);
         }
     }
 
@@ -870,15 +887,44 @@ export class ProjectStepList {
     }
 
     getVisibleSteps() {
-        const steps = this.filter === FILTER_ALL
-            ? this.steps
-            : this.steps.filter((step) => step.status === this.filter);
+        const steps = this.steps.filter((step) => (this.filter === FILTER_ALL || step.status === this.filter)
+            && (this.stepMatchesSearch(step) || step.subSteps.some(this.subStepMatchesSearch, this)));
 
         return this.sortItems(steps);
     }
 
+    /**
+     * Sous-tâches affichées sous une tâche :
+     * - sans recherche : toutes si la tâche est dépliée ;
+     * - avec recherche : celles qui correspondent (toutes si la tâche elle-même correspond et est dépliée).
+     */
+    getVisibleSubSteps(step) {
+        const isExpanded = this.expandedStepIds.has(step.id);
+
+        if (this.searchQuery === '') {
+            return isExpanded ? step.subSteps : [];
+        }
+
+        if (isExpanded && this.stepMatchesSearch(step)) {
+            return step.subSteps;
+        }
+
+        return step.subSteps.filter(this.subStepMatchesSearch, this);
+    }
+
+    stepMatchesSearch(step) {
+        return matchesSearch(`${step.title} ${step.description ?? ''}`, this.searchQuery);
+    }
+
+    subStepMatchesSearch(subStep) {
+        return this.searchQuery !== '' && matchesSearch(`${subStep.title} ${subStep.description ?? ''}`, this.searchQuery);
+    }
+
+    /**
+     * Le glisser-déposer n'est possible que sur la liste complète, dans l'ordre manuel, sans recherche.
+     */
     isReorderable() {
-        return this.filter === FILTER_ALL && this.sortKey === SORT_MANUAL;
+        return this.filter === FILTER_ALL && this.sortKey === SORT_MANUAL && this.searchQuery === '';
     }
 
     /* ------------------------------------------------------------------
@@ -992,11 +1038,6 @@ export class ProjectStepList {
 
     setStat(name, text) {
         this.root.querySelector(`[data-stat="${name}"]`).textContent = text;
-    }
-
-    showMessage(text, isError = false) {
-        this.message.textContent = text;
-        this.message.classList.toggle('steps__message--error', isError);
     }
 }
 

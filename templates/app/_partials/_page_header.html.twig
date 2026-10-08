@@ -1,0 +1,106 @@
+{#
+    En-tête commun des pages de l'app : titre, recherche, boutons d'action, onglets.
+    Tout est facultatif sauf le titre : ce qui n'est pas donné ne s'affiche pas.
+
+    {{ include('app/_partials/_page_header.html.twig', {
+        title: 'Glossaire',                         (obligatoire)
+        eyebrow: 'Documentation',                   petite étiquette au-dessus du titre
+        eyebrow_url: path('app_documentation'),     → l'étiquette devient un lien « ← … »
+        logo_url: path('app_project_logo', …),      image à gauche du titre
+        count: terms|length,                        compteur à droite du titre
+        lead: 'Une phrase de présentation.',
+        search: 'Rechercher un terme…',             barre de recherche (texte d'aide) ;
+                                                    le filtrage est fait par la page (voir PageSearch.js)
+        actions: [
+            {label: 'Ajouter un terme', icon: 'plus.svg', modal: 'glossary-term-add', modal_title: 'Nouveau terme', modal_size: 'medium'},
+            {label: 'Modifier', href: path(…), variant: 'ghost'},
+            {label: 'Supprimer', variant: 'ghost', attributes: {'data-topic-delete': ''}},   attributs libres (pour le JavaScript)
+        ],
+        tabs: [
+            {label: 'Tutoriels', url: path('app_documentation'), count: 3},
+            {label: 'Glossaire', url: path('app_documentation_glossary'), count: 48, active: true},
+        ],
+        tabs_label: 'Sections de la documentation',
+    }) }}
+#}
+{% set eyebrow = eyebrow ?? null %}
+{% set eyebrow_url = eyebrow_url ?? null %}
+{% set logo_url = logo_url ?? null %}
+{% set count = count ?? null %}
+{% set lead = lead ?? null %}
+{% set search = search ?? null %}
+{% set actions = actions ?? [] %}
+{% set tabs = tabs ?? [] %}
+
+<header class="page-header{{ tabs is not empty ? ' page-header--with-tabs' }}">
+    <div class="page-header__main">
+        <div class="page-header__titles">
+            {% if eyebrow %}
+                <p class="page-header__eyebrow">
+                    {% if eyebrow_url %}
+                        <a href="{{ eyebrow_url }}" class="page-header__back">{{ eyebrow }}</a>
+                    {% else %}
+                        {{ eyebrow }}
+                    {% endif %}
+                </p>
+            {% endif %}
+
+            <div class="page-header__heading">
+                {% if logo_url %}
+                    <img src="{{ logo_url }}" alt="" class="page-header__logo" width="44" height="44">
+                {% endif %}
+                <h1 class="page-header__title">{{ title }}</h1>
+                {% if count is not null %}
+                    <span class="page-header__count">{{ count }}</span>
+                {% endif %}
+            </div>
+
+            {% if lead %}
+                <p class="page-header__lead">{{ lead }}</p>
+            {% endif %}
+        </div>
+
+        {% if search or actions is not empty %}
+            <div class="page-header__actions">
+                {% if search %}
+                    <label class="page-search">
+                        <img src="{{ asset('images/icones/search.svg') }}" alt="" class="page-search__icon" width="16" height="16">
+                        <input type="search" class="page-search__input" data-page-search placeholder="{{ search }}" aria-label="{{ search }}" autocomplete="off">
+                    </label>
+                {% endif %}
+
+                {% for action in actions %}
+                    {% set action_class = 'page-header__button' ~ ((action.variant ?? 'primary') == 'ghost' ? ' page-header__button--ghost') %}
+                    {% if action.href ?? null %}
+                        <a href="{{ action.href }}" class="{{ action_class }}"{% for name, value in action.attributes ?? {} %} {{ name }}="{{ value }}"{% endfor %}>
+                            {% if action.icon ?? null %}<img src="{{ asset('images/icones/' ~ action.icon) }}" alt="" width="16" height="16">{% endif %}
+                            <span>{{ action.label }}</span>
+                        </a>
+                    {% else %}
+                        <button type="button" class="{{ action_class }}"
+                                {% if action.modal ?? null %}data-modal-open="{{ action.modal }}"{% endif %}
+                                {% if action.modal_title ?? null %}data-modal-title="{{ action.modal_title }}"{% endif %}
+                                {% if action.modal_size ?? null %}data-modal-size="{{ action.modal_size }}"{% endif %}
+                                {% for name, value in action.attributes ?? {} %}{{ name }}="{{ value }}" {% endfor %}>
+                            {% if action.icon ?? null %}<img src="{{ asset('images/icones/' ~ action.icon) }}" alt="" width="16" height="16">{% endif %}
+                            <span>{{ action.label }}</span>
+                        </button>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    {% if tabs is not empty %}
+        <nav class="page-tabs" aria-label="{{ tabs_label ?? 'Onglets de la page' }}">
+            {% for tab in tabs %}
+                <a href="{{ tab.url }}" class="page-tabs__link" {% if tab.active ?? false %}aria-current="page"{% endif %}>
+                    {{ tab.label }}
+                    {% if (tab.count ?? null) is not null %}
+                        <span class="page-tabs__count">{{ tab.count }}</span>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </nav>
+    {% endif %}
+</header>

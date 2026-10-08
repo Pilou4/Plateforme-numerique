@@ -1,0 +1,29 @@
+<footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__brand">
+            <p class="site-footer__name">Plateforme Numérique</p>
+            <p class="site-footer__tagline">Développement web, intelligence artificielle, automatisation et cybersécurité.</p>
+        </div>
+
+        <nav class="site-footer__nav" aria-label="Liens du pied de page">
+            <div class="site-footer__column">
+                <p class="site-footer__heading">Navigation</p>
+                <ul class="site-footer__list">
+                    <li class="site-footer__item"><a href="{{ path('home') }}" class="site-footer__link">Accueil</a></li>
+                    <li class="site-footer__item"><a href="{{ path('app_dashboard') }}" class="site-footer__link">App</a></li>
+                </ul>
+            </div>
+            <div class="site-footer__column">
+                <p class="site-footer__heading">Accueil</p>
+                <ul class="site-footer__list">
+                    <li class="site-footer__item"><a href="{{ path('home') }}#services" class="site-footer__link">Services</a></li>
+                    <li class="site-footer__item"><a href="{{ path('home') }}#contact" class="site-footer__link">Contact</a></li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+
+    <div class="site-footer__bottom">
+        <p class="site-footer__copyright">© {{ 'now'|date('Y') }} Plateforme Numérique</p>
+    </div>
+</footer>

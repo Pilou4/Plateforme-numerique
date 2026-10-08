@@ -1,0 +1,12 @@
+{#
+    Carte d'un service, qui mène à sa page (accueil et liste des services).
+    {{ include('services/_service_card.html.twig', {service: service}, with_context = false) }}
+#}
+<a href="{{ path('services_show', {slug: service.slug}) }}" class="home-service">
+    <span class="home-service__icon">
+        <img src="{{ asset('images/icones/' ~ service.icon) }}" alt="" width="22" height="22">
+    </span>
+    <h3 class="home-service__title">{{ service.title }}</h3>
+    <p class="home-service__text">{{ service.summary }}</p>
+    <span class="home-service__more">En savoir plus</span>
+</a>

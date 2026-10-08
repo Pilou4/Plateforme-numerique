@@ -1,0 +1,30 @@
+{#
+    Formulaires d'ajout et de modification d'une section, affichés dans la modal
+    (boutons « Ajouter une section » de l'en-tête et crayon de chaque section).
+    Gérés par assets/js/composants/SectionEditor.js.
+#}
+{% for mode in ['add', 'edit'] %}
+    <template id="section-{{ mode }}">
+        <form class="project-form" data-section-form="{{ mode }}" novalidate>
+            <div class="project-form__fields">
+                <label class="project-form__field">
+                    <span class="project-form__label">Titre</span>
+                    <input type="text" name="title" class="project-form__input" maxlength="255" required autofocus>
+                </label>
+                <label class="project-form__field">
+                    <span class="project-form__label">Contenu</span>
+                    <textarea name="content" class="project-form__input project-form__input--textarea section-form__textarea" rows="14" required></textarea>
+                    <span class="project-form__help">
+                        HTML : &lt;p&gt;, &lt;h3&gt;, &lt;ul&gt;/&lt;li&gt;, &lt;strong&gt;, &lt;code&gt;, &lt;pre&gt;&lt;code&gt;, &lt;table&gt;, &lt;blockquote&gt;, &lt;a href="…"&gt;…
+                        Les balises dangereuses (scripts…) sont retirées à l'affichage.
+                    </span>
+                </label>
+            </div>
+            <p class="project-form__error" data-form-error role="alert"></p>
+            <div class="modal__actions">
+                <button type="button" class="projects__button projects__button--ghost" data-modal-close>Annuler</button>
+                <button type="submit" class="projects__button">{{ mode == 'add' ? 'Ajouter' : 'Enregistrer' }}</button>
+            </div>
+        </form>
+    </template>
+{% endfor %}

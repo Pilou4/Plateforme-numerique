@@ -1,0 +1,20 @@
+{#
+    Boutons d'une section modifiable (tutoriel ou présentation d'un projet) :
+    monter, descendre, modifier, supprimer. Gérés par assets/js/composants/SectionEditor.js.
+
+    {{ include('app/_partials/_section_tools.html.twig', {section: section, is_first: loop.first, is_last: loop.last}, with_context = false) }}
+#}
+<div class="section-tools" role="group" aria-label="Actions sur la section « {{ section.title }} »">
+    <button type="button" class="section-tools__button" data-section-action="up" title="Monter" aria-label="Monter « {{ section.title }} »" {{ is_first ? 'disabled' }}>
+        <img src="{{ asset('images/icones/arrow-up.svg') }}" alt="" width="16" height="16">
+    </button>
+    <button type="button" class="section-tools__button" data-section-action="down" title="Descendre" aria-label="Descendre « {{ section.title }} »" {{ is_last ? 'disabled' }}>
+        <img src="{{ asset('images/icones/arrow-down.svg') }}" alt="" width="16" height="16">
+    </button>
+    <button type="button" class="section-tools__button" data-section-action="edit" title="Modifier" aria-label="Modifier « {{ section.title }} »">
+        <img src="{{ asset('images/icones/edit.svg') }}" alt="" width="16" height="16">
+    </button>
+    <button type="button" class="section-tools__button section-tools__button--delete" data-section-action="delete" title="Supprimer" aria-label="Supprimer « {{ section.title }} »">
+        <img src="{{ asset('images/icones/delete.svg') }}" alt="" width="16" height="16">
+    </button>
+</div>

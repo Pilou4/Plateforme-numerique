@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Services{% endblock %}
+
+{% block metaTag %}
+    <meta name="description" content="Applications web, intelligence artificielle, automatisation, cybersécurité, formation et outils métier : découvrez les services proposés.">
+{% endblock %}
+
+{# Contenu : src/Content/ServiceCatalog.php #}
+{% block body %}
+<main id="services">
+    <section class="home-hero" aria-labelledby="services-title">
+        <div class="home-hero__inner service-page__hero">
+            <div class="home-hero__text">
+                <p class="home-hero__eyebrow">Services</p>
+                <h1 class="home-hero__title" id="services-title">Ce que je peux faire <span class="home-hero__highlight">pour vous</span></h1>
+                <p class="home-hero__lead">
+                    Du site web à l'intelligence artificielle, des solutions sur mesure, développées avec une exigence forte
+                    en matière de sécurité, de performance et de qualité.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-section" aria-label="Liste des services">
+        <div class="home-section__inner">
+            <ul class="home-services">
+                {% for service in services %}
+                    <li class="home-services__item">
+                        {{ include('services/_service_card.html.twig', {service: service}, with_context = false) }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+
+    {{ include('services/_contact_band.html.twig', {}, with_context = false) }}
+</main>
+{% endblock %}

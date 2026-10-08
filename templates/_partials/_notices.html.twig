@@ -1,0 +1,36 @@
+{#
+    Zone des bandeaux de message (succès, alerte, erreur, info), en haut de l'écran.
+    Incluse une seule fois dans templates/base.html.twig. Mode d'emploi en haut de
+    assets/js/composants/Notice.js.
+
+    - Côté PHP : $this->addFlash('success', 'Projet enregistré.') dans un contrôleur ;
+      le bandeau s'affiche sur la page suivante.
+    - Côté JavaScript : showNotice('success', 'Modification enregistrée.').
+#}
+{% set notice_types = ['success', 'warning', 'error', 'info'] %}
+
+<div class="notices" data-notices
+     {% for type in notice_types %}data-icon-{{ type }}="{{ asset('images/icones/notice-' ~ type ~ '.svg') }}" {% endfor %}>
+    {% for type, messages in app.flashes(notice_types) %}
+        {% for message in messages %}
+            <div class="notice notice--{{ type }}" data-notice data-notice-type="{{ type }}" role="{{ type == 'error' ? 'alert' : 'status' }}">
+                <img src="{{ asset('images/icones/notice-' ~ type ~ '.svg') }}" alt="" class="notice__icon" width="20" height="20">
+                <p class="notice__text" data-notice-text>{{ message }}</p>
+                <button type="button" class="notice__close" data-notice-close aria-label="Fermer le message">
+                    <img src="{{ asset('images/icones/close.svg') }}" alt="" width="16" height="16">
+                </button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    {# Modèle utilisé par le JavaScript pour créer un bandeau #}
+    <template data-notice-template>
+        <div class="notice" data-notice>
+            <img src="" alt="" class="notice__icon" data-notice-icon width="20" height="20">
+            <p class="notice__text" data-notice-text></p>
+            <button type="button" class="notice__close" data-notice-close aria-label="Fermer le message">
+                <img src="{{ asset('images/icones/close.svg') }}" alt="" width="16" height="16">
+            </button>
+        </div>
+    </template>
+</div>

@@ -1,6 +1,8 @@
 // Point d'entrée des pages « Projets » (liste) et « Projet » (présentation).
-// Gère les formulaires d'ajout et de modification d'un projet, affichés dans la modal.
+// Gère les formulaires d'ajout et de modification d'un projet, affichés dans la modal,
+// et les sections de la présentation (page d'un projet).
 import { apiPost } from '../../fonctions/api.js';
+import { initSectionEditor } from '../../composants/SectionEditor.js';
 
 /**
  * Envoi d'un formulaire de projet (création ou modification).
@@ -50,3 +52,5 @@ function showSavedProject(form, project) {
 }
 
 document.addEventListener('submit', handleProjectFormSubmit);
+// Sections de la présentation (page d'un projet uniquement)
+document.addEventListener('DOMContentLoaded', initSectionEditor);

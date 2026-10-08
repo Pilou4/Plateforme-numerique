@@ -1,0 +1,100 @@
+{% extends 'app/base.html.twig' %}
+
+{% block title %}Éléments{% endblock %}
+
+{# JavaScript de l'app + celui de cette page (aperçu des icônes dans la modal) #}
+{% block importmap %}{{ importmap(['app', 'app-space', 'app-elements']) }}{% endblock %}
+
+{#
+    Catalogue des styles de base de l'app, pour voir le rendu de chaque élément.
+    Une section par élément ; à compléter au fur et à mesure.
+#}
+{% block app_body %}
+<main id="elements">
+    {{ include('app/_partials/_page_header.html.twig', {
+        title: 'Éléments',
+        eyebrow: 'Interface',
+        lead: 'Les éléments de base de l\'app et leur rendu.',
+    }, with_context = false) }}
+
+    <div class="elements" data-elements>
+        {# --- Bandeaux de message (composant notice) --- #}
+        <section class="elements__section" aria-labelledby="elements-notices-title">
+            <h2 class="elements__section-title" id="elements-notices-title">Bandeaux de message</h2>
+            <p class="elements__section-text">
+                JavaScript : <code class="elements__code">showNotice('success', 'Message')</code>
+                · PHP : <code class="elements__code">$this->addFlash('success', 'Message')</code>
+            </p>
+
+            <div class="elements__notices">
+                {% for type, message in notice_types %}
+                    <div class="elements__notice-example">
+                        <p class="elements__label">{{ type }}</p>
+                        {# Même HTML que _partials/_notices.html.twig, affiché dans la page (et non en haut de l'écran) #}
+                        <div class="notice notice--{{ type }}">
+                            <img src="{{ asset('images/icones/notice-' ~ type ~ '.svg') }}" alt="" class="notice__icon" width="20" height="20">
+                            <p class="notice__text">{{ message }}</p>
+                            <button type="button" class="notice__close" aria-label="Fermer le message" disabled>
+                                <img src="{{ asset('images/icones/close.svg') }}" alt="" width="16" height="16">
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        {# --- Icônes : tout le dossier public/images/icones --- #}
+        <section class="elements__section" aria-labelledby="elements-icons-title">
+            <h2 class="elements__section-title" id="elements-icons-title">
+                Icônes <span class="elements__count">{{ icons|length }}</span>
+            </h2>
+            <p class="elements__section-text">
+                Dossier <code class="elements__code">public/images/icones/</code> : une nouvelle icône apparaît ici automatiquement.
+                Clique sur une icône pour la voir en grand.
+            </p>
+
+            <ul class="elements__icons">
+                {% for icon in icons %}
+                    <li class="elements__icon-item">
+                        <button type="button" class="elements__icon" data-icon-preview data-icon-name="{{ icon }}" data-icon-url="{{ asset('images/icones/' ~ icon) }}">
+                            <span class="elements__icon-preview">
+                                <img src="{{ asset('images/icones/' ~ icon) }}" alt="" class="elements__icon-image">
+                            </span>
+                            <span class="elements__icon-name" title="{{ icon }}">{{ icon }}</span>
+                        </button>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        {# Contenu de la modal d'aperçu d'une icône, rempli par le JavaScript #}
+        <template data-icon-viewer>
+            <div class="icon-viewer">
+                <div class="icon-viewer__sizes">
+                    <figure class="icon-viewer__size">
+                        <span class="icon-viewer__stage icon-viewer__stage--large">
+                            <img src="" alt="" class="icon-viewer__image icon-viewer__image--large" data-icon-image>
+                        </span>
+                        <figcaption class="icon-viewer__caption">En grand</figcaption>
+                    </figure>
+                    <figure class="icon-viewer__size">
+                        <span class="icon-viewer__stage icon-viewer__stage--dark">
+                            <img src="" alt="" class="icon-viewer__image icon-viewer__image--large" data-icon-image>
+                        </span>
+                        <figcaption class="icon-viewer__caption">Sur fond sombre</figcaption>
+                    </figure>
+                    <figure class="icon-viewer__size">
+                        <span class="icon-viewer__stage">
+                            <img src="" alt="" class="icon-viewer__image" data-icon-image data-icon-natural>
+                        </span>
+                        <figcaption class="icon-viewer__caption" data-icon-natural-caption>Taille réelle</figcaption>
+                    </figure>
+                </div>
+                <p class="icon-viewer__path">
+                    <code class="elements__code" data-icon-path></code>
+                </p>
+            </div>
+        </template>
+    </div>
+</main>
+{% endblock %}

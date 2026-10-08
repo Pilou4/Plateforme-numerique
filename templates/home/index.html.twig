@@ -1,9 +1,121 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello HomeController!{% endblock %}
+{% block title %}Accueil{% endblock %}
+
+{#
+    Page d'accueil, version 1 : sert à valider le style.
+    Les textes sont provisoires, le vrai contenu viendra ensuite.
+#}
+{# services : envoyés par HomeController (contenu dans src/Content/ServiceCatalog.php) #}
+
+{% set steps = [
+    {title: 'Comprendre le besoin', text: 'On échange sur votre projet, vos contraintes et vos objectifs.'},
+    {title: 'Construire pas à pas', text: 'Des étapes courtes, validées avec vous, sans mauvaise surprise.'},
+    {title: 'Livrer et faire évoluer', text: 'Un code testé, documenté, et un outil qui grandit avec vous.'},
+] %}
 
 {% block body %}
 <main id="home">
-    <h1>Accueil</h1>
+    {# --- Bandeau d'accroche --- #}
+    <section class="home-hero" aria-labelledby="home-title">
+        <div class="home-hero__inner">
+            <div class="home-hero__text">
+                <p class="home-hero__eyebrow">Développement web · IA · Cybersécurité</p>
+                <h1 class="home-hero__title" id="home-title">
+                    Des outils numériques <span class="home-hero__highlight">solides</span>, pensés pour durer.
+                </h1>
+                <p class="home-hero__lead home-hero__lead--first">
+                    Conception d'applications web, d'automatisations sur mesure et de solutions basées sur
+                    l'intelligence artificielle. Chaque projet est développé avec une exigence forte en matière
+                    de sécurité, de performance et de qualité.
+                </p>
+                <p class="home-hero__lead">
+                    Automatisez les tâches répétitives, optimisez vos processus et libérez du temps pour vous
+                    concentrer sur votre activité.
+                </p>
+                <div class="home-hero__actions">
+                    <a href="#contact" class="home-button home-button--primary">Me contacter</a>
+                    <a href="#services" class="home-button home-button--secondary">Voir les services</a>
+                </div>
+            </div>
+
+            {# Illustration décorative : une fenêtre de code stylisée #}
+            <div class="home-hero__visual" aria-hidden="true">
+                <div class="home-hero__card home-hero__card--back"></div>
+                <div class="home-hero__card home-hero__card--front">
+                    <span class="home-hero__dots">
+                        <span class="home-hero__dot"></span>
+                        <span class="home-hero__dot"></span>
+                        <span class="home-hero__dot"></span>
+                    </span>
+                    <span class="home-hero__line home-hero__line--long"></span>
+                    <span class="home-hero__line home-hero__line--medium"></span>
+                    <span class="home-hero__line home-hero__line--short"></span>
+                    <span class="home-hero__line home-hero__line--long"></span>
+                    <span class="home-hero__badge">Symfony · Docker · IA</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# --- Services --- #}
+    <section class="home-section" id="services" aria-labelledby="home-services-title">
+        <div class="home-section__inner">
+            <p class="home-section__eyebrow">Services</p>
+            <h2 class="home-section__title" id="home-services-title">Ce que je peux faire pour vous</h2>
+            <ul class="home-services">
+                {% for service in services %}
+                    <li class="home-services__item">
+                        {{ include('services/_service_card.html.twig', {service: service}, with_context = false) }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+
+    {# --- Méthode --- #}
+    <section class="home-section home-section--alt" aria-labelledby="home-method-title">
+        <div class="home-section__inner">
+            <p class="home-section__eyebrow">Méthode</p>
+            <h2 class="home-section__title" id="home-method-title">Une façon de travailler simple et transparente</h2>
+            <ol class="home-steps">
+                {% for step in steps %}
+                    <li class="home-step">
+                        <span class="home-step__number">{{ '%02d'|format(loop.index) }}</span>
+                        <h3 class="home-step__title">{{ step.title }}</h3>
+                        <p class="home-step__text">{{ step.text }}</p>
+                    </li>
+                {% endfor %}
+            </ol>
+        </div>
+    </section>
+
+    {# --- Contact --- #}
+    <section class="home-section" id="contact" aria-labelledby="home-contact-title">
+        <div class="home-section__inner home-contact">
+            <div class="home-contact__intro">
+                <p class="home-section__eyebrow">Contact</p>
+                <h2 class="home-section__title" id="home-contact-title">Parlons de votre projet</h2>
+                <p class="home-contact__text">Une idée, une question ou un besoin précis ? Écrivez-moi, je vous réponds rapidement.</p>
+            </div>
+
+            {# Formulaire visuel uniquement : l'envoi sera fait avec la sous-tâche « Formulaire de contact » #}
+            <form class="home-form" novalidate>
+                <label class="home-form__field">
+                    <span class="home-form__label">Nom</span>
+                    <input type="text" name="name" class="home-form__input" placeholder="Votre nom" autocomplete="name">
+                </label>
+                <label class="home-form__field">
+                    <span class="home-form__label">E-mail</span>
+                    <input type="email" name="email" class="home-form__input" placeholder="vous@exemple.fr" autocomplete="email">
+                </label>
+                <label class="home-form__field home-form__field--full">
+                    <span class="home-form__label">Message</span>
+                    <textarea name="message" class="home-form__input home-form__input--textarea" rows="4" placeholder="Décrivez votre projet en quelques mots"></textarea>
+                </label>
+                <button type="submit" class="home-button home-button--primary home-form__submit" disabled>Envoyer le message</button>
+            </form>
+        </div>
+    </section>
 </main>
 {% endblock %}

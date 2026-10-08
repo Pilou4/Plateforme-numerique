@@ -2,21 +2,31 @@
 
 {% block title %}{{ topic.title }} · Documentation{% endblock %}
 
+{# JavaScript de l'app + celui de la documentation (tutoriel et sections : ajout, modification, suppression, ordre) #}
+{% block importmap %}{{ importmap(['app', 'app-space', 'app-documentation']) }}{% endblock %}
+
 {% block app_body %}
 <main id="documentation-topic">
-    <article class="doc-page">
-        <header class="doc-page__header">
-            <p class="doc-page__eyebrow">
-                <a href="{{ path('app_documentation') }}" class="doc-page__back">Tutoriels</a>
-            </p>
-            <h1 class="doc-page__title">{{ topic.title }}</h1>
-            {% if topic.summary %}
-                <p class="doc-page__lead">{{ topic.summary }}</p>
-            {% endif %}
-        </header>
+    {{ include('app/_partials/_page_header.html.twig', {
+        title: topic.title,
+        eyebrow: 'Tutoriels',
+        eyebrow_url: path('app_documentation'),
+        lead: topic.summary,
+        actions: [
+            {label: 'Ajouter une section', icon: 'plus.svg', modal: 'section-add', modal_title: 'Nouvelle section', modal_size: 'large'},
+            {label: 'Modifier', icon: 'edit-light.svg', modal: 'topic-edit', modal_title: 'Modifier le tutoriel', variant: 'ghost'},
+            {label: 'Supprimer', icon: 'delete-light.svg', variant: 'ghost', attributes: {
+                'data-topic-delete': path('api_documentation_topics_delete', {id: topic.id}),
+                'data-topic-title': topic.title,
+            }},
+        ],
+    }, with_context = false) }}
 
+    <article class="doc-page"
+             data-section-editor
+             data-api-url="{{ path('api_documentation_topics_section_create', {id: topic.id}) }}">
         {% if topic.sections is empty %}
-            <p class="doc-page__empty">Ce tutoriel n'a pas encore de contenu.</p>
+            <p class="doc-page__empty">Ce tutoriel n'a pas encore de contenu : ajoute une première section avec le bouton « Ajouter une section ».</p>
         {% else %}
             <nav class="doc-toc" aria-label="Sommaire">
                 <h2 class="doc-toc__title">Sommaire</h2>
@@ -29,8 +39,14 @@
                 </ol>
             </nav>
 
+            {# data-section-* : identifiant et HTML d'origine, pour les boutons et le formulaire de modification #}
             {% for section in topic.sections %}
-                <section class="doc-section" id="section-{{ section.id }}" aria-labelledby="section-{{ section.id }}-title">
+                <section class="doc-section section-editable" id="section-{{ section.id }}" aria-labelledby="section-{{ section.id }}-title"
+                         data-section
+                         data-section-id="{{ section.id }}"
+                         data-section-title="{{ section.title }}"
+                         data-section-content="{{ section.content }}">
+                    {{ include('app/_partials/_section_tools.html.twig', {section: section, is_first: loop.first, is_last: loop.last}, with_context = false) }}
                     <h2 class="doc-section__title" id="section-{{ section.id }}-title">{{ section.title }}</h2>
                     <div class="doc-content">
                         {{ section.content|sanitize_html('app.documentation_sanitizer') }}
@@ -38,6 +54,12 @@
                 </section>
             {% endfor %}
         {% endif %}
+
+        {{ include('app/_partials/_section_forms.html.twig', {}, with_context = false) }}
+
+        <template id="topic-edit">
+            {{ include('app/documentation/_topic_form.html.twig', {topic: topic}, with_context = false) }}
+        </template>
     </article>
 </main>
 {% endblock %}

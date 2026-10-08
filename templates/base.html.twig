@@ -16,6 +16,7 @@
         {% endblock %}
         {% block stylesheets %}
             <link rel="stylesheet" href="{{ asset('styles/composants/modal.css') }}">
+            <link rel="stylesheet" href="{{ asset('styles/composants/notice.css') }}">
         {% endblock %}
         {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
@@ -33,5 +34,6 @@
         {% block body %}{% endblock %}
         {% include "_partials/_footer.html.twig" %}
         {% include "_partials/_modal.html.twig" %}
+        {% include "_partials/_notices.html.twig" %}
     </body>
 </html>

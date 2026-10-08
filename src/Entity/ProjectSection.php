@@ -12,7 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 #[ORM\Entity(repositoryClass: ProjectSectionRepository::class)]
 #[ORM\HasLifecycleCallbacks]
-class ProjectSection
+class ProjectSection implements ContentSectionInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]

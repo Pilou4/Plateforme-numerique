@@ -15,8 +15,18 @@
     border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/*
+ * Le menu reste visible quand on fait défiler la page (le fond de la colonne, lui, suit la page).
+ * max-height + overflow-y : si le menu devient plus haut que l'écran, il défile tout seul.
+ */
 .app-sidebar__nav {
+    position: sticky;
+    /* Sous la nav du haut quand elle est visible (variable mise à jour par AutoHideHeader.js) */
+    top: var(--site-header-height, 0px);
+    transition: top 250ms ease;
+    max-height: calc(100vh - var(--site-header-height, 0px));
     padding: 1rem 0.75rem;
+    overflow-y: auto;
 }
 
 .app-sidebar__list {
@@ -80,6 +90,291 @@
 .app-layout__content {
     flex: 1;
     min-width: 0;
+}
+
+/* Bandeaux de message (composant notice) : dans l'app, ils commencent après le menu de gauche */
+.app-layout ~ .notices {
+    left: 240px;
+}
+
+/* ==========================================================================
+   En-tête des pages de l'app (.page-header)
+   HTML : templates/app/_partials/_page_header.html.twig
+   Bandeau sombre dans la continuité de la nav : titre, recherche, boutons, onglets.
+   ========================================================================== */
+
+.page-header {
+    padding: 1.75rem 2.5rem 1.75rem;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(120deg, #0f172a 0%, #13224b 60%, #1a2f63 100%);
+    border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+}
+
+/* Avec des onglets, ils sont collés en bas du bandeau */
+.page-header--with-tabs {
+    padding-bottom: 0;
+}
+
+.page-header__main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+}
+
+.page-header__titles {
+    min-width: 0;
+}
+
+.page-header__eyebrow {
+    margin-bottom: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #67e8f9;
+}
+
+.page-header__back {
+    color: inherit;
+    text-decoration: none;
+}
+
+.page-header__back::before {
+    content: "← ";
+}
+
+.page-header__back:hover {
+    text-decoration: underline;
+}
+
+.page-header__back:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 2px;
+}
+
+.page-header__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.page-header__logo {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    background-color: #ffffff;
+    border-radius: 10px;
+}
+
+.page-header__title {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #ffffff;
+}
+
+.page-header__count {
+    padding: 0.1rem 0.55rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #67e8f9;
+    background-color: rgba(34, 211, 238, 0.14);
+    border-radius: 99px;
+}
+
+.page-header__lead {
+    max-width: 720px;
+    margin-top: 0.5rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #a9b8d9;
+}
+
+/*
+ * Avec des onglets : l'en-tête reste collé en haut de l'écran, décalé vers le haut
+ * de sa hauteur moins celle des onglets → seuls les onglets restent visibles au défilement.
+ * --page-header-offset est calculé par assets/js/composants/StickyPageHeader.js.
+ */
+.page-header--sticky {
+    position: sticky;
+    /* + hauteur de la nav du haut quand elle est visible : les onglets restent juste en dessous */
+    top: calc(var(--page-header-offset, 0px) + var(--site-header-height, 0px));
+    z-index: 50;
+    transition: box-shadow 200ms ease, top 250ms ease;
+}
+
+.page-header--stuck {
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+}
+
+/* --- Recherche et boutons --- */
+
+/* margin-left: auto : les boutons restent à droite, même passés à la ligne */
+.page-header__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin-left: auto;
+}
+
+.page-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.page-search__icon {
+    position: absolute;
+    left: 0.75rem;
+    pointer-events: none;
+}
+
+.page-search__input {
+    width: 260px;
+    padding: 0.6rem 0.8rem 0.6rem 2.2rem;
+    font: inherit;
+    font-size: 0.92rem;
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.page-search__input::placeholder {
+    color: #94a3b8;
+}
+
+.page-search__input:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #38bdf8;
+}
+
+.page-header__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.62rem 1.1rem;
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: #ffffff;
+    text-decoration: none;
+    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(59, 130, 246, 0.35);
+    cursor: pointer;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.page-header__button:hover {
+    box-shadow: 0 8px 22px rgba(59, 130, 246, 0.45);
+    transform: translateY(-1px);
+}
+
+.page-header__button:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 2px;
+}
+
+/* Action secondaire : transparente, bordure claire */
+.page-header__button--ghost {
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(148, 163, 184, 0.35);
+    box-shadow: none;
+}
+
+.page-header__button--ghost:hover {
+    background: rgba(255, 255, 255, 0.09);
+    box-shadow: none;
+}
+
+/* --- Onglets : l'onglet actif est blanc et rejoint le contenu de la page --- */
+
+.page-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 1.4rem;
+}
+
+.page-tabs__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #a9b8d9;
+    text-decoration: none;
+    border-radius: 10px 10px 0 0;
+    transition: color 150ms ease, background-color 150ms ease;
+}
+
+.page-tabs__link:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.page-tabs__link[aria-current="page"] {
+    color: #0f172a;
+    background-color: #ffffff;
+}
+
+.page-tabs__link:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: -2px;
+}
+
+.page-tabs__count {
+    padding: 0 0.45rem;
+    font-size: 0.75rem;
+    color: #a9b8d9;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 99px;
+}
+
+.page-tabs__link[aria-current="page"] .page-tabs__count {
+    color: #1e40af;
+    background-color: #dbeafe;
+}
+
+/* Éléments masqués par la recherche : l'attribut hidden doit gagner sur leur display */
+.doc-glossary__entry[hidden],
+.doc-glossary__group[hidden],
+.doc-page__empty[hidden] {
+    display: none;
+}
+
+@media (max-width: 700px) {
+    .page-header {
+        padding: 1.25rem 1rem;
+    }
+
+    .page-header--with-tabs {
+        padding-bottom: 0;
+    }
+
+    .page-header__title {
+        font-size: 1.6rem;
+    }
+
+    .page-search,
+    .page-search__input {
+        width: 100%;
+    }
+
+    .page-header__actions {
+        width: 100%;
+    }
 }
 
 /* ==========================================================================
@@ -189,41 +484,10 @@
    ========================================================================== */
 
 #project .project {
-    max-width: 880px;
     padding: 2.5rem 2.5rem 4rem;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     line-height: 1.6;
     color: #1f2937;
-}
-
-/* --- En-tête --- */
-
-#project .project__header {
-    padding-bottom: 2rem;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-#project .project__eyebrow {
-    margin-bottom: 0.5rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #3b82f6;
-}
-
-#project .project__title {
-    margin-bottom: 0.75rem;
-    font-size: 2.25rem;
-    font-weight: 700;
-    line-height: 1.2;
-    color: #0f172a;
-}
-
-#project .project__lead {
-    max-width: 640px;
-    font-size: 1.1rem;
-    color: #4b5563;
 }
 
 /* --- Sections --- */
@@ -231,6 +495,11 @@
 #project .project__section {
     padding: 2rem 0;
     border-bottom: 1px solid #e5e7eb;
+}
+
+/* La première section suit directement l'en-tête de la page */
+#project .project__section:first-child {
+    padding-top: 0;
 }
 
 #project .project__heading {
@@ -442,10 +711,6 @@
         padding: 1.5rem 1rem 3rem;
     }
 
-    #project .project__title {
-        font-size: 1.75rem;
-    }
-
     #project .project__definition {
         grid-template-columns: 1fr;
         gap: 0.25rem;
@@ -457,55 +722,10 @@
    ========================================================================== */
 
 .doc-page {
-    max-width: 880px;
     padding: 2.5rem 2.5rem 4rem;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     line-height: 1.6;
     color: #1f2937;
-}
-
-/* --- En-tête --- */
-
-.doc-page__header {
-    margin-bottom: 2rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.doc-page__eyebrow {
-    margin-bottom: 0.5rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #3b82f6;
-}
-
-.doc-page__back {
-    color: inherit;
-    text-decoration: none;
-}
-
-.doc-page__back::before {
-    content: "← ";
-}
-
-.doc-page__back:hover {
-    text-decoration: underline;
-}
-
-.doc-page__title {
-    margin-bottom: 0.75rem;
-    font-size: 2.25rem;
-    font-weight: 700;
-    line-height: 1.2;
-    color: #0f172a;
-}
-
-.doc-page__lead {
-    max-width: 640px;
-    font-size: 1.1rem;
-    color: #4b5563;
 }
 
 .doc-page__empty {
@@ -571,6 +791,7 @@
 /* --- Sommaire d'un tutoriel --- */
 
 .doc-toc {
+    max-width: 640px;
     margin-bottom: 1rem;
     padding: 1.25rem 1.5rem;
     background-color: #f9fafb;
@@ -756,10 +977,6 @@
         padding: 1.5rem 1rem 3rem;
     }
 
-    .doc-page__title {
-        font-size: 1.75rem;
-    }
-
     .doc-glossary__entry {
         grid-template-columns: 1fr;
         gap: 0.4rem;
@@ -775,39 +992,6 @@
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     line-height: 1.5;
     color: #1f2937;
-}
-
-/* --- En-tête --- */
-
-.steps__header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.steps__eyebrow {
-    margin-bottom: 0.5rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #3b82f6;
-}
-
-.steps__title {
-    margin-bottom: 0.4rem;
-    font-size: 2.25rem;
-    font-weight: 700;
-    line-height: 1.2;
-    color: #0f172a;
-}
-
-.steps__lead {
-    color: #4b5563;
 }
 
 /* --- Boutons --- */
@@ -859,7 +1043,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
-    margin: 1.5rem 0;
+    margin-bottom: 1.5rem;
 }
 
 .steps__stat {
@@ -936,15 +1120,6 @@
 .steps__filter:focus-visible {
     outline: 2px solid #3b82f6;
     outline-offset: 2px;
-}
-
-.steps__message {
-    font-size: 0.9rem;
-    color: #166534;
-}
-
-.steps__message--error {
-    color: #b91c1c;
 }
 
 .steps__empty {
@@ -1554,10 +1729,6 @@
     .steps {
         padding: 1.5rem 1rem 3rem;
     }
-
-    .steps__title {
-        font-size: 1.75rem;
-    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1575,33 +1746,6 @@
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     line-height: 1.5;
     color: #1f2937;
-}
-
-.projects__header {
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.projects__eyebrow {
-    margin-bottom: 0.5rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #3b82f6;
-}
-
-.projects__title {
-    margin-bottom: 0.4rem;
-    font-size: 2.25rem;
-    font-weight: 700;
-    line-height: 1.2;
-    color: #0f172a;
-}
-
-.projects__lead {
-    color: #4b5563;
 }
 
 .projects__empty {
@@ -1691,63 +1835,6 @@
     outline-offset: 2px;
 }
 
-/* --- Page d'un projet : retour à la liste et lien vers les tâches --- */
-
-#project .project__nav {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-#project .project__back,
-.steps__back {
-    font-size: inherit;
-    color: inherit;
-    text-decoration: none;
-}
-
-#project .project__back {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #3b82f6;
-}
-
-#project .project__back::before,
-.steps__back::before {
-    content: "← ";
-}
-
-#project .project__back:hover,
-.steps__back:hover {
-    text-decoration: underline;
-}
-
-#project .project__nav-button {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.6rem 1.1rem;
-    font-size: 0.92rem;
-    font-weight: 600;
-    color: #ffffff;
-    text-decoration: none;
-    background-color: #3b82f6;
-    border-radius: 8px;
-    transition: background-color 200ms ease;
-}
-
-#project .project__nav-button:hover {
-    background-color: #2563eb;
-}
-
-#project .project__nav-button:focus-visible,
-#project .project__back:focus-visible {
-    outline: 2px solid #1e40af;
-    outline-offset: 2px;
-}
-
 #project .project__empty {
     padding: 2rem 0;
     color: #6b7280;
@@ -1757,24 +1844,11 @@
     .projects {
         padding: 1.5rem 1rem 3rem;
     }
-
-    .projects__title {
-        font-size: 1.75rem;
-    }
 }
 
 /* ==========================================================================
    Projets : bouton et formulaire d'ajout, logos
    ========================================================================== */
-
-/* L'en-tête de la liste accueille le bouton « Ajouter un projet » à droite */
-.projects__header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1rem;
-}
 
 .projects__button {
     display: inline-flex;
@@ -1850,29 +1924,6 @@
     color: #1e40af;
     background: linear-gradient(135deg, #eff6ff, #dbeafe);
     border-color: #dbeafe;
-}
-
-/* --- Logo sur la page d'un projet --- */
-
-#project .project__identity {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 0.75rem;
-}
-
-#project .project__identity .project__title {
-    margin-bottom: 0;
-}
-
-#project .project__logo {
-    flex-shrink: 0;
-    width: 64px;
-    height: 64px;
-    object-fit: contain;
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
 }
 
 /* --- Formulaire d'ajout d'un projet (dans la modal) --- */
@@ -1980,32 +2031,6 @@
     outline-offset: 2px;
 }
 
-/* Page d'un projet : « Modifier le projet » et « Voir les tâches » côte à côte */
-#project .project__nav-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-}
-
-/* Le bouton « Modifier » est un <button> : on retire le style du navigateur */
-#project .project__nav-button {
-    font-family: inherit;
-    line-height: inherit;
-    border: 1px solid transparent;
-    cursor: pointer;
-}
-
-/* Variante claire, pour l'action secondaire */
-#project .project__nav-button--ghost {
-    color: #1f2937;
-    background-color: #ffffff;
-    border-color: #d1d5db;
-}
-
-#project .project__nav-button--ghost:hover {
-    background-color: #f3f4f6;
-}
-
 /* Formulaire de modification : logo actuel + case « Supprimer le logo » */
 .project-form__current-logo {
     display: flex;
@@ -2038,4 +2063,643 @@
     height: 16px;
     margin: 0;
     accent-color: #b91c1c;
+}
+
+/* ==========================================================================
+   Page Fichiers du projet (#project-files)
+   ========================================================================== */
+
+.files {
+    padding: 2.5rem 2.5rem 4rem;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+    color: #1f2937;
+}
+
+/* --- Blocs Images et Documents --- */
+
+/* Espace entre le bloc Images et le bloc Documents */
+.files__block + .files__block {
+    margin-top: 2rem;
+}
+
+.files__block-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.files__count {
+    padding: 0.1rem 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1e40af;
+    background-color: #eff6ff;
+    border-radius: 99px;
+}
+
+.files__empty {
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+    border: 1px dashed #d1d5db;
+    border-radius: 12px;
+}
+
+.files__empty[hidden] {
+    display: none;
+}
+
+.files__meta {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+/* --- Boutons d'action (télécharger, modifier, supprimer…) --- */
+
+.files__actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.25rem;
+}
+
+.files__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.files__action:hover {
+    background-color: #f3f4f6;
+    border-color: #e5e7eb;
+}
+
+.files__action--delete:hover {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+}
+
+.files__action:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 1px;
+}
+
+.files__action[hidden] {
+    display: none;
+}
+
+/* --- Galerie d'images --- */
+
+.files-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    list-style: none;
+}
+
+.files-gallery__item {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    transition: box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.files-gallery__item:hover {
+    border-color: #bfdbfe;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+/* Vignette : fond quadrillé léger pour voir les images transparentes */
+.files-gallery__preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 160px;
+    padding: 0.75rem;
+    background-color: #f8fafc;
+    background-image:
+        linear-gradient(45deg, #eef2f7 25%, transparent 25%, transparent 75%, #eef2f7 75%),
+        linear-gradient(45deg, #eef2f7 25%, transparent 25%, transparent 75%, #eef2f7 75%);
+    background-position: 0 0, 8px 8px;
+    background-size: 16px 16px;
+    border: none;
+    border-bottom: 1px solid #e5e7eb;
+    cursor: zoom-in;
+}
+
+.files-gallery__preview:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: -2px;
+}
+
+.files-gallery__image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.files-gallery__body {
+    flex: 1;
+    padding: 0.75rem 0.9rem 0.25rem;
+}
+
+.files-gallery__title {
+    overflow: hidden;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #0f172a;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.files-gallery__item .files__actions {
+    padding: 0.25rem 0.6rem 0.6rem;
+}
+
+/* --- Liste de documents --- */
+
+.files-list {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    list-style: none;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.files-list__item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color 150ms ease;
+}
+
+.files-list__item:last-child {
+    border-bottom: none;
+}
+
+.files-list__item:hover {
+    background-color: #f8fafc;
+}
+
+.files-list__icon {
+    flex-shrink: 0;
+}
+
+.files-list__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.files-list__title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.files-list__description {
+    font-size: 0.88rem;
+    color: #4b5563;
+}
+
+.files-list__description[hidden] {
+    display: none;
+}
+
+/* --- Aperçu d'un fichier (dans la modal) --- */
+
+.file-viewer__content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: #6b7280;
+    text-align: center;
+}
+
+.file-viewer__image {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+}
+
+.file-viewer__frame {
+    width: 100%;
+    height: 70vh;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.file-viewer__text {
+    width: 100%;
+    max-height: 70vh;
+    padding: 1rem 1.25rem;
+    overflow: auto;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #0f172a;
+    text-align: left;
+    white-space: pre-wrap;
+    background-color: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.file-viewer__description {
+    margin-top: 1rem;
+    color: #4b5563;
+}
+
+.file-viewer__description[hidden] {
+    display: none;
+}
+
+/* Le lien « Télécharger » a le style des boutons projets */
+.file-viewer .projects__button {
+    text-decoration: none;
+}
+
+/* Champ texte sur plusieurs lignes des formulaires de projet */
+.project-form__input--textarea {
+    resize: vertical;
+}
+
+@media (max-width: 700px) {
+    .files {
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    .files-list__item {
+        flex-wrap: wrap;
+    }
+}
+
+/* ==========================================================================
+   Page Éléments (#elements) : catalogue des styles de l'app
+   ========================================================================== */
+
+.elements {
+    padding: 2.5rem 2.5rem 4rem;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+    color: #1f2937;
+}
+
+/* --- Sections --- */
+
+.elements__section {
+    margin-top: 2.5rem;
+}
+
+.elements__section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.4rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.elements__section-text {
+    margin-bottom: 1.25rem;
+    font-size: 0.92rem;
+    color: #6b7280;
+}
+
+.elements__code {
+    padding: 0.1rem 0.4rem;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    color: #0f172a;
+    background-color: #f1f5f9;
+    border-radius: 4px;
+}
+
+.elements__count {
+    padding: 0.1rem 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1e40af;
+    background-color: #eff6ff;
+    border-radius: 99px;
+}
+
+.elements__label {
+    margin-bottom: 0.35rem;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+/* --- Bandeaux de message --- */
+
+.elements__notices {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 900px;
+}
+
+/* --- Icônes --- */
+
+.elements__icons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
+    list-style: none;
+}
+
+/* Chaque icône est un bouton : un clic l'ouvre en grand dans la modal */
+.elements__icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.9rem 0.6rem;
+    font: inherit;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    cursor: zoom-in;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.elements__icon:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.elements__icon:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Fond quadrillé : les icônes blanches ou transparentes restent visibles */
+.elements__icon-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    background-color: #f8fafc;
+    background-image:
+        linear-gradient(45deg, #e2e8f0 25%, transparent 25%, transparent 75%, #e2e8f0 75%),
+        linear-gradient(45deg, #e2e8f0 25%, transparent 25%, transparent 75%, #e2e8f0 75%);
+    background-position: 0 0, 6px 6px;
+    background-size: 12px 12px;
+    border-radius: 8px;
+}
+
+.elements__icon-image {
+    max-width: 44px;
+    max-height: 44px;
+}
+
+.elements__icon-name {
+    max-width: 100%;
+    overflow: hidden;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.75rem;
+    color: #374151;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+    .elements {
+        padding: 1.5rem 1rem 3rem;
+    }
+}
+
+/* ==========================================================================
+   Glossaire : ajout, modification et suppression des termes
+   ========================================================================== */
+
+/* Ligne modifiable : une colonne de plus pour les boutons */
+.doc-glossary__entry--editable {
+    grid-template-columns: 200px 1fr auto;
+}
+
+.doc-glossary__actions {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 150ms ease;
+}
+
+/* Boutons visibles au survol de la ligne, ou quand l'un d'eux a le focus (clavier) */
+.doc-glossary__entry--editable:hover .doc-glossary__actions,
+.doc-glossary__actions:focus-within {
+    opacity: 1;
+}
+
+.doc-glossary__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.doc-glossary__action:hover {
+    background-color: #f3f4f6;
+    border-color: #e5e7eb;
+}
+
+.doc-glossary__action--delete:hover {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+}
+
+.doc-glossary__action:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 1px;
+}
+
+/* Champ de la définition : HTML saisi, en police à chasse fixe */
+.doc-glossary__textarea {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+    .doc-glossary__entry--editable {
+        grid-template-columns: 1fr;
+    }
+
+    /* Pas de survol sur mobile : boutons toujours visibles */
+    .doc-glossary__actions {
+        opacity: 1;
+    }
+}
+
+/* --- Aperçu d'une icône (dans la modal) --- */
+
+.icon-viewer__sizes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.icon-viewer__size {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Fond quadrillé, comme dans la liste */
+.icon-viewer__stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1;
+    background-color: #f8fafc;
+    background-image:
+        linear-gradient(45deg, #e2e8f0 25%, transparent 25%, transparent 75%, #e2e8f0 75%),
+        linear-gradient(45deg, #e2e8f0 25%, transparent 25%, transparent 75%, #e2e8f0 75%);
+    background-position: 0 0, 8px 8px;
+    background-size: 16px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+/* Même fond que l'en-tête des pages : pour voir les icônes claires */
+.icon-viewer__stage--dark {
+    background: linear-gradient(120deg, #0f172a 0%, #13224b 60%, #1a2f63 100%);
+    border-color: #0f172a;
+}
+
+.icon-viewer__image--large {
+    width: 70%;
+    height: 70%;
+    object-fit: contain;
+}
+
+.icon-viewer__caption {
+    font-size: 0.8rem;
+    color: #6b7280;
+    text-align: center;
+}
+
+.icon-viewer__path {
+    margin-top: 1.25rem;
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .icon-viewer__sizes {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+   Sections modifiables (tutoriel, présentation d'un projet)
+   HTML : templates/app/_partials/_section_tools.html.twig — JS : assets/js/composants/SectionEditor.js
+   ========================================================================== */
+
+/* flow-root : la section contient entièrement ses boutons (placés en float) */
+.section-editable {
+    display: flow-root;
+    scroll-margin-top: 1rem;
+}
+
+/* Boutons à droite du titre, visibles au survol de la section ou au clavier.
+   position + z-index : le titre (en position relative) ne doit pas passer par-dessus. */
+.section-tools {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    float: right;
+    gap: 0.2rem;
+    margin-left: 1rem;
+    opacity: 0;
+    transition: opacity 150ms ease;
+}
+
+.section-editable:hover .section-tools,
+.section-tools:focus-within {
+    opacity: 1;
+}
+
+.section-tools__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.section-tools__button:hover {
+    background-color: #f3f4f6;
+}
+
+.section-tools__button--delete:hover {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+}
+
+/* Première section : pas de « monter » ; dernière : pas de « descendre » */
+.section-tools__button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.section-tools__button:disabled:hover {
+    background-color: #ffffff;
+}
+
+.section-tools__button:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 1px;
+}
+
+/* Contenu HTML saisi : police à chasse fixe, plus lisible pour les balises */
+.section-form__textarea {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+    /* Pas de survol sur mobile : boutons toujours visibles */
+    .section-tools {
+        opacity: 1;
+    }
 }

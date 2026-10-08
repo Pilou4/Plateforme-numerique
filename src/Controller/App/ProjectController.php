@@ -3,9 +3,12 @@
 namespace App\Controller\App;
 
 use App\Entity\Project;
+use App\Entity\ProjectFile;
 use App\Enum\ProjectStepPriority;
 use App\Enum\ProjectStepStatus;
 use App\Repository\ProjectRepository;
+use App\Service\ProjectFileManager;
+use App\Service\ProjectFilePreview;
 use App\Service\ProjectStorage;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -19,8 +22,11 @@ use Symfony\Component\Routing\Attribute\Route;
  * /app/projet/{slug}           → présentation d'un projet
  * /app/projet/{slug}/taches    → tâches d'un projet
  * /app/projet/{slug}/logo      → image du logo (lue dans le stockage privé)
+ * /app/projet/{slug}/fichiers  → images et documents d'un projet
+ * /app/projet/{slug}/fichiers/{id}              → un fichier, affiché dans le navigateur
+ * /app/projet/{slug}/fichiers/{id}/telecharger  → un fichier, téléchargé
  */
-#[Route('/app/projet', requirements: ['slug' => '[a-z0-9-]+'])]
+#[Route('/app/projet', requirements: ['slug' => '[a-z0-9-]+', 'id' => '\d+'])]
 final class ProjectController extends AbstractController
 {
     #[Route('', name: 'app_project')]
@@ -49,6 +55,41 @@ final class ProjectController extends AbstractController
             'statuses' => ProjectStepStatus::cases(),
             'priorities' => ProjectStepPriority::cases(),
         ]);
+    }
+
+    #[Route('/{slug:project}/fichiers', name: 'app_project_files')]
+    public function files(Project $project): Response
+    {
+        // Les fichiers sont chargés par le JavaScript via l'API
+        return $this->render('app/project/files.html.twig', [
+            'project' => $project,
+        ]);
+    }
+
+    #[Route('/{slug:project}/fichiers/{id:file}', name: 'app_project_file')]
+    public function showFile(Project $project, ProjectFile $file, ProjectFileManager $projectFileManager, ProjectFilePreview $projectFilePreview): BinaryFileResponse
+    {
+        $this->assertFileIsAvailable($project, $file, $projectFileManager);
+
+        return $projectFilePreview->createResponse($file, download: false);
+    }
+
+    #[Route('/{slug:project}/fichiers/{id:file}/telecharger', name: 'app_project_file_download')]
+    public function downloadFile(Project $project, ProjectFile $file, ProjectFileManager $projectFileManager, ProjectFilePreview $projectFilePreview): BinaryFileResponse
+    {
+        $this->assertFileIsAvailable($project, $file, $projectFileManager);
+
+        return $projectFilePreview->createResponse($file, download: true);
+    }
+
+    /**
+     * Le fichier doit appartenir au projet de l'URL et exister sur le disque.
+     */
+    private function assertFileIsAvailable(Project $project, ProjectFile $file, ProjectFileManager $projectFileManager): void
+    {
+        if ($file->getProject() !== $project || !$projectFileManager->exists($file)) {
+            throw new NotFoundHttpException('Ce fichier est introuvable.');
+        }
     }
 
     /**

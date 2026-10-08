@@ -7,26 +7,19 @@
 
 {% block app_body %}
 <main id="project-steps">
+    {{ include('app/project/_project_header.html.twig', {
+        project: project,
+        active: 'steps',
+        lead: 'Clique sur une cellule pour la modifier, et fais glisser une ligne pour changer l\'ordre.',
+        search: 'Rechercher une tâche…',
+        actions: [
+            {label: 'Ajouter une tâche', icon: 'plus.svg', modal: 'project-step-add', modal_title: 'Nouvelle tâche', modal_size: 'medium'},
+        ],
+    }, with_context = false) }}
+
     <div class="steps"
          data-project-steps
          data-api-url="{{ path('api_project_steps_list', {slug: project.slug}) }}">
-
-        <header class="steps__header">
-            <div class="steps__intro">
-                <p class="steps__eyebrow">
-                    <a href="{{ path('app_project_show', {slug: project.slug}) }}" class="steps__back">{{ project.name }}</a>
-                </p>
-                <h1 class="steps__title">Tâches du projet</h1>
-                <p class="steps__lead">Clique sur une cellule pour la modifier, et fais glisser une ligne pour changer l'ordre.</p>
-            </div>
-            <button type="button" class="steps__button"
-                    data-modal-open="project-step-add"
-                    data-modal-title="Nouvelle tâche"
-                    data-modal-size="medium">
-                <img src="{{ asset('images/icones/plus.svg') }}" alt="" width="16" height="16">
-                <span>Ajouter une tâche</span>
-            </button>
-        </header>
 
         <section class="steps__stats" aria-label="Avancement du projet">
             <div class="steps__stat">
@@ -57,7 +50,6 @@
                     <button type="button" class="steps__filter" data-filter="{{ status.value }}" aria-pressed="false">{{ status.pluralLabel }}</button>
                 {% endfor %}
             </div>
-            <p class="steps__message" data-message role="status" aria-live="polite"></p>
         </div>
 
         <div class="steps-table__wrapper">

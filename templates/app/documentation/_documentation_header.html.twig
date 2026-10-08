@@ -1,0 +1,16 @@
+{#
+    En-tête des pages Tutoriels et Glossaire : mêmes onglets, seul l'onglet actif change.
+    active : 'tutorials' ou 'glossary'
+#}
+{{ include('app/_partials/_page_header.html.twig', {
+    title: title,
+    eyebrow: 'Documentation',
+    lead: lead ?? null,
+    search: search ?? null,
+    actions: actions ?? [],
+    tabs_label: 'Sections de la documentation',
+    tabs: [
+        {label: 'Tutoriels', url: path('app_documentation'), count: topic_count, active: active == 'tutorials'},
+        {label: 'Glossaire', url: path('app_documentation_glossary'), count: term_count, active: active == 'glossary'},
+    ],
+}, with_context = false) }}

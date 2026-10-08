@@ -1,0 +1,147 @@
+/* ==========================================================================
+   Composant : bandeaux de message (site public et app)
+   HTML : templates/_partials/_notices.html.twig — JS : assets/js/composants/Notice.js
+   ========================================================================== */
+
+/*
+ * Zone collée sous la nav du haut, sur toute la largeur.
+ * --notices-top est mis à jour par Notice.js : bas du header, ou 0 quand on a défilé.
+ * Dans l'app, la zone commence après le menu de gauche (voir app.css).
+ */
+.notices {
+    position: fixed;
+    top: var(--notices-top, 72px);
+    right: 0;
+    left: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    pointer-events: none;
+}
+
+.notice {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1.5rem 0.7rem 2.5rem;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    border-bottom: 1px solid transparent;
+    border-left: 4px solid transparent;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.1);
+    pointer-events: auto;
+    animation: notice-enter 250ms ease-out;
+}
+
+.notice__icon {
+    flex-shrink: 0;
+}
+
+.notice__text {
+    flex: 1;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.notice__close {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 150ms ease, background-color 150ms ease;
+}
+
+.notice__close:hover {
+    background-color: rgba(15, 23, 42, 0.06);
+    opacity: 1;
+}
+
+.notice__close:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 1px;
+}
+
+/* --- Les 4 types : fond clair, texte et bordure foncés --- */
+
+.notice--success {
+    color: #14532d;
+    background-color: #dcfce7;
+    border-bottom-color: #86efac;
+    border-left-color: #16a34a;
+}
+
+.notice--warning {
+    color: #7c2d12;
+    background-color: #ffedd5;
+    border-bottom-color: #fdba74;
+    border-left-color: #ea580c;
+}
+
+.notice--error {
+    color: #7f1d1d;
+    background-color: #fee2e2;
+    border-bottom-color: #fca5a5;
+    border-left-color: #dc2626;
+}
+
+.notice--info {
+    color: #1e3a8a;
+    background-color: #dbeafe;
+    border-bottom-color: #93c5fd;
+    border-left-color: #2563eb;
+}
+
+/* --- Animations --- */
+
+/* Même message répété : petit flash au lieu d'un nouveau bandeau */
+.notice--repeat {
+    animation: notice-repeat 400ms ease;
+}
+
+.notice--leaving {
+    animation: notice-leave 250ms ease-in forwards;
+}
+
+/* Le bandeau glisse depuis la nav */
+@keyframes notice-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-100%);
+    }
+}
+
+@keyframes notice-repeat {
+    50% {
+        filter: brightness(0.94);
+    }
+}
+
+@keyframes notice-leave {
+    to {
+        opacity: 0;
+        transform: translateY(-100%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .notice,
+    .notice--repeat,
+    .notice--leaving {
+        animation: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .notice {
+        padding-right: 0.75rem;
+        padding-left: 1rem;
+    }
+}

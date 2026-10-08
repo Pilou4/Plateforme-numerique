@@ -7,7 +7,11 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+/**
+ * Un tutoriel de la documentation, découpé en sections.
+ */
 #[ORM\Entity(repositoryClass: DocumentationTopicRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class DocumentationTopic
 {
     #[ORM\Id]
@@ -44,6 +48,12 @@ class DocumentationTopic
     {
         $this->sections = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
+    }
+
+    #[ORM\PreUpdate]
+    public function refreshUpdatedAt(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int

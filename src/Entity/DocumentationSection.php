@@ -6,8 +6,12 @@ use App\Repository\DocumentationSectionRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
+/**
+ * Une partie d'un tutoriel de la documentation. Le contenu est du HTML, nettoyé à l'affichage.
+ */
 #[ORM\Entity(repositoryClass: DocumentationSectionRepository::class)]
-class DocumentationSection
+#[ORM\HasLifecycleCallbacks]
+class DocumentationSection implements ContentSectionInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -36,6 +40,12 @@ class DocumentationSection
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+    }
+
+    #[ORM\PreUpdate]
+    public function refreshUpdatedAt(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int

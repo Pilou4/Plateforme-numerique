@@ -1,7 +1,11 @@
 {% extends 'app/base.html.twig' %}
 
-{% block title %}Hello DashboardController!{% endblock %}
+{% block title %}Tableau de bord{% endblock %}
 
 {% block app_body %}
-<h1>Tableau de bord</h1>
+<main id="dashboard">
+    {{ include('app/_partials/_page_header.html.twig', {
+        title: 'Tableau de bord',
+    }, with_context = false) }}
+</main>
 {% endblock %}

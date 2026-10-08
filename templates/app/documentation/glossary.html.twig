@@ -2,15 +2,24 @@
 
 {% block title %}Glossaire · Documentation{% endblock %}
 
+{# JavaScript de l'app + celui de cette page (ajout, modification, suppression) #}
+{% block importmap %}{{ importmap(['app', 'app-space', 'app-glossary']) }}{% endblock %}
+
 {% block app_body %}
 <main id="glossary">
-    <article class="doc-page">
-        <header class="doc-page__header">
-            <p class="doc-page__eyebrow">Documentation</p>
-            <h1 class="doc-page__title">Glossaire</h1>
-            <p class="doc-page__lead">Les définitions des termes techniques rencontrés dans le projet.</p>
-        </header>
+    {{ include('app/documentation/_documentation_header.html.twig', {
+        title: 'Glossaire',
+        active: 'glossary',
+        lead: 'Les définitions des termes techniques rencontrés dans le projet.',
+        search: 'Rechercher un terme…',
+        actions: [
+            {label: 'Ajouter un terme', icon: 'plus.svg', modal: 'glossary-term-add', modal_title: 'Nouveau terme', modal_size: 'medium'},
+        ],
+        topic_count: topic_count,
+        term_count: terms|length,
+    }, with_context = false) }}
 
+    <article class="doc-page" data-glossary data-search-scope data-api-url="{{ path('api_glossary_terms_create') }}">
         {% if terms is empty %}
             <p class="doc-page__empty">Aucune définition pour l'instant.</p>
         {% else %}
@@ -24,22 +33,46 @@
 
             <div class="doc-glossary">
                 {% for key, letter_terms in groups %}
-                    <section class="doc-glossary__group" aria-labelledby="glossary-letter-{{ loop.index }}">
+                    <section class="doc-glossary__group" data-search-group aria-labelledby="glossary-letter-{{ loop.index }}">
                         <h2 class="doc-glossary__letter" id="glossary-letter-{{ loop.index }}">{{ key|slice(1) }}</h2>
                         <dl class="doc-glossary__list">
                             {% for term in letter_terms %}
-                                <div class="doc-glossary__entry">
+                                {# data-definition : le HTML d'origine, pour pré-remplir le formulaire de modification #}
+                                <div class="doc-glossary__entry doc-glossary__entry--editable"
+                                     data-glossary-term
+                                     data-search-item
+                                     data-search-text="{{ term.term }} {{ term.definition|striptags }}"
+                                     data-id="{{ term.id }}"
+                                     data-term="{{ term.term }}"
+                                     data-definition="{{ term.definition }}">
                                     <dt class="doc-glossary__term">{{ term.term }}</dt>
                                     <dd class="doc-glossary__definition doc-content">
                                         {{ term.definition|sanitize_html('app.documentation_sanitizer') }}
+                                    </dd>
+                                    <dd class="doc-glossary__actions">
+                                        <button type="button" class="doc-glossary__action" data-action="edit" aria-label="Modifier « {{ term.term }} »" title="Modifier">
+                                            <img src="{{ asset('images/icones/edit.svg') }}" alt="" width="16" height="16">
+                                        </button>
+                                        <button type="button" class="doc-glossary__action doc-glossary__action--delete" data-action="delete" aria-label="Supprimer « {{ term.term }} »" title="Supprimer">
+                                            <img src="{{ asset('images/icones/delete.svg') }}" alt="" width="16" height="16">
+                                        </button>
                                     </dd>
                                 </div>
                             {% endfor %}
                         </dl>
                     </section>
                 {% endfor %}
+                <p class="doc-page__empty" data-search-empty hidden>Aucun terme ne correspond à la recherche.</p>
             </div>
         {% endif %}
+
+        {# Formulaires (affichés dans la modal) #}
+        <template id="glossary-term-add">
+            {{ include('app/documentation/_glossary_term_form.html.twig', {mode: 'add'}) }}
+        </template>
+        <template id="glossary-term-edit">
+            {{ include('app/documentation/_glossary_term_form.html.twig', {mode: 'edit'}) }}
+        </template>
     </article>
 </main>
 {% endblock %}

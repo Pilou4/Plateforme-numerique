@@ -1,0 +1,91 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ service.title }} · Services{% endblock %}
+
+{% block metaTag %}
+    <meta name="description" content="{{ service.summary }}">
+{% endblock %}
+
+{# Contenu : src/Content/ServiceCatalog.php #}
+{% block body %}
+<main id="service">
+    {# --- Présentation du service --- #}
+    <section class="home-hero" aria-labelledby="service-title">
+        <div class="home-hero__inner service-page__hero">
+            <div class="home-hero__text">
+                <p class="home-hero__eyebrow">
+                    <a href="{{ path('services') }}" class="service-page__back">Services</a>
+                </p>
+                <div class="service-page__heading">
+                    <span class="service-page__icon">
+                        <img src="{{ asset('images/icones/' ~ service.icon) }}" alt="" width="34" height="34">
+                    </span>
+                    <h1 class="home-hero__title service-page__title" id="service-title">{{ service.title }}</h1>
+                </div>
+                <p class="home-hero__lead">{{ service.lead }}</p>
+                <div class="home-hero__actions">
+                    <a href="{{ path('home') }}#contact" class="home-button home-button--primary">Me contacter</a>
+                    <a href="{{ path('services') }}" class="home-button home-button--secondary">Tous les services</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# --- Ce qui est proposé --- #}
+    <section class="home-section" aria-labelledby="service-offers-title">
+        <div class="home-section__inner">
+            <p class="home-section__eyebrow">Ce que je propose</p>
+            <h2 class="home-section__title" id="service-offers-title">Concrètement</h2>
+            <ul class="service-offers">
+                {% for offer in service.offers %}
+                    <li class="service-offer">
+                        <h3 class="service-offer__title">{{ offer[0] }}</h3>
+                        <p class="service-offer__text">{{ offer[1] }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+
+    {# --- Exemples et technologies --- #}
+    <section class="home-section home-section--alt" aria-label="Exemples et technologies">
+        <div class="home-section__inner service-details">
+            <div class="service-details__block">
+                <p class="home-section__eyebrow">Exemples</p>
+                <h2 class="service-details__title">Quelques réalisations possibles</h2>
+                <ul class="service-examples">
+                    {% for example in service.examples %}
+                        <li class="service-examples__item">{{ example }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="service-details__block">
+                <p class="home-section__eyebrow">Technologies</p>
+                <h2 class="service-details__title">Les outils utilisés</h2>
+                <ul class="service-tags">
+                    {% for technology in service.technologies %}
+                        <li class="service-tags__item">{{ technology }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    {# --- Les autres services --- #}
+    <section class="home-section" aria-labelledby="service-others-title">
+        <div class="home-section__inner">
+            <p class="home-section__eyebrow">Services</p>
+            <h2 class="home-section__title" id="service-others-title">Les autres services</h2>
+            <ul class="home-services">
+                {% for other in other_services %}
+                    <li class="home-services__item">
+                        {{ include('services/_service_card.html.twig', {service: other}, with_context = false) }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+
+    {{ include('services/_contact_band.html.twig', {}, with_context = false) }}
+</main>
+{% endblock %}

@@ -13,6 +13,12 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
  * Les fichiers sont rangés hors du dossier public, dans var/storage/projets/{id du projet}/ :
  * ils ne sont accessibles que par un contrôleur, qui pourra vérifier les droits d'accès.
  * Le dossier porte l'id du projet (et non le slug) pour ne pas bouger si le projet est renommé.
+ *
+ * Organisation :
+ *   var/storage/projets/{id}/              → le logo
+ *   var/storage/projets/{id}/images/       → les images du projet
+ *   var/storage/projets/{id}/documents/    → les documents du projet
+ * Le paramètre $folder (null, 'images' ou 'documents') choisit le sous-dossier.
  */
 final class ProjectStorage
 {
@@ -26,33 +32,36 @@ final class ProjectStorage
     /**
      * Enregistre le fichier sous un nom unique et renvoie ce nom.
      */
-    public function store(Project $project, UploadedFile $file, string $prefix): string
+    public function store(Project $project, UploadedFile $file, string $prefix, ?string $folder = null): string
     {
         $extension = $file->guessExtension() ?? 'bin';
         $fileName = \sprintf('%s-%s.%s', $prefix, bin2hex(random_bytes(8)), $extension);
 
-        $file->move($this->getProjectDirectory($project), $fileName);
+        $file->move($this->getDirectory($project, $folder), $fileName);
 
         return $fileName;
     }
 
-    public function getPath(Project $project, string $fileName): string
+    public function getPath(Project $project, string $fileName, ?string $folder = null): string
     {
-        return $this->getProjectDirectory($project).'/'.basename($fileName);
+        return $this->getDirectory($project, $folder).'/'.basename($fileName);
     }
 
-    public function exists(Project $project, string $fileName): bool
+    public function exists(Project $project, string $fileName, ?string $folder = null): bool
     {
-        return $this->filesystem->exists($this->getPath($project, $fileName));
+        return $this->filesystem->exists($this->getPath($project, $fileName, $folder));
     }
 
-    public function delete(Project $project, string $fileName): void
+    public function delete(Project $project, string $fileName, ?string $folder = null): void
     {
-        $this->filesystem->remove($this->getPath($project, $fileName));
+        $this->filesystem->remove($this->getPath($project, $fileName, $folder));
     }
 
-    private function getProjectDirectory(Project $project): string
+    private function getDirectory(Project $project, ?string $folder): string
     {
-        return $this->storageDirectory.'/'.$project->getId();
+        $directory = $this->storageDirectory.'/'.$project->getId();
+
+        // basename() : le sous-dossier ne peut pas remonter dans l'arborescence (../)
+        return null === $folder ? $directory : $directory.'/'.basename($folder);
     }
 }

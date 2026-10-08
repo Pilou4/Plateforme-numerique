@@ -7,6 +7,9 @@
                 <a href="{{ path('home') }}" class="main-nav__link" {% if current_route == 'home' %}aria-current="page"{% endif %}>Accueil</a>
             </li>
             <li class="main-nav__item">
+                <a href="{{ path('services') }}" class="main-nav__link" {% if current_route starts with 'services' %}aria-current="page"{% endif %}>Services</a>
+            </li>
+            <li class="main-nav__item">
                 <a href="{{ path('app_dashboard') }}" class="main-nav__link" {% if current_route starts with 'app_' %}aria-current="page"{% endif %}>App</a>
             </li>
         </ul>

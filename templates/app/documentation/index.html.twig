@@ -2,17 +2,23 @@
 
 {% block title %}Documentation{% endblock %}
 
+{# JavaScript de l'app + celui de la documentation (ajout d'un tutoriel) #}
+{% block importmap %}{{ importmap(['app', 'app-space', 'app-documentation']) }}{% endblock %}
+
 {% block app_body %}
 <main id="documentation">
-    <article class="doc-page">
-        <header class="doc-page__header">
-            <p class="doc-page__eyebrow">Documentation</p>
-            <h1 class="doc-page__title">Tutoriels</h1>
-            <p class="doc-page__lead">
-                Les notions et outils appris au fil du projet, expliqués étape par étape.
-            </p>
-        </header>
+    {{ include('app/documentation/_documentation_header.html.twig', {
+        title: 'Tutoriels',
+        active: 'tutorials',
+        lead: 'Les notions et outils appris au fil du projet, expliqués étape par étape.',
+        actions: [
+            {label: 'Ajouter un tutoriel', icon: 'plus.svg', modal: 'topic-add', modal_title: 'Nouveau tutoriel', modal_size: 'medium'},
+        ],
+        topic_count: topics|length,
+        term_count: term_count,
+    }, with_context = false) }}
 
+    <article class="doc-page">
         {% if topics is empty %}
             <p class="doc-page__empty">Aucun tutoriel pour l'instant.</p>
         {% else %}
@@ -32,6 +38,11 @@
                 {% endfor %}
             </ul>
         {% endif %}
+
+        {# Formulaire d'ajout d'un tutoriel (modal) #}
+        <template id="topic-add">
+            {{ include('app/documentation/_topic_form.html.twig', {}, with_context = false) }}
+        </template>
     </article>
 </main>
 {% endblock %}

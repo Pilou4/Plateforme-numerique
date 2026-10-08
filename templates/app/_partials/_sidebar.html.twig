@@ -46,6 +46,16 @@
                     </ul>
                 </div>
             </li>
+
+            {# Lien principal sans sous-menu : Éléments (catalogue des styles de l'app) #}
+            <li class="app-sidebar__item">
+                <div class="app-sidebar__row">
+                    <a href="{{ path('app_elements') }}" class="app-sidebar__link" {% if current_route == 'app_elements' %}aria-current="page"{% endif %}>
+                        <img src="{{ asset('images/icones/elements.svg') }}" alt="" class="app-sidebar__icon" width="18" height="18">
+                        <span>Éléments</span>
+                    </a>
+                </div>
+            </li>
         </ul>
     </nav>
 </aside>

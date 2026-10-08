@@ -7,22 +7,16 @@
 
 {% block app_body %}
 <main id="projects">
-    <div class="projects">
-        <header class="projects__header">
-            <div class="projects__intro">
-                <p class="projects__eyebrow">Projets</p>
-                <h1 class="projects__title">Mes projets</h1>
-                <p class="projects__lead">Chaque projet a sa présentation et sa liste de tâches.</p>
-            </div>
-            <button type="button" class="projects__button"
-                    data-modal-open="project-create"
-                    data-modal-title="Nouveau projet"
-                    data-modal-size="medium">
-                <img src="{{ asset('images/icones/plus.svg') }}" alt="" width="16" height="16">
-                <span>Ajouter un projet</span>
-            </button>
-        </header>
+    {{ include('app/_partials/_page_header.html.twig', {
+        title: 'Mes projets',
+        count: projects|length,
+        lead: 'Chaque projet a sa présentation, ses tâches et ses fichiers.',
+        actions: [
+            {label: 'Ajouter un projet', icon: 'plus.svg', modal: 'project-create', modal_title: 'Nouveau projet', modal_size: 'medium'},
+        ],
+    }, with_context = false) }}
 
+    <div class="projects">
         {% if projects is empty %}
             <p class="projects__empty">Aucun projet pour l'instant.</p>
         {% else %}

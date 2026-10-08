@@ -12,20 +12,24 @@ use Symfony\Component\Routing\Attribute\Route;
 final class DocumentationController extends AbstractController
 {
     #[Route('/app/documentation', name: 'app_documentation')]
-    public function index(DocumentationTopicRepository $topicRepository): Response
+    public function index(DocumentationTopicRepository $topicRepository, GlossaryTermRepository $glossaryTermRepository): Response
     {
         return $this->render('app/documentation/index.html.twig', [
             'topics' => $topicRepository->findBy([], ['position' => 'ASC']),
+            // Compteur de l'onglet « Glossaire »
+            'term_count' => $glossaryTermRepository->count(),
         ]);
     }
 
     // Priorité 1 : cette route est testée avant /app/documentation/{slug},
     // sinon "glossaire" serait pris pour le slug d'un tutoriel.
     #[Route('/app/documentation/glossaire', name: 'app_documentation_glossary', priority: 1)]
-    public function glossary(GlossaryTermRepository $glossaryTermRepository): Response
+    public function glossary(GlossaryTermRepository $glossaryTermRepository, DocumentationTopicRepository $topicRepository): Response
     {
         return $this->render('app/documentation/glossary.html.twig', [
             'terms' => $glossaryTermRepository->findBy([], ['term' => 'ASC']),
+            // Compteur de l'onglet « Tutoriels »
+            'topic_count' => $topicRepository->count(),
         ]);
     }
 

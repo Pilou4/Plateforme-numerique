@@ -5,13 +5,14 @@
     padding: 0;
 }
 
+/*
+ * overflow-x: clip coupe ce qui dépasse en largeur (pas de défilement horizontal)
+ * sans transformer html/body en zone de défilement : position sticky reste possible
+ * (menu de gauche de l'app). Avec overflow: hidden, sticky ne fonctionnait pas.
+ */
 html, body {
     scroll-behavior: smooth;
-    overflow-x: hidden;
-}
-
-body {
-    overflow: hidden;
+    overflow-x: clip;
 }
 
 /* ==========================================================================
@@ -24,6 +25,27 @@ body {
     border-bottom: 1px solid rgba(96, 165, 250, 0.18);
     box-shadow: 0 6px 24px rgba(10, 17, 40, 0.45);
     overflow: hidden;
+}
+
+/*
+ * Nav collée en haut de l'écran (site et app), cachée quand on descend,
+ * visible dès qu'on remonte (classes ajoutées par assets/js/composants/AutoHideHeader.js).
+ */
+.site-header--auto-hide {
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    transition: transform 250ms ease;
+}
+
+.site-header--hidden {
+    transform: translateY(-100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .site-header--auto-hide {
+        transition: none;
+    }
 }
 
 /* Halo bleu décoratif dans le fond */
@@ -96,3 +118,731 @@ body {
     }
 }
 
+
+/* ==========================================================================
+   Page d'accueil (#home) — style « sombre tech », dans la continuité du header
+   ========================================================================== */
+
+/* Accueil et pages Services : même style sombre */
+#home,
+#services,
+#service {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #e2e8f0;
+    background-color: #0b1430;
+}
+
+/* Les champs de formulaire n'héritent pas de la police par défaut */
+#home .home-form__input,
+#home .home-button,
+#services .home-button,
+#service .home-button {
+    font-family: inherit;
+}
+
+/* --- Boutons --- */
+
+.home-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.85rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 200ms ease, box-shadow 200ms ease, background-color 200ms ease;
+}
+
+.home-button:hover {
+    transform: translateY(-2px);
+}
+
+.home-button:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 3px;
+}
+
+.home-button--primary {
+    color: #ffffff;
+    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.45);
+}
+
+.home-button--secondary {
+    color: #e2e8f0;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: rgba(148, 163, 184, 0.35);
+}
+
+.home-button--secondary:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Bouton pas encore actif (ex. : envoi du formulaire de contact) */
+.home-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* --- Bandeau d'accroche --- */
+
+.home-hero {
+    position: relative;
+    overflow: hidden;
+    color: #ffffff;
+    background:
+        radial-gradient(ellipse at 75% 20%, rgba(59, 130, 246, 0.35), transparent 55%),
+        radial-gradient(ellipse at 10% 90%, rgba(6, 182, 212, 0.18), transparent 50%),
+        linear-gradient(180deg, #0f1e45 0%, #0b1430 100%);
+}
+
+.home-hero__inner {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: center;
+    gap: 3rem;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 6rem 2rem 6.5rem;
+}
+
+.home-hero__eyebrow {
+    margin-bottom: 1.2rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #67e8f9;
+}
+
+.home-hero__title {
+    margin-bottom: 1.4rem;
+    font-size: clamp(2.2rem, 4.5vw, 3.6rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+}
+
+/* Mot mis en avant : dégradé bleu → cyan dans le texte */
+.home-hero__highlight {
+    color: transparent;
+    background: linear-gradient(135deg, #60a5fa 0%, #22d3ee 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.home-hero__lead {
+    max-width: 560px;
+    margin-bottom: 2.2rem;
+    font-size: 1.1rem;
+    line-height: 1.65;
+    color: #a9b8d9;
+}
+
+/* Deux paragraphes sous le titre : le premier est rapproché du second */
+.home-hero__lead--first {
+    margin-bottom: 1rem;
+}
+
+.home-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+}
+
+/* Illustration : deux cartes superposées, façon fenêtre de code */
+.home-hero__visual {
+    position: relative;
+    height: 320px;
+}
+
+.home-hero__card {
+    position: absolute;
+    border-radius: 18px;
+}
+
+.home-hero__card--back {
+    inset: 30px 0 0 60px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(6, 182, 212, 0.25));
+    transform: rotate(6deg);
+}
+
+.home-hero__card--front {
+    inset: 0 50px 40px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding: 1.6rem;
+    background-color: rgba(15, 30, 69, 0.85);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+}
+
+.home-hero__dots {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 0.6rem;
+}
+
+.home-hero__dot {
+    width: 10px;
+    height: 10px;
+    background-color: #334a80;
+    border-radius: 50%;
+}
+
+.home-hero__line {
+    height: 10px;
+    background-color: rgba(148, 163, 184, 0.25);
+    border-radius: 99px;
+}
+
+.home-hero__line--long {
+    width: 85%;
+}
+
+.home-hero__line--medium {
+    width: 60%;
+    background: linear-gradient(90deg, #3b82f6, #22d3ee);
+}
+
+.home-hero__line--short {
+    width: 40%;
+}
+
+.home-hero__badge {
+    align-self: flex-start;
+    margin-top: auto;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #67e8f9;
+    background-color: rgba(34, 211, 238, 0.12);
+    border-radius: 99px;
+}
+
+/* --- Sections --- */
+
+.home-section {
+    background-color: #0b1430;
+}
+
+.home-section--alt {
+    background-color: #0e1a3d;
+}
+
+.home-section__inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 5.5rem 2rem;
+}
+
+.home-section__eyebrow {
+    margin-bottom: 0.7rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #38bdf8;
+}
+
+.home-section__title {
+    max-width: 640px;
+    margin-bottom: 2.8rem;
+    font-size: clamp(1.7rem, 3vw, 2.4rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: #f8fafc;
+}
+
+/* --- Services --- */
+
+.home-services {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    list-style: none;
+}
+
+/* Carte d'un service : un lien vers sa page */
+.home-service {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.8rem;
+    text-decoration: none;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 16px;
+    transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.home-service:hover {
+    border-color: #38bdf8;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    transform: translateY(-4px);
+}
+
+.home-service__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    margin-bottom: 1.2rem;
+    background-color: rgba(34, 211, 238, 0.1);
+    border-radius: 12px;
+}
+
+.home-service__title {
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.home-service__text {
+    flex: 1;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #9fb0d0;
+}
+
+.home-service__more {
+    margin-top: 1.2rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #38bdf8;
+}
+
+.home-service__more::after {
+    content: " →";
+    transition: margin-left 200ms ease;
+}
+
+.home-service:hover .home-service__more::after {
+    margin-left: 0.25rem;
+}
+
+.home-service:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 3px;
+}
+
+/* --- Méthode --- */
+
+.home-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    list-style: none;
+}
+
+.home-step {
+    padding-top: 1.4rem;
+    border-top: 2px solid rgba(56, 189, 248, 0.35);
+}
+
+.home-step__number {
+    display: block;
+    margin-bottom: 0.8rem;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #38bdf8;
+}
+
+.home-step__title {
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.home-step__text {
+    line-height: 1.6;
+    color: #9fb0d0;
+}
+
+/* --- Contact --- */
+
+.home-contact {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    align-items: start;
+    gap: 3rem;
+}
+
+.home-contact .home-section__title {
+    margin-bottom: 1rem;
+}
+
+.home-contact__text {
+    line-height: 1.65;
+    color: #9fb0d0;
+}
+
+.home-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 2rem;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 16px;
+}
+
+.home-form__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.home-form__field--full {
+    grid-column: 1 / -1;
+}
+
+.home-form__label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.home-form__input {
+    padding: 0.75rem 0.9rem;
+    font-size: 0.95rem;
+    color: #f8fafc;
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 10px;
+    transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.home-form__input::placeholder {
+    color: #6b7ca3;
+}
+
+.home-form__input:focus {
+    border-color: #38bdf8;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
+.home-form__input--textarea {
+    resize: vertical;
+}
+
+.home-form__submit {
+    grid-column: 1 / -1;
+    justify-self: start;
+}
+
+/* --- Tablette et mobile --- */
+
+@media (max-width: 900px) {
+    .home-hero__inner {
+        grid-template-columns: 1fr;
+        padding: 4rem 1.5rem 4.5rem;
+    }
+
+    /* L'illustration est décorative : on la retire pour laisser la place au texte */
+    .home-hero__visual {
+        display: none;
+    }
+
+    .home-services {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .home-steps,
+    .home-contact {
+        grid-template-columns: 1fr;
+    }
+
+    .home-section__inner {
+        padding: 4rem 1.5rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .home-services,
+    .home-form {
+        grid-template-columns: 1fr;
+    }
+
+    .home-form {
+        padding: 1.4rem;
+    }
+}
+
+/* ==========================================================================
+   Pied de page (commun à tout le site)
+   ========================================================================== */
+
+.site-footer {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #a9b8d9;
+    background: linear-gradient(180deg, #0a1128 0%, #070d20 100%);
+    border-top: 1px solid rgba(96, 165, 250, 0.18);
+}
+
+.site-footer__inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 2.5rem;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 3.5rem 2rem 2.5rem;
+}
+
+.site-footer__brand {
+    max-width: 360px;
+}
+
+.site-footer__name {
+    margin-bottom: 0.6rem;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.site-footer__tagline {
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+.site-footer__nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4rem;
+}
+
+.site-footer__heading {
+    margin-bottom: 0.9rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #38bdf8;
+}
+
+.site-footer__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    list-style: none;
+}
+
+.site-footer__link {
+    font-size: 0.92rem;
+    color: #a9b8d9;
+    text-decoration: none;
+    transition: color 200ms ease;
+}
+
+.site-footer__link:hover {
+    color: #ffffff;
+}
+
+.site-footer__link:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
+.site-footer__bottom {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 1.2rem 2rem 1.6rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.site-footer__copyright {
+    font-size: 0.82rem;
+    color: #7c8db3;
+}
+
+@media (max-width: 600px) {
+    .site-footer__inner {
+        padding: 2.5rem 1.5rem 2rem;
+    }
+
+    .site-footer__nav {
+        gap: 2.5rem;
+    }
+
+    .site-footer__bottom {
+        padding: 1rem 1.5rem 1.4rem;
+    }
+}
+
+/* ==========================================================================
+   Pages Services (#services : liste, #service : un service)
+   Reprennent les classes de l'accueil (home-hero, home-section, home-service…)
+   ========================================================================== */
+
+/* Bandeau du haut plus compact que sur l'accueil (pas d'illustration) */
+.service-page__hero {
+    grid-template-columns: 1fr;
+    padding-top: 4.5rem;
+    padding-bottom: 4.5rem;
+}
+
+.service-page__hero .home-hero__lead {
+    max-width: 720px;
+}
+
+.service-page__back {
+    color: inherit;
+    text-decoration: none;
+}
+
+.service-page__back::before {
+    content: "← ";
+}
+
+.service-page__back:hover {
+    text-decoration: underline;
+}
+
+.service-page__heading {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.4rem;
+}
+
+.service-page__icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    background-color: rgba(34, 211, 238, 0.1);
+    border: 1px solid rgba(34, 211, 238, 0.25);
+    border-radius: 16px;
+}
+
+.service-page__title {
+    margin-bottom: 0;
+}
+
+/* --- Ce qui est proposé --- */
+
+.service-offers {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+    list-style: none;
+}
+
+.service-offer {
+    padding: 1.6rem 1.8rem;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-left: 3px solid #38bdf8;
+    border-radius: 12px;
+}
+
+.service-offer__title {
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.service-offer__text {
+    line-height: 1.6;
+    color: #9fb0d0;
+}
+
+/* --- Exemples et technologies --- */
+
+.service-details {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 3rem;
+}
+
+.service-details__title {
+    margin-bottom: 1.4rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #f8fafc;
+}
+
+.service-examples {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    list-style: none;
+}
+
+.service-examples__item {
+    position: relative;
+    padding-left: 1.8rem;
+    line-height: 1.6;
+    color: #cbd5e1;
+}
+
+/* Coche devant chaque exemple */
+.service-examples__item::before {
+    content: "✓";
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-weight: 800;
+    color: #22d3ee;
+}
+
+.service-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    list-style: none;
+}
+
+.service-tags__item {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #67e8f9;
+    background-color: rgba(34, 211, 238, 0.1);
+    border: 1px solid rgba(34, 211, 238, 0.2);
+    border-radius: 99px;
+}
+
+/* --- Bandeau de contact --- */
+
+.service-cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.service-cta__title {
+    margin-bottom: 0.5rem;
+}
+
+.service-cta__lead {
+    color: #9fb0d0;
+}
+
+@media (max-width: 900px) {
+    .service-page__hero {
+        padding-top: 3.5rem;
+        padding-bottom: 3.5rem;
+    }
+
+    .service-offers,
+    .service-details {
+        grid-template-columns: 1fr;
+    }
+}

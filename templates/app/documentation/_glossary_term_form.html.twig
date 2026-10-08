@@ -1,0 +1,25 @@
+{#
+    Formulaire d'un terme du glossaire, affiché dans la modal.
+    mode = 'add' (ajout) ou 'edit' (modification : le JavaScript pré-remplit les champs).
+#}
+<form class="project-form" data-glossary-form="{{ mode }}" novalidate>
+    <div class="project-form__fields">
+        <label class="project-form__field">
+            <span class="project-form__label">Terme</span>
+            <input type="text" name="term" class="project-form__input" maxlength="255" required autofocus>
+        </label>
+        <label class="project-form__field">
+            <span class="project-form__label">Définition</span>
+            <textarea name="definition" class="project-form__input project-form__input--textarea doc-glossary__textarea" rows="8" required></textarea>
+            <span class="project-form__help">
+                HTML accepté : &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;code&gt;, &lt;a href="…"&gt;, &lt;ul&gt;/&lt;li&gt;…
+                Les balises dangereuses (scripts…) sont retirées à l'affichage.
+            </span>
+        </label>
+    </div>
+    <p class="project-form__error" data-form-error role="alert"></p>
+    <div class="modal__actions">
+        <button type="button" class="projects__button projects__button--ghost" data-modal-close>Annuler</button>
+        <button type="submit" class="projects__button">{{ mode == 'add' ? 'Ajouter' : 'Enregistrer' }}</button>
+    </div>
+</form>

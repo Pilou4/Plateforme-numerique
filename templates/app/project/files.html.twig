@@ -1,0 +1,163 @@
+{% extends 'app/base.html.twig' %}
+
+{% block title %}Fichiers · {{ project.name }}{% endblock %}
+
+{# JavaScript de l'app + celui de cette page uniquement #}
+{% block importmap %}{{ importmap(['app', 'app-space', 'app-project-files']) }}{% endblock %}
+
+{# Extensions proposées dans la fenêtre de choix du fichier (le serveur vérifie le vrai type) #}
+{% set accepted_files = '.png,.jpg,.jpeg,.webp,.svg,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md' %}
+
+{% block app_body %}
+<main id="project-files">
+    {{ include('app/project/_project_header.html.twig', {
+        project: project,
+        active: 'files',
+        lead: 'Maquettes, schémas, documents et images utiles au projet.',
+        search: 'Rechercher un fichier…',
+        actions: [
+            {label: 'Ajouter un fichier', icon: 'plus.svg', modal: 'project-file-add', modal_title: 'Ajouter un fichier', modal_size: 'medium'},
+        ],
+    }, with_context = false) }}
+
+    <div class="files"
+         data-project-files
+         data-api-url="{{ path('api_project_files_list', {slug: project.slug}) }}"
+         data-icon-pdf="{{ asset('images/icones/file-pdf.svg') }}"
+         data-icon-word="{{ asset('images/icones/file-word.svg') }}"
+         data-icon-excel="{{ asset('images/icones/file-excel.svg') }}"
+         data-icon-powerpoint="{{ asset('images/icones/file-powerpoint.svg') }}"
+         data-icon-text="{{ asset('images/icones/file-text.svg') }}"
+         data-icon-other="{{ asset('images/icones/file-other.svg') }}">
+
+        {# --- Images : galerie --- #}
+        <section class="files__block" aria-labelledby="files-images-title">
+            <h2 class="files__block-title" id="files-images-title">
+                Images <span class="files__count" data-count="image">0</span>
+            </h2>
+            <ul class="files-gallery" data-list="image"></ul>
+            <p class="files__empty" data-empty="image">Chargement…</p>
+        </section>
+
+        {# --- Documents : liste --- #}
+        <section class="files__block" aria-labelledby="files-documents-title">
+            <h2 class="files__block-title" id="files-documents-title">
+                Documents <span class="files__count" data-count="document">0</span>
+            </h2>
+            <ul class="files-list" data-list="document"></ul>
+            <p class="files__empty" data-empty="document">Chargement…</p>
+        </section>
+
+        {# Modèle d'une image de la galerie, rempli par le JavaScript #}
+        <template data-template="image">
+            <li class="files-gallery__item" data-file>
+                <button type="button" class="files-gallery__preview" data-action="view">
+                    <img src="" alt="" class="files-gallery__image" data-field="thumbnail" loading="lazy">
+                </button>
+                <div class="files-gallery__body">
+                    <p class="files-gallery__title" data-field="title"></p>
+                    <p class="files__meta" data-field="meta"></p>
+                </div>
+                <div class="files__actions">
+                    <a href="" class="files__action" data-action="download" download>
+                        <img src="{{ asset('images/icones/download.svg') }}" alt="" width="16" height="16">
+                    </a>
+                    <button type="button" class="files__action" data-action="edit">
+                        <img src="{{ asset('images/icones/edit.svg') }}" alt="" width="16" height="16">
+                    </button>
+                    <button type="button" class="files__action files__action--delete" data-action="delete">
+                        <img src="{{ asset('images/icones/delete.svg') }}" alt="" width="16" height="16">
+                    </button>
+                </div>
+            </li>
+        </template>
+
+        {# Modèle d'un document de la liste #}
+        <template data-template="document">
+            <li class="files-list__item" data-file>
+                <img src="" alt="" class="files-list__icon" data-field="icon" width="40" height="40">
+                <div class="files-list__body">
+                    <p class="files-list__title" data-field="title"></p>
+                    <p class="files-list__description" data-field="description"></p>
+                    <p class="files__meta" data-field="meta"></p>
+                </div>
+                <div class="files__actions">
+                    <button type="button" class="files__action" data-action="view">
+                        <img src="{{ asset('images/icones/view.svg') }}" alt="" width="16" height="16">
+                    </button>
+                    <a href="" class="files__action" data-action="download" download>
+                        <img src="{{ asset('images/icones/download.svg') }}" alt="" width="16" height="16">
+                    </a>
+                    <button type="button" class="files__action" data-action="edit">
+                        <img src="{{ asset('images/icones/edit.svg') }}" alt="" width="16" height="16">
+                    </button>
+                    <button type="button" class="files__action files__action--delete" data-action="delete">
+                        <img src="{{ asset('images/icones/delete.svg') }}" alt="" width="16" height="16">
+                    </button>
+                </div>
+            </li>
+        </template>
+
+        {# Contenu de la modal d'aperçu : l'image, le PDF ou le texte est ajouté par le JavaScript #}
+        <template data-template="viewer">
+            <div class="file-viewer">
+                <div class="file-viewer__content" data-viewer-content></div>
+                <p class="file-viewer__description" data-viewer-description></p>
+                <div class="modal__actions">
+                    <a href="" class="projects__button projects__button--ghost" data-viewer-download download>
+                        <img src="{{ asset('images/icones/download.svg') }}" alt="" width="16" height="16">
+                        <span>Télécharger</span>
+                    </a>
+                </div>
+            </div>
+        </template>
+
+        {# Formulaire d'ajout (modal) #}
+        <template id="project-file-add">
+            <form class="project-form" data-file-add-form novalidate>
+                <div class="project-form__fields">
+                    <div class="project-form__field">
+                        <label class="project-form__label" for="project-file-input">Fichier</label>
+                        <input type="file" id="project-file-input" name="file" class="project-form__input project-form__input--file" accept="{{ accepted_files }}" required>
+                        <span class="project-form__help">Images (PNG, JPG, WebP, SVG), PDF, Word, Excel, PowerPoint, texte ou Markdown · 10 Mo maximum.</span>
+                    </div>
+                    <label class="project-form__field">
+                        <span class="project-form__label">Titre <span class="project-form__optional">(facultatif)</span></span>
+                        <input type="text" name="title" class="project-form__input" maxlength="255" placeholder="Par défaut : le nom du fichier">
+                    </label>
+                    <label class="project-form__field">
+                        <span class="project-form__label">Description <span class="project-form__optional">(facultatif)</span></span>
+                        <textarea name="description" class="project-form__input project-form__input--textarea" rows="3" maxlength="2000"></textarea>
+                    </label>
+                </div>
+                <p class="project-form__error" data-form-error role="alert"></p>
+                <div class="modal__actions">
+                    <button type="button" class="projects__button projects__button--ghost" data-modal-close>Annuler</button>
+                    <button type="submit" class="projects__button">Ajouter</button>
+                </div>
+            </form>
+        </template>
+
+        {# Formulaire de modification (modal) : titre et description seulement #}
+        <template id="project-file-edit">
+            <form class="project-form" data-file-edit-form novalidate>
+                <div class="project-form__fields">
+                    <label class="project-form__field">
+                        <span class="project-form__label">Titre</span>
+                        <input type="text" name="title" class="project-form__input" maxlength="255" required autofocus>
+                    </label>
+                    <label class="project-form__field">
+                        <span class="project-form__label">Description <span class="project-form__optional">(facultatif)</span></span>
+                        <textarea name="description" class="project-form__input project-form__input--textarea" rows="3" maxlength="2000"></textarea>
+                    </label>
+                </div>
+                <p class="project-form__error" data-form-error role="alert"></p>
+                <div class="modal__actions">
+                    <button type="button" class="projects__button projects__button--ghost" data-modal-close>Annuler</button>
+                    <button type="submit" class="projects__button">Enregistrer</button>
+                </div>
+            </form>
+        </template>
+    </div>
+</main>
+{% endblock %}

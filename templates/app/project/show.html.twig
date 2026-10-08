@@ -7,40 +7,35 @@
 
 {% block app_body %}
 <main id="project">
-    <article class="project">
-        <nav class="project__nav" aria-label="Navigation du projet">
-            <a href="{{ path('app_project') }}" class="project__back">Tous les projets</a>
-            <div class="project__nav-actions">
-                <button type="button" class="project__nav-button project__nav-button--ghost"
-                        data-modal-open="project-edit"
-                        data-modal-title="Modifier le projet">
-                    Modifier le projet
-                </button>
-                <a href="{{ path('app_project_steps', {slug: project.slug}) }}" class="project__nav-button">Voir les tâches</a>
-            </div>
-        </nav>
+    {{ include('app/project/_project_header.html.twig', {
+        project: project,
+        active: 'show',
+        lead: project.summary,
+        actions: [
+            {label: 'Ajouter une section', icon: 'plus.svg', modal: 'section-add', modal_title: 'Nouvelle section', modal_size: 'large'},
+            {label: 'Modifier le projet', icon: 'edit-light.svg', modal: 'project-edit', modal_title: 'Modifier le projet', variant: 'ghost'},
+        ],
+    }, with_context = false) }}
 
-        <header class="project__header">
-            <p class="project__eyebrow">Présentation</p>
-            <div class="project__identity">
-                {% if project.logo %}
-                    <img src="{{ path('app_project_logo', {slug: project.slug}) }}" alt="Logo de {{ project.name }}" class="project__logo" width="64" height="64">
-                {% endif %}
-                <h1 class="project__title">{{ project.name }}</h1>
-            </div>
-            {% if project.summary %}
-                <p class="project__lead">{{ project.summary }}</p>
-            {% endif %}
-        </header>
-
+    <article class="project"
+             data-section-editor
+             data-api-url="{{ path('api_project_sections_create', {slug: project.slug}) }}">
+        {# data-section-* : identifiant et HTML d'origine, pour les boutons et le formulaire de modification #}
         {% for section in project.sections %}
-            <section class="project__section" aria-labelledby="project-section-{{ section.id }}">
+            <section class="project__section section-editable" id="section-{{ section.id }}" aria-labelledby="project-section-{{ section.id }}"
+                     data-section
+                     data-section-id="{{ section.id }}"
+                     data-section-title="{{ section.title }}"
+                     data-section-content="{{ section.content }}">
+                {{ include('app/_partials/_section_tools.html.twig', {section: section, is_first: loop.first, is_last: loop.last}, with_context = false) }}
                 <h2 class="project__heading" id="project-section-{{ section.id }}">{{ section.title }}</h2>
                 {{ section.content|sanitize_html('app.project_sanitizer') }}
             </section>
         {% else %}
-            <p class="project__empty">Ce projet n'a pas encore de présentation.</p>
+            <p class="project__empty">Ce projet n'a pas encore de présentation : ajoute une première section avec le bouton « Ajouter une section ».</p>
         {% endfor %}
+
+        {{ include('app/_partials/_section_forms.html.twig', {}, with_context = false) }}
     </article>
 
     {# Formulaire de modification, affiché dans la modal (bouton « Modifier le projet ») #}

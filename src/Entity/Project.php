@@ -8,7 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Un projet : sa présentation (découpée en sections) et ses tâches.
+ * Un projet : sa présentation (découpée en sections), ses tâches et ses fichiers.
  */
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -60,11 +60,23 @@ class Project
     #[ORM\OrderBy(['position' => 'ASC'])]
     private Collection $steps;
 
+    /**
+     * Images et documents du projet.
+     * Supprimer le projet supprime ces lignes, mais pas les fichiers sur le disque :
+     * ProjectFileManager s'en charge quand on supprime un fichier.
+     *
+     * @var Collection<int, ProjectFile>
+     */
+    #[ORM\OneToMany(targetEntity: ProjectFile::class, mappedBy: 'project', cascade: ['remove'], orphanRemoval: true)]
+    #[ORM\OrderBy(['createdAt' => 'DESC'])]
+    private Collection $files;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->sections = new ArrayCollection();
         $this->steps = new ArrayCollection();
+        $this->files = new ArrayCollection();
     }
 
     #[ORM\PreUpdate]
@@ -185,6 +197,33 @@ class Project
     {
         if ($this->steps->removeElement($step) && $step->getProject() === $this) {
             $step->setProject(null);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ProjectFile>
+     */
+    public function getFiles(): Collection
+    {
+        return $this->files;
+    }
+
+    public function addFile(ProjectFile $file): static
+    {
+        if (!$this->files->contains($file)) {
+            $this->files->add($file);
+            $file->setProject($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFile(ProjectFile $file): static
+    {
+        if ($this->files->removeElement($file) && $file->getProject() === $this) {
+            $file->setProject(null);
         }
 
         return $this;
