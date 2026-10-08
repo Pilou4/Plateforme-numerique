@@ -1,41 +1,41 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Accueil{% endblock %}
+{% block title %}Plateforme Numérique · IA, automatisation et outils numériques{% endblock %}
 
-{#
-    Page d'accueil, version 1 : sert à valider le style.
-    Les textes sont provisoires, le vrai contenu viendra ensuite.
-#}
-{# services : envoyés par HomeController (contenu dans src/Content/ServiceCatalog.php) #}
+{% block metaTag %}
+    <meta name="description" content="Développement, automatisation, intelligence artificielle, cybersécurité et formation pour les particuliers, indépendants et PME.">
+{% endblock %}
 
-{% set steps = [
-    {title: 'Comprendre le besoin', text: 'On échange sur votre projet, vos contraintes et vos objectifs.'},
-    {title: 'Construire pas à pas', text: 'Des étapes courtes, validées avec vous, sans mauvaise surprise.'},
-    {title: 'Livrer et faire évoluer', text: 'Un code testé, documenté, et un outil qui grandit avec vous.'},
+{% block url %}
+    <link rel="canonical" href="{{ url('home') }}">
+{% endblock %}
+
+{# contact_form : formulaire de contact, envoyé par HomeController #}
+
+{% set domains = [
+    {title: 'Intelligence artificielle', icon: 'service-ia.svg', text: 'Assistants IA, automatisation, analyse documentaire et intégration de solutions d\'intelligence artificielle.'},
+    {title: 'Développement', icon: 'service-web.svg', text: 'Applications web, outils métier et solutions numériques sur mesure.'},
+    {title: 'Cybersécurité', icon: 'service-securite.svg', text: 'Sensibilisation, bonnes pratiques et accompagnement pour améliorer la sécurité numérique.'},
+    {title: 'Formation', icon: 'service-formation.svg', text: 'Formation et accompagnement pour particuliers, étudiants et professionnels.'},
 ] %}
+
+{% set technologies = ['Symfony 8', 'PHP', 'Docker', 'MySQL', 'Git', 'PHPUnit', 'JavaScript', 'IA'] %}
 
 {% block body %}
 <main id="home">
-    {# --- Bandeau d'accroche --- #}
+    {# --- 1. Accroche --- #}
     <section class="home-hero" aria-labelledby="home-title">
         <div class="home-hero__inner">
             <div class="home-hero__text">
-                <p class="home-hero__eyebrow">Développement web · IA · Cybersécurité</p>
                 <h1 class="home-hero__title" id="home-title">
-                    Des outils numériques <span class="home-hero__highlight">solides</span>, pensés pour durer.
+                    Transformez votre activité grâce à l'IA, l'automatisation et des outils numériques adaptés.
                 </h1>
-                <p class="home-hero__lead home-hero__lead--first">
-                    Conception d'applications web, d'automatisations sur mesure et de solutions basées sur
-                    l'intelligence artificielle. Chaque projet est développé avec une exigence forte en matière
-                    de sécurité, de performance et de qualité.
-                </p>
                 <p class="home-hero__lead">
-                    Automatisez les tâches répétitives, optimisez vos processus et libérez du temps pour vous
-                    concentrer sur votre activité.
+                    Développement, automatisation, cybersécurité et formation pour les particuliers, indépendants et PME.
                 </p>
                 <div class="home-hero__actions">
-                    <a href="#contact" class="home-button home-button--primary">Me contacter</a>
-                    <a href="#services" class="home-button home-button--secondary">Voir les services</a>
+                    <a href="#projet" class="home-button home-button--primary">Découvrir le projet</a>
+                    <a href="#contact" class="home-button home-button--secondary">Me contacter</a>
                 </div>
             </div>
 
@@ -58,63 +58,95 @@
         </div>
     </section>
 
-    {# --- Services --- #}
-    <section class="home-section" id="services" aria-labelledby="home-services-title">
+    {# --- 2. Pourquoi ce projet ? --- #}
+    <section class="home-section" id="projet" aria-labelledby="home-why-title">
         <div class="home-section__inner">
-            <p class="home-section__eyebrow">Services</p>
-            <h2 class="home-section__title" id="home-services-title">Ce que je peux faire pour vous</h2>
-            <ul class="home-services">
-                {% for service in services %}
-                    <li class="home-services__item">
-                        {{ include('services/_service_card.html.twig', {service: service}, with_context = false) }}
+            <h2 class="home-section__title" id="home-why-title">Pourquoi ce projet existe ?</h2>
+            <div class="home-text">
+                <p class="home-text__paragraph">L'intelligence artificielle et les outils numériques évoluent rapidement.</p>
+                <p class="home-text__paragraph">Pourtant, beaucoup de particuliers et d'entreprises ne savent pas toujours comment les utiliser concrètement.</p>
+                <p class="home-text__paragraph home-text__paragraph--strong">L'objectif de Plateforme Numérique est de proposer des solutions simples, utiles et adaptées aux besoins réels.</p>
+                <p class="home-text__paragraph">
+                    Les prestations sont réalisées majoritairement à distance, ce qui permet d'accompagner efficacement
+                    des particuliers et des entreprises sur l'ensemble du territoire. Lorsque cela est pertinent,
+                    des interventions sur site peuvent également être organisées.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    {# --- 3. Domaines d'expertise --- #}
+    <section class="home-section home-section--alt" id="domaines" aria-labelledby="home-domains-title">
+        <div class="home-section__inner">
+            <h2 class="home-section__title" id="home-domains-title">Domaines d'expertise</h2>
+            <ul class="home-domains">
+                {% for domain in domains %}
+                    <li class="home-domain">
+                        <span class="home-domain__icon">
+                            <img src="{{ asset('images/icones/' ~ domain.icon) }}" alt="" width="24" height="24">
+                        </span>
+                        <h3 class="home-domain__title">{{ domain.title }}</h3>
+                        <p class="home-domain__text">{{ domain.text }}</p>
                     </li>
                 {% endfor %}
             </ul>
         </div>
     </section>
 
-    {# --- Méthode --- #}
-    <section class="home-section home-section--alt" aria-labelledby="home-method-title">
-        <div class="home-section__inner">
-            <p class="home-section__eyebrow">Méthode</p>
-            <h2 class="home-section__title" id="home-method-title">Une façon de travailler simple et transparente</h2>
-            <ol class="home-steps">
-                {% for step in steps %}
-                    <li class="home-step">
-                        <span class="home-step__number">{{ '%02d'|format(loop.index) }}</span>
-                        <h3 class="home-step__title">{{ step.title }}</h3>
-                        <p class="home-step__text">{{ step.text }}</p>
-                    </li>
-                {% endfor %}
-            </ol>
+    {# --- 4. La plateforme en construction --- #}
+    <section class="home-section" id="plateforme" aria-labelledby="home-platform-title">
+        <div class="home-section__inner home-platform">
+            <div class="home-platform__text">
+                <h2 class="home-section__title" id="home-platform-title">Une plateforme qui évolue avec les compétences</h2>
+                <div class="home-text">
+                    <p class="home-text__paragraph">Cette plateforme est également un laboratoire technique et un support d'apprentissage.</p>
+                    <p class="home-text__paragraph">Chaque nouvelle compétence acquise peut être expérimentée et intégrée au projet lorsque cela est pertinent.</p>
+                </div>
+                {# Pointe vers le suivi du projet dans l'app #}
+                <a href="{{ path('app_project_show', {slug: 'plateforme-numerique'}) }}" class="home-button home-button--secondary home-platform__button">Suivre l'avancement</a>
+            </div>
+            <div class="home-platform__technologies">
+                <h3 class="home-platform__subtitle">Technologies utilisées</h3>
+                <ul class="service-tags">
+                    {% for technology in technologies %}
+                        <li class="service-tags__item">{{ technology }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
     </section>
 
-    {# --- Contact --- #}
+    {# --- 5. Vision --- #}
+    <section class="home-section home-section--alt" id="vision" aria-labelledby="home-vision-title">
+        <div class="home-section__inner">
+            <h2 class="home-section__title" id="home-vision-title">Une vision à long terme</h2>
+            <div class="home-text">
+                <p class="home-text__paragraph">Construire une entreprise capable d'accompagner les particuliers et les professionnels dans leur transition numérique.</p>
+                <ul class="service-examples home-vision__list">
+                    <li class="service-examples__item">Créer des solutions utiles.</li>
+                    <li class="service-examples__item">Transmettre les connaissances.</li>
+                    <li class="service-examples__item">Sensibiliser aux risques numériques.</li>
+                </ul>
+                <p class="home-text__paragraph">Et progressivement développer des outils et services permettant de simplifier le quotidien grâce au numérique.</p>
+            </div>
+        </div>
+    </section>
+
+    {# --- 6. Contact --- #}
     <section class="home-section" id="contact" aria-labelledby="home-contact-title">
         <div class="home-section__inner home-contact">
             <div class="home-contact__intro">
-                <p class="home-section__eyebrow">Contact</p>
                 <h2 class="home-section__title" id="home-contact-title">Parlons de votre projet</h2>
-                <p class="home-contact__text">Une idée, une question ou un besoin précis ? Écrivez-moi, je vous réponds rapidement.</p>
+                <p class="home-contact__text">
+                    Vous avez un projet, une question ou souhaitez simplement échanger sur une solution numérique,
+                    une automatisation ou l'intelligence artificielle ?
+                </p>
+                <p class="home-contact__text">N'hésitez pas à me contacter.</p>
+
+                {{ include('home/_contact_infos.html.twig', {}, with_context = false) }}
             </div>
 
-            {# Formulaire visuel uniquement : l'envoi sera fait avec la sous-tâche « Formulaire de contact » #}
-            <form class="home-form" novalidate>
-                <label class="home-form__field">
-                    <span class="home-form__label">Nom</span>
-                    <input type="text" name="name" class="home-form__input" placeholder="Votre nom" autocomplete="name">
-                </label>
-                <label class="home-form__field">
-                    <span class="home-form__label">E-mail</span>
-                    <input type="email" name="email" class="home-form__input" placeholder="vous@exemple.fr" autocomplete="email">
-                </label>
-                <label class="home-form__field home-form__field--full">
-                    <span class="home-form__label">Message</span>
-                    <textarea name="message" class="home-form__input home-form__input--textarea" rows="4" placeholder="Décrivez votre projet en quelques mots"></textarea>
-                </label>
-                <button type="submit" class="home-button home-button--primary home-form__submit" disabled>Envoyer le message</button>
-            </form>
+            {{ include('home/_contact_form.html.twig', {form: contact_form}, with_context = false) }}
         </div>
     </section>
 </main>

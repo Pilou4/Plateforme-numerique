@@ -2,7 +2,7 @@
     <div class="site-footer__inner">
         <div class="site-footer__brand">
             <p class="site-footer__name">Plateforme Numérique</p>
-            <p class="site-footer__tagline">Développement web, intelligence artificielle, automatisation et cybersécurité.</p>
+            <p class="site-footer__tagline">Développement, automatisation, intelligence artificielle, cybersécurité et formation.</p>
         </div>
 
         <nav class="site-footer__nav" aria-label="Liens du pied de page">
@@ -10,14 +10,18 @@
                 <p class="site-footer__heading">Navigation</p>
                 <ul class="site-footer__list">
                     <li class="site-footer__item"><a href="{{ path('home') }}" class="site-footer__link">Accueil</a></li>
-                    <li class="site-footer__item"><a href="{{ path('app_dashboard') }}" class="site-footer__link">App</a></li>
+                    <li class="site-footer__item"><a href="{{ path('services') }}" class="site-footer__link">Services</a></li>
+                    <li class="site-footer__item"><a href="{{ path('home') }}#projet" class="site-footer__link">Projet</a></li>
+                    {# Learning : la documentation de l'app (tutoriels, glossaire) #}
+                    <li class="site-footer__item"><a href="{{ path('app_documentation') }}" class="site-footer__link">Learning</a></li>
+                    <li class="site-footer__item"><a href="{{ path('home') }}#contact" class="site-footer__link">Contact</a></li>
                 </ul>
             </div>
             <div class="site-footer__column">
-                <p class="site-footer__heading">Accueil</p>
+                <p class="site-footer__heading">Informations</p>
                 <ul class="site-footer__list">
-                    <li class="site-footer__item"><a href="{{ path('home') }}#services" class="site-footer__link">Services</a></li>
-                    <li class="site-footer__item"><a href="{{ path('home') }}#contact" class="site-footer__link">Contact</a></li>
+                    <li class="site-footer__item"><a href="{{ path('legal_notice') }}" class="site-footer__link">Mentions légales</a></li>
+                    <li class="site-footer__item"><a href="{{ path('privacy_policy') }}" class="site-footer__link">Politique de confidentialité</a></li>
                 </ul>
             </div>
         </nav>

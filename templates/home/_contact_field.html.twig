@@ -1,0 +1,43 @@
+{#
+    Un champ du formulaire de contact : libellé, champ, messages d'erreur.
+
+    Paramètres :
+      field       le champ (ex. : form.email)
+      type        text (par défaut), email, tel ou textarea
+      required    true si obligatoire
+      full        true pour prendre toute la largeur du formulaire
+      attributes  attributs HTML en plus (autocomplete, maxlength…)
+#}
+{% set type = type ?? 'text' %}
+{% set required = required ?? false %}
+{% set id = field.vars.id %}
+{# field.vars.errors : se compte et se parcourt (field_errors() ne se parcourt qu'une fois) #}
+{% set errors = field.vars.errors %}
+{% set has_errors = errors|length > 0 %}
+{% set error_id = id ~ '-error' %}
+
+<div class="home-form__field{{ (full ?? false) ? ' home-form__field--full' }}">
+    <label class="home-form__label" for="{{ id }}">
+        {{ field_label(field) }}
+        {% if required %}
+            <span class="home-form__required" aria-hidden="true">*</span>
+            <span class="home-form__hidden-text">(obligatoire)</span>
+        {% endif %}
+    </label>
+
+    {% set common_attributes %}id="{{ id }}" name="{{ field_name(field) }}"{% for name, value in attributes ?? {} %} {{ name }}="{{ value }}"{% endfor %}{{ required ? ' required' }}{% if has_errors %} aria-invalid="true" aria-describedby="{{ error_id }}"{% endif %}{% endset %}
+
+    {% if type == 'textarea' %}
+        <textarea {{ common_attributes }} class="home-form__input home-form__input--textarea">{{ field_value(field) }}</textarea>
+    {% else %}
+        <input type="{{ type }}" {{ common_attributes }} value="{{ field_value(field) }}" class="home-form__input">
+    {% endif %}
+
+    {% if has_errors %}
+        <div class="home-form__errors" id="{{ error_id }}">
+            {% for error in errors %}
+                <p class="home-form__error">{{ error.message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>

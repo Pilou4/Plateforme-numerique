@@ -3,11 +3,11 @@
 namespace App\Entity;
 
 use App\Enum\ProjectStepPriority;
-use App\Enum\ProjectStepStatus;
 use App\Repository\ProjectSubStepRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
 /**
  * Sous-tâche d'une tâche du projet.
@@ -36,9 +36,13 @@ class ProjectSubStep
     #[Groups([ProjectStep::GROUP_READ])]
     private ?string $description = null;
 
-    #[ORM\Column(length: 20, enumType: ProjectStepStatus::class)]
-    #[Groups([ProjectStep::GROUP_READ])]
-    private ProjectStepStatus $status = ProjectStepStatus::Todo;
+    /**
+     * Statut (table project_status). Donné par ProjectSubStepManager à la création.
+     * Envoyé à l'API sous forme de code : voir getStatusCode().
+     */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?ProjectStatus $status = null;
 
     #[ORM\Column(length: 20, enumType: ProjectStepPriority::class)]
     #[Groups([ProjectStep::GROUP_READ])]
@@ -117,19 +121,34 @@ class ProjectSubStep
         return $this;
     }
 
-    public function getStatus(): ProjectStepStatus
+    public function getStatus(): ?ProjectStatus
     {
         return $this->status;
     }
 
     /**
-     * Passer à "faite" enregistre la date de fin ; quitter "faite" l'efface.
+     * Code du statut (pas_commencer, en_cours, terminer) : c'est ce que reçoit l'API sous le nom « status ».
      */
-    public function setStatus(ProjectStepStatus $status): static
+    #[Groups([ProjectStep::GROUP_READ])]
+    #[SerializedName('status')]
+    public function getStatusCode(): ?string
     {
-        if (ProjectStepStatus::Done === $status && ProjectStepStatus::Done !== $this->status) {
+        return $this->status?->getCode();
+    }
+
+    public function isDone(): bool
+    {
+        return true === $this->status?->isDone();
+    }
+
+    /**
+     * Passer à « terminée » enregistre la date de fin ; quitter « terminée » l'efface.
+     */
+    public function setStatus(ProjectStatus $status): static
+    {
+        if ($status->isDone() && !$this->isDone()) {
             $this->completedAt = new \DateTimeImmutable();
-        } elseif (ProjectStepStatus::Done !== $status) {
+        } elseif (!$status->isDone()) {
             $this->completedAt = null;
         }
 

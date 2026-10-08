@@ -1,0 +1,9 @@
+# Limites d'envoi (composant symfony/rate-limiter)
+framework:
+    rate_limiter:
+        # Formulaire de contact de l'accueil : 3 messages par visiteur (adresse IP) sur 15 minutes.
+        # Injecté dans HomeController par le nom d'argument $contactFormLimiter.
+        contact_form:
+            policy: 'sliding_window'
+            limit: 3
+            interval: '15 minutes'

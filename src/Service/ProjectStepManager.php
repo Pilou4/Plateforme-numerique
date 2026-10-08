@@ -4,7 +4,9 @@ namespace App\Service;
 
 use App\Dto\ProjectStepPayload;
 use App\Entity\Project;
+use App\Entity\ProjectStatus;
 use App\Entity\ProjectStep;
+use App\Repository\ProjectStatusRepository;
 use App\Repository\ProjectStepRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -16,6 +18,7 @@ final class ProjectStepManager
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly ProjectStepRepository $projectStepRepository,
+        private readonly ProjectStatusRepository $projectStatusRepository,
     ) {
     }
 
@@ -28,6 +31,7 @@ final class ProjectStepManager
     public function create(Project $project, ProjectStepPayload $payload): ProjectStep
     {
         $step = new ProjectStep();
+        $step->setStatus($this->projectStatusRepository->getByCode(ProjectStatus::CODE_TODO));
         $step->setPosition($this->projectStepRepository->findNextPosition($project));
         $project->addStep($step);
 
@@ -57,7 +61,7 @@ final class ProjectStepManager
         $this->applyDescription($step, $payload->description);
 
         if (null !== $payload->status) {
-            $step->setStatus($payload->status);
+            $step->setStatus($this->projectStatusRepository->getByCode($payload->status));
         }
 
         if (null !== $payload->priority) {

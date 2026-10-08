@@ -2,8 +2,8 @@
 
 namespace App\Dto;
 
+use App\Entity\ProjectStatus;
 use App\Enum\ProjectStepPriority;
-use App\Enum\ProjectStepStatus;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -23,7 +23,11 @@ final readonly class ProjectStepPayload
 
         public ?string $description = null,
 
-        public ?ProjectStepStatus $status = null,
+        /**
+         * Code du statut (table project_status) : pas_commencer, en_cours ou terminer.
+         */
+        #[Assert\Choice(choices: ProjectStatus::CODES, message: 'Ce statut n\'existe pas.')]
+        public ?string $status = null,
 
         public ?ProjectStepPriority $priority = null,
 

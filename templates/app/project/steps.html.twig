@@ -47,7 +47,7 @@
             <div class="steps__filters" role="group" aria-label="Filtrer les tâches par statut">
                 <button type="button" class="steps__filter steps__filter--active" data-filter="all" aria-pressed="true">Toutes</button>
                 {% for status in statuses %}
-                    <button type="button" class="steps__filter" data-filter="{{ status.value }}" aria-pressed="false">{{ status.pluralLabel }}</button>
+                    <button type="button" class="steps__filter" data-filter="{{ status.code }}" aria-pressed="false">{{ status.pluralLabel }}</button>
                 {% endfor %}
             </div>
         </div>
@@ -121,7 +121,7 @@
                     <span class="steps-table__select-wrapper">
                         <select class="steps-table__select" data-edit="status" aria-label="Statut">
                             {% for status in statuses %}
-                                <option value="{{ status.value }}">{{ status.label }}</option>
+                                <option value="{{ status.code }}">{{ status.label }}</option>
                             {% endfor %}
                         </select>
                         <img src="{{ asset('images/icones/chevron-down.svg') }}" alt="" class="steps-table__select-arrow" width="14" height="14">
@@ -183,7 +183,7 @@
                     <span class="steps-table__select-wrapper">
                         <select class="steps-table__select" data-edit="status" aria-label="Statut">
                             {% for status in statuses %}
-                                <option value="{{ status.value }}">{{ status.label }}</option>
+                                <option value="{{ status.code }}">{{ status.label }}</option>
                             {% endfor %}
                         </select>
                         <img src="{{ asset('images/icones/chevron-down.svg') }}" alt="" class="steps-table__select-arrow" width="14" height="14">

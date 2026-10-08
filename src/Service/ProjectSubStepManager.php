@@ -3,8 +3,10 @@
 namespace App\Service;
 
 use App\Dto\ProjectStepPayload;
+use App\Entity\ProjectStatus;
 use App\Entity\ProjectStep;
 use App\Entity\ProjectSubStep;
+use App\Repository\ProjectStatusRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -15,6 +17,7 @@ final class ProjectSubStepManager
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
+        private readonly ProjectStatusRepository $projectStatusRepository,
     ) {
     }
 
@@ -26,6 +29,7 @@ final class ProjectSubStepManager
     public function create(ProjectStep $step, ProjectStepPayload $payload): ProjectSubStep
     {
         $subStep = new ProjectSubStep();
+        $subStep->setStatus($this->projectStatusRepository->getByCode(ProjectStatus::CODE_TODO));
         $subStep->setPosition($this->findNextPosition($step));
         $this->applyTitle($step, $subStep, (string) $payload->title);
         $this->applyDescription($subStep, $payload->description);
@@ -35,7 +39,7 @@ final class ProjectSubStepManager
         }
 
         $step->addSubStep($subStep);
-        $step->refreshStatusFromSubSteps();
+        $this->refreshStepStatus($step);
 
         $this->entityManager->persist($subStep);
         $this->entityManager->flush();
@@ -57,7 +61,7 @@ final class ProjectSubStepManager
         $this->applyDescription($subStep, $payload->description);
 
         if (null !== $payload->status) {
-            $subStep->setStatus($payload->status);
+            $subStep->setStatus($this->projectStatusRepository->getByCode($payload->status));
         }
 
         if (null !== $payload->priority) {
@@ -68,7 +72,7 @@ final class ProjectSubStepManager
             $subStep->setTimeSpent($payload->timeSpent);
         }
 
-        $step->refreshStatusFromSubSteps();
+        $this->refreshStepStatus($step);
         $this->entityManager->flush();
 
         return $subStep;
@@ -80,7 +84,7 @@ final class ProjectSubStepManager
 
         // orphanRemoval : retirer la sous-tâche de sa tâche la supprime en base
         $step->removeSubStep($subStep);
-        $step->refreshStatusFromSubSteps();
+        $this->refreshStepStatus($step);
         $this->entityManager->flush();
     }
 
@@ -110,7 +114,20 @@ final class ProjectSubStepManager
         $this->entityManager->flush();
     }
 
-    private function findNextPosition(ProjectStep $step): int
+    /**
+     * La tâche prend le statut calculé à partir de ses sous-tâches (voir ProjectStep::getStatusCodeFromSubSteps()).
+     * Sans sous-tâche, son statut ne change pas.
+     */
+    private function refreshStepStatus(ProjectStep $step): void
+    {
+        $code = $step->getStatusCodeFromSubSteps();
+
+        if (null !== $code && $code !== $step->getStatusCode()) {
+            $step->setStatus($this->projectStatusRepository->getByCode($code));
+        }
+    }
+
+        private function findNextPosition(ProjectStep $step): int
     {
         $maxPosition = -1;
 

@@ -2,10 +2,10 @@
 
 namespace App\Tests\Unit\Entity;
 
+use App\Entity\ProjectStatus;
 use App\Entity\ProjectStep;
 use App\Entity\ProjectSubStep;
 use App\Enum\ProjectStepPriority;
-use App\Enum\ProjectStepStatus;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -15,7 +15,10 @@ final class ProjectStepTest extends TestCase
     {
         $step = new ProjectStep();
 
-        $this->assertSame(ProjectStepStatus::Todo, $step->getStatus());
+        // Le statut est donné par ProjectStepManager à la création
+        $this->assertNull($step->getStatus());
+        $this->assertNull($step->getStatusCode());
+        $this->assertFalse($step->isDone());
         $this->assertSame(ProjectStepPriority::Normal, $step->getPriority());
         $this->assertSame(0, $step->getTimeSpent());
         $this->assertNull($step->getCompletedAt());
@@ -40,26 +43,28 @@ final class ProjectStepTest extends TestCase
     {
         $step = new ProjectStep();
 
-        $step->setStatus(ProjectStepStatus::Done);
+        $step->setStatus(self::status(ProjectStatus::CODE_DONE));
 
+        $this->assertTrue($step->isDone());
+        $this->assertSame(ProjectStatus::CODE_DONE, $step->getStatusCode());
         $this->assertNotNull($step->getCompletedAt());
     }
 
     public function testSettingDoneAgainKeepsTheFirstCompletionDate(): void
     {
-        $step = (new ProjectStep())->setStatus(ProjectStepStatus::Done);
+        $step = (new ProjectStep())->setStatus(self::status(ProjectStatus::CODE_DONE));
         $completedAt = $step->getCompletedAt();
 
-        $step->setStatus(ProjectStepStatus::Done);
+        $step->setStatus(self::status(ProjectStatus::CODE_DONE));
 
         $this->assertSame($completedAt, $step->getCompletedAt());
     }
 
     public function testLeavingDoneClearsTheCompletionDate(): void
     {
-        $step = (new ProjectStep())->setStatus(ProjectStepStatus::Done);
+        $step = (new ProjectStep())->setStatus(self::status(ProjectStatus::CODE_DONE));
 
-        $step->setStatus(ProjectStepStatus::InProgress);
+        $step->setStatus(self::status(ProjectStatus::CODE_IN_PROGRESS));
 
         $this->assertNull($step->getCompletedAt());
     }
@@ -139,47 +144,39 @@ final class ProjectStepTest extends TestCase
        ------------------------------------------------------------------ */
 
     /**
-     * @param list<ProjectStepStatus> $subStepStatuses
+     * @param list<string> $subStepCodes codes des statuts des sous-tâches
      */
     #[DataProvider('subStepStatusesProvider')]
-    public function testRefreshStatusFromSubSteps(array $subStepStatuses, ProjectStepStatus $expected): void
+    public function testStatusCodeFromSubSteps(array $subStepCodes, string $expected): void
     {
         $step = new ProjectStep();
 
-        foreach ($subStepStatuses as $status) {
-            $step->addSubStep((new ProjectSubStep())->setStatus($status));
+        foreach ($subStepCodes as $code) {
+            $step->addSubStep((new ProjectSubStep())->setStatus(self::status($code)));
         }
 
-        $step->refreshStatusFromSubSteps();
-
-        $this->assertSame($expected, $step->getStatus());
+        $this->assertSame($expected, $step->getStatusCodeFromSubSteps());
     }
 
     public static function subStepStatusesProvider(): iterable
     {
-        yield 'toutes pas commencées' => [[ProjectStepStatus::Todo, ProjectStepStatus::Todo], ProjectStepStatus::Todo];
-        yield 'toutes faites' => [[ProjectStepStatus::Done, ProjectStepStatus::Done], ProjectStepStatus::Done];
-        yield 'une faite, une pas commencée' => [[ProjectStepStatus::Done, ProjectStepStatus::Todo], ProjectStepStatus::InProgress];
-        yield 'une en cours' => [[ProjectStepStatus::InProgress], ProjectStepStatus::InProgress];
-        yield 'mélange des trois' => [[ProjectStepStatus::Todo, ProjectStepStatus::InProgress, ProjectStepStatus::Done], ProjectStepStatus::InProgress];
+        yield 'toutes pas commencées' => [[ProjectStatus::CODE_TODO, ProjectStatus::CODE_TODO], ProjectStatus::CODE_TODO];
+        yield 'toutes terminées' => [[ProjectStatus::CODE_DONE, ProjectStatus::CODE_DONE], ProjectStatus::CODE_DONE];
+        yield 'une terminée, une pas commencée' => [[ProjectStatus::CODE_DONE, ProjectStatus::CODE_TODO], ProjectStatus::CODE_IN_PROGRESS];
+        yield 'une en cours' => [[ProjectStatus::CODE_IN_PROGRESS], ProjectStatus::CODE_IN_PROGRESS];
+        yield 'mélange des trois' => [[ProjectStatus::CODE_TODO, ProjectStatus::CODE_IN_PROGRESS, ProjectStatus::CODE_DONE], ProjectStatus::CODE_IN_PROGRESS];
     }
 
-    public function testRefreshStatusWithoutSubStepsKeepsTheStatus(): void
+    public function testStatusCodeWithoutSubStepsIsNull(): void
     {
-        $step = (new ProjectStep())->setStatus(ProjectStepStatus::InProgress);
-
-        $step->refreshStatusFromSubSteps();
-
-        $this->assertSame(ProjectStepStatus::InProgress, $step->getStatus());
+        $this->assertNull((new ProjectStep())->getStatusCodeFromSubSteps());
     }
 
-    public function testAllSubStepsDoneSetsTheCompletionDate(): void
+    /**
+     * Statut de la table project_status, créé ici sans base de données.
+     */
+    private static function status(string $code): ProjectStatus
     {
-        $step = new ProjectStep();
-        $step->addSubStep((new ProjectSubStep())->setStatus(ProjectStepStatus::Done));
-
-        $step->refreshStatusFromSubSteps();
-
-        $this->assertNotNull($step->getCompletedAt());
+        return new ProjectStatus($code, $code, $code, array_search($code, ProjectStatus::CODES, true));
     }
 }

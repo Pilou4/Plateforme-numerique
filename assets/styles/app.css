@@ -1407,32 +1407,32 @@
     pointer-events: none;
 }
 
-.steps-table__select--status-todo {
+.steps-table__select--status-pas_commencer {
     color: #4b5563;
     background-color: #f3f4f6;
 }
 
-.steps-table__select--status-in_progress {
+.steps-table__select--status-en_cours {
     color: #92400e;
     background-color: #fef3c7;
 }
 
-.steps-table__select--status-done {
+.steps-table__select--status-terminer {
     color: #166534;
     background-color: #dcfce7;
 }
 
-.steps-table__select--priority-high {
+.steps-table__select--priority-haute {
     color: #991b1b;
     background-color: #fee2e2;
 }
 
-.steps-table__select--priority-normal {
+.steps-table__select--priority-normale {
     color: #3730a3;
     background-color: #e0e7ff;
 }
 
-.steps-table__select--priority-low {
+.steps-table__select--priority-basse {
     color: #6b7280;
     background-color: #f3f4f6;
 }

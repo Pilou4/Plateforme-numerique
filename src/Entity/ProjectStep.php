@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use App\Enum\ProjectStepPriority;
-use App\Enum\ProjectStepStatus;
 use App\Repository\ProjectStepRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -40,9 +39,13 @@ class ProjectStep
     #[Groups([self::GROUP_READ])]
     private ?string $description = null;
 
-    #[ORM\Column(length: 20, enumType: ProjectStepStatus::class)]
-    #[Groups([self::GROUP_READ])]
-    private ProjectStepStatus $status = ProjectStepStatus::Todo;
+    /**
+     * Statut (table project_status). Donné par ProjectStepManager à la création.
+     * Envoyé à l'API sous forme de code : voir getStatusCode().
+     */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?ProjectStatus $status = null;
 
     #[ORM\Column(length: 20, enumType: ProjectStepPriority::class)]
     #[Groups([self::GROUP_READ])]
@@ -130,19 +133,34 @@ class ProjectStep
         return $this;
     }
 
-    public function getStatus(): ProjectStepStatus
+    public function getStatus(): ?ProjectStatus
     {
         return $this->status;
     }
 
     /**
-     * Passer à "faite" enregistre la date de fin ; quitter "faite" l'efface.
+     * Code du statut (pas_commencer, en_cours, terminer) : c'est ce que reçoit l'API sous le nom « status ».
      */
-    public function setStatus(ProjectStepStatus $status): static
+    #[Groups([self::GROUP_READ])]
+    #[SerializedName('status')]
+    public function getStatusCode(): ?string
     {
-        if (ProjectStepStatus::Done === $status && ProjectStepStatus::Done !== $this->status) {
+        return $this->status?->getCode();
+    }
+
+    public function isDone(): bool
+    {
+        return true === $this->status?->isDone();
+    }
+
+    /**
+     * Passer à « terminée » enregistre la date de fin ; quitter « terminée » l'efface.
+     */
+    public function setStatus(ProjectStatus $status): static
+    {
+        if ($status->isDone() && !$this->isDone()) {
             $this->completedAt = new \DateTimeImmutable();
-        } elseif (ProjectStepStatus::Done !== $status) {
+        } elseif (!$status->isDone()) {
             $this->completedAt = null;
         }
 
@@ -270,35 +288,35 @@ class ProjectStep
     }
 
     /**
-     * Statut calculé à partir des sous-tâches :
-     * toutes pas commencées → pas commencée, toutes faites → faite, sinon → en cours.
-     * Sans sous-tâche, le statut n'est pas modifié.
+     * Code du statut que doit avoir la tâche d'après ses sous-tâches :
+     * toutes pas commencées → pas_commencer, toutes terminées → terminer, sinon → en_cours.
+     * Sans sous-tâche : null (le statut de la tâche se choisit à la main).
+     *
+     * ProjectSubStepManager applique ce statut après chaque changement d'une sous-tâche.
      */
-    public function refreshStatusFromSubSteps(): void
+    public function getStatusCodeFromSubSteps(): ?string
     {
         if (!$this->hasSubSteps()) {
-            return;
+            return null;
         }
 
         $todoCount = 0;
         $doneCount = 0;
 
         foreach ($this->subSteps as $subStep) {
-            match ($subStep->getStatus()) {
-                ProjectStepStatus::Todo => ++$todoCount,
-                ProjectStepStatus::Done => ++$doneCount,
-                ProjectStepStatus::InProgress => null,
-            };
+            if (true === $subStep->getStatus()?->isTodo()) {
+                ++$todoCount;
+            } elseif ($subStep->isDone()) {
+                ++$doneCount;
+            }
         }
 
         $total = $this->subSteps->count();
 
-        $status = match (true) {
-            $todoCount === $total => ProjectStepStatus::Todo,
-            $doneCount === $total => ProjectStepStatus::Done,
-            default => ProjectStepStatus::InProgress,
+        return match (true) {
+            $todoCount === $total => ProjectStatus::CODE_TODO,
+            $doneCount === $total => ProjectStatus::CODE_DONE,
+            default => ProjectStatus::CODE_IN_PROGRESS,
         };
-
-        $this->setStatus($status);
     }
 }

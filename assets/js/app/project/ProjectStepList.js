@@ -5,9 +5,10 @@ import { showNotice } from '../../composants/Notice.js';
 import { matchesSearch, PAGE_SEARCH_EVENT } from '../../composants/PageSearch.js';
 
 const FILTER_ALL = 'all';
-const STATUS_TODO = 'todo';
-const STATUS_IN_PROGRESS = 'in_progress';
-const STATUS_DONE = 'done';
+// Codes des statuts envoyés par l'API (table project_status, voir App\Entity\ProjectStatus)
+const STATUS_TODO = 'pas_commencer';
+const STATUS_IN_PROGRESS = 'en_cours';
+const STATUS_DONE = 'terminer';
 const SAVED_CLASS = 'steps-table__row--saved';
 const DRAGGING_CLASS = 'steps-table__row--dragging';
 const ADD_FORM_TEMPLATE_ID = 'project-step-add';
@@ -16,8 +17,8 @@ const SORT_MANUAL = 'position';
 const SORT_ASCENDING = 'ascending';
 const SORT_DESCENDING = 'descending';
 // Rang utilisé pour trier les priorités (la plus importante d'abord) et les statuts
-const PRIORITY_RANK = { high: 0, normal: 1, low: 2 };
-const STATUS_RANK = { todo: 0, in_progress: 1, done: 2 };
+const PRIORITY_RANK = { haute: 0, normale: 1, basse: 2 };
+const STATUS_RANK = { [STATUS_TODO]: 0, [STATUS_IN_PROGRESS]: 1, [STATUS_DONE]: 2 };
 
 /**
  * Tableau des tâches du projet et de leurs sous-tâches :

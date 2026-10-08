@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mentions légales · Plateforme Numérique{% endblock %}
+
+{% block metaTag %}
+    <meta name="description" content="Mentions légales du site Plateforme Numérique : éditeur, directeur de la publication et hébergeur.">
+{% endblock %}
+
+{% block url %}
+    <link rel="canonical" href="{{ url('legal_notice') }}">
+{% endblock %}
+
+{#
+    Modèle à compléter : les passages surlignés (classe legal-content__todo) sont à remplacer
+    par tes informations avant la mise en ligne.
+#}
+{% block body %}
+<main id="legal-notice" class="legal-page">
+    {{ include('legal/_hero.html.twig', {title: 'Mentions légales', id: 'legal-notice-title', updated_at: '8 octobre 2026'}, with_context = false) }}
+
+    <section class="home-section" aria-label="Contenu des mentions légales">
+        <div class="home-section__inner">
+            <div class="legal-content">
+                <h2 class="legal-content__title">Éditeur du site</h2>
+                <p class="legal-content__text">Le site Plateforme Numérique est édité par :</p>
+                <ul class="legal-content__list">
+                    <li class="legal-content__item">Nom : <mark class="legal-content__todo">[prénom et nom, ou nom de l'entreprise]</mark></li>
+                    <li class="legal-content__item">Statut : <mark class="legal-content__todo">[ex. : entrepreneur individuel (micro-entreprise)]</mark></li>
+                    <li class="legal-content__item">Adresse : <mark class="legal-content__todo">[adresse postale]</mark></li>
+                    <li class="legal-content__item">E-mail : <mark class="legal-content__todo">[adresse e-mail de contact]</mark></li>
+                    <li class="legal-content__item">SIRET : <mark class="legal-content__todo">[numéro SIRET, dès l'immatriculation]</mark></li>
+                </ul>
+
+                <h2 class="legal-content__title">Directeur de la publication</h2>
+                <p class="legal-content__text"><mark class="legal-content__todo">[prénom et nom]</mark></p>
+
+                <h2 class="legal-content__title">Hébergement</h2>
+                <p class="legal-content__text">Le site est hébergé par :</p>
+                <ul class="legal-content__list">
+                    <li class="legal-content__item">Hébergeur : <mark class="legal-content__todo">[nom de l'hébergeur]</mark></li>
+                    <li class="legal-content__item">Adresse : <mark class="legal-content__todo">[adresse de l'hébergeur]</mark></li>
+                    <li class="legal-content__item">Téléphone : <mark class="legal-content__todo">[téléphone de l'hébergeur]</mark></li>
+                </ul>
+
+                <h2 class="legal-content__title">Propriété intellectuelle</h2>
+                <p class="legal-content__text">
+                    L'ensemble des contenus de ce site (textes, images, logos, code) est protégé par le droit d'auteur.
+                    Toute reproduction ou réutilisation, totale ou partielle, sans autorisation écrite préalable est interdite.
+                </p>
+
+                <h2 class="legal-content__title">Données personnelles</h2>
+                <p class="legal-content__text">
+                    Les informations envoyées avec le formulaire de contact sont utilisées uniquement pour répondre à votre demande.
+                    Le détail figure dans la <a href="{{ path('privacy_policy') }}" class="legal-content__link">politique de confidentialité</a>.
+                </p>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}

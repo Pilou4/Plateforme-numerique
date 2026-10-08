@@ -1,0 +1,13 @@
+{#
+    Bandeau du haut des pages légales.
+    Paramètres : title, id (id du titre, pour aria-labelledby), updated_at (date de mise à jour, en texte)
+#}
+<section class="home-hero" aria-labelledby="{{ id }}">
+    <div class="home-hero__inner service-page__hero">
+        <div class="home-hero__text">
+            <p class="home-hero__eyebrow">Informations légales</p>
+            <h1 class="home-hero__title" id="{{ id }}">{{ title }}</h1>
+            <p class="home-hero__lead">Dernière mise à jour : {{ updated_at }}</p>
+        </div>
+    </div>
+</section>

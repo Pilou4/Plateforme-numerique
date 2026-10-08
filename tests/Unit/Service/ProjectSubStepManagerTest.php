@@ -3,16 +3,31 @@
 namespace App\Tests\Unit\Service;
 
 use App\Dto\ProjectStepPayload;
+use App\Entity\ProjectStatus;
 use App\Entity\ProjectStep;
 use App\Entity\ProjectSubStep;
 use App\Enum\ProjectStepPriority;
-use App\Enum\ProjectStepStatus;
+use App\Repository\ProjectStatusRepository;
 use App\Service\ProjectSubStepManager;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
 final class ProjectSubStepManagerTest extends TestCase
 {
+    /**
+     * Les 3 statuts de la table project_status, créés ici sans base de données.
+     *
+     * @var array<string, ProjectStatus>
+     */
+    private array $statuses = [];
+
+    protected function setUp(): void
+    {
+        foreach (ProjectStatus::CODES as $position => $code) {
+            $this->statuses[$code] = new ProjectStatus($code, $code, $code, $position);
+        }
+    }
+
     /* ------------------------------------------------------------------
        Création
        ------------------------------------------------------------------ */
@@ -25,7 +40,7 @@ final class ProjectSubStepManagerTest extends TestCase
         $entityManager->expects($this->once())->method('persist')->with($this->isInstanceOf(ProjectSubStep::class));
         $entityManager->expects($this->once())->method('flush');
 
-        $subStep = (new ProjectSubStepManager($entityManager))->create($step, new ProjectStepPayload(
+        $subStep = (new ProjectSubStepManager($entityManager, $this->createStatusRepository()))->create($step, new ProjectStepPayload(
             title: '  Écrire les tests  ',
             description: '  Un test par comportement  ',
             priority: ProjectStepPriority::High,
@@ -35,7 +50,7 @@ final class ProjectSubStepManagerTest extends TestCase
         $this->assertSame('Écrire les tests', $subStep->getTitle());
         $this->assertSame('Un test par comportement', $subStep->getDescription());
         $this->assertSame(ProjectStepPriority::High, $subStep->getPriority());
-        $this->assertSame(ProjectStepStatus::Todo, $subStep->getStatus());
+        $this->assertSame(ProjectStatus::CODE_TODO, $subStep->getStatusCode());
     }
 
     public function testCreatePutsTheSubStepAtTheEnd(): void
@@ -62,14 +77,13 @@ final class ProjectSubStepManagerTest extends TestCase
 
     public function testCreateRefreshesTheStepStatus(): void
     {
-        // Tâche « faite » : une nouvelle sous-tâche pas commencée la fait repasser « en cours »
-        $step = new ProjectStep();
-        $step->addSubStep((new ProjectSubStep())->setTitle('Faite')->setStatus(ProjectStepStatus::Done));
-        $step->refreshStatusFromSubSteps();
+        // Tâche terminée : une nouvelle sous-tâche pas commencée la fait repasser « en cours »
+        $step = (new ProjectStep())->setStatus($this->statuses[ProjectStatus::CODE_DONE]);
+        $step->addSubStep((new ProjectSubStep())->setTitle('Terminée')->setStatus($this->statuses[ProjectStatus::CODE_DONE]));
 
         $this->createManager()->create($step, new ProjectStepPayload(title: 'Nouvelle'));
 
-        $this->assertSame(ProjectStepStatus::InProgress, $step->getStatus());
+        $this->assertSame(ProjectStatus::CODE_IN_PROGRESS, $step->getStatusCode());
     }
 
     /* ------------------------------------------------------------------
@@ -82,9 +96,10 @@ final class ProjectSubStepManagerTest extends TestCase
         $subStep = (new ProjectSubStep())->setTitle('Seule');
         $step->addSubStep($subStep);
 
-        $this->createManager()->update($subStep, new ProjectStepPayload(status: ProjectStepStatus::Done));
+        $this->createManager()->update($subStep, new ProjectStepPayload(status: ProjectStatus::CODE_DONE));
 
-        $this->assertSame(ProjectStepStatus::Done, $step->getStatus());
+        $this->assertSame(ProjectStatus::CODE_DONE, $step->getStatusCode());
+        $this->assertNotNull($step->getCompletedAt());
     }
 
     public function testUpdateOnlyChangesTheFieldsSent(): void
@@ -141,18 +156,18 @@ final class ProjectSubStepManagerTest extends TestCase
     public function testDeleteRemovesTheSubStepAndRefreshesTheStatus(): void
     {
         $step = new ProjectStep();
-        $done = (new ProjectSubStep())->setTitle('Faite')->setStatus(ProjectStepStatus::Done);
-        $todo = (new ProjectSubStep())->setTitle('Pas commencée');
+        $step->setStatus($this->statuses[ProjectStatus::CODE_IN_PROGRESS]);
+        $done = (new ProjectSubStep())->setTitle('Terminée')->setStatus($this->statuses[ProjectStatus::CODE_DONE]);
+        $todo = (new ProjectSubStep())->setTitle('Pas commencée')->setStatus($this->statuses[ProjectStatus::CODE_TODO]);
         $step->addSubStep($done)->addSubStep($todo);
-        $step->refreshStatusFromSubSteps();
 
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects($this->once())->method('flush');
 
-        (new ProjectSubStepManager($entityManager))->delete($todo);
+        (new ProjectSubStepManager($entityManager, $this->createStatusRepository()))->delete($todo);
 
         $this->assertCount(1, $step->getSubSteps());
-        $this->assertSame(ProjectStepStatus::Done, $step->getStatus());
+        $this->assertSame(ProjectStatus::CODE_DONE, $step->getStatusCode());
     }
 
     /* ------------------------------------------------------------------
@@ -194,7 +209,7 @@ final class ProjectSubStepManagerTest extends TestCase
 
     private function createManager(): ProjectSubStepManager
     {
-        return new ProjectSubStepManager($this->createStub(EntityManagerInterface::class));
+        return new ProjectSubStepManager($this->createStub(EntityManagerInterface::class), $this->createStatusRepository());
     }
 
     /**
@@ -206,5 +221,16 @@ final class ProjectSubStepManagerTest extends TestCase
         (new \ReflectionProperty(ProjectSubStep::class, 'id'))->setValue($subStep, $id);
 
         return $subStep;
+    }
+
+    /**
+     * Faux repository des statuts : getByCode() renvoie le statut correspondant de $this->statuses.
+     */
+    private function createStatusRepository(): ProjectStatusRepository
+    {
+        $repository = $this->createStub(ProjectStatusRepository::class);
+        $repository->method('getByCode')->willReturnCallback(fn (string $code): ProjectStatus => $this->statuses[$code]);
+
+        return $repository;
     }
 }

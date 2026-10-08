@@ -5,8 +5,8 @@ namespace App\Controller\App;
 use App\Entity\Project;
 use App\Entity\ProjectFile;
 use App\Enum\ProjectStepPriority;
-use App\Enum\ProjectStepStatus;
 use App\Repository\ProjectRepository;
+use App\Repository\ProjectStatusRepository;
 use App\Service\ProjectFileManager;
 use App\Service\ProjectFilePreview;
 use App\Service\ProjectStorage;
@@ -46,13 +46,13 @@ final class ProjectController extends AbstractController
     }
 
     #[Route('/{slug:project}/taches', name: 'app_project_steps')]
-    public function steps(Project $project): Response
+    public function steps(Project $project, ProjectStatusRepository $projectStatusRepository): Response
     {
         // Les tâches sont chargées par le JavaScript via l'API ;
         // la page ne reçoit que le projet, les statuts et les priorités possibles.
         return $this->render('app/project/steps.html.twig', [
             'project' => $project,
-            'statuses' => ProjectStepStatus::cases(),
+            'statuses' => $projectStatusRepository->findAllOrdered(),
             'priorities' => ProjectStepPriority::cases(),
         ]);
     }

@@ -1,0 +1,53 @@
+{#
+    Formulaire de contact (HomeController + App\Form\ContactType).
+
+    Le HTML est écrit à la main pour maîtriser l'accessibilité :
+    - chaque champ a son <label> ; les champs obligatoires sont marqués * et annoncés « obligatoire » ;
+    - un champ en erreur porte aria-invalid et est relié à son message par aria-describedby ;
+    - les erreurs générales (trop d'envois, envoi impossible…) sont annoncées tout de suite (role="alert").
+
+    Sécurité : jeton CSRF (champ caché) + champ piège invisible pour les robots ;
+    la limite d'envois et la validation sont faites côté serveur.
+
+    Paramètre : form (le formulaire, objet FormView)
+#}
+{#
+    form.vars.errors : erreurs générales (jeton CSRF, trop d'envois…).
+    On n'utilise pas field_errors() : il renvoie une liste qu'on ne peut parcourir qu'une fois
+    (impossible de la compter puis de l'afficher).
+#}
+{% set global_errors = form.vars.errors %}
+
+<form method="post" action="{{ path('home') }}#contact" class="home-form" aria-labelledby="home-contact-title">
+    {% if global_errors|length > 0 %}
+        <div class="home-form__alert" role="alert">
+            {% for error in global_errors %}
+                <p class="home-form__alert-text">{{ error.message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <p class="home-form__legend">Les champs marqués d'un <span class="home-form__required" aria-hidden="true">*</span> sont obligatoires.</p>
+
+    {{ include('home/_contact_field.html.twig', {field: form.firstName, required: true, attributes: {autocomplete: 'given-name', maxlength: 100}}, with_context = false) }}
+    {{ include('home/_contact_field.html.twig', {field: form.lastName, required: true, attributes: {autocomplete: 'family-name', maxlength: 100}}, with_context = false) }}
+    {{ include('home/_contact_field.html.twig', {field: form.email, type: 'email', required: true, attributes: {autocomplete: 'email', maxlength: 180}}, with_context = false) }}
+    {{ include('home/_contact_field.html.twig', {field: form.phone, type: 'tel', attributes: {autocomplete: 'tel', maxlength: 30}}, with_context = false) }}
+    {{ include('home/_contact_field.html.twig', {field: form.subject, full: true, attributes: {maxlength: 150}}, with_context = false) }}
+    {{ include('home/_contact_field.html.twig', {field: form.message, type: 'textarea', required: true, full: true, attributes: {minlength: 10, maxlength: 5000, rows: 6}}, with_context = false) }}
+
+    {# Champ piège : caché aux humains (hors écran, ignoré au clavier et par les lecteurs d'écran) #}
+    <div class="home-form__trap" aria-hidden="true">
+        <label for="{{ form.website.vars.id }}">{{ field_label(form.website) }}</label>
+        <input type="text" id="{{ form.website.vars.id }}" name="{{ field_name(form.website) }}" value="" tabindex="-1" autocomplete="off">
+    </div>
+
+    <input type="hidden" name="{{ field_name(form._token) }}" value="{{ field_value(form._token) }}" data-controller="csrf-protection">
+
+    <p class="home-form__privacy">
+        Vos informations servent uniquement à vous répondre.
+        <a href="{{ path('privacy_policy') }}" class="home-form__link">Politique de confidentialité</a>
+    </p>
+
+    <button type="submit" class="home-button home-button--primary home-form__submit">Envoyer</button>
+</form>

@@ -16,7 +16,7 @@
             <span class="step-form__label">Priorité</span>
             <select name="priority" class="step-form__input">
                 {% for priority in priorities %}
-                    <option value="{{ priority.value }}" {{ priority.value == 'normal' ? 'selected' }}>{{ priority.label }}</option>
+                    <option value="{{ priority.value }}" {{ priority.value == 'normale' ? 'selected' }}>{{ priority.label }}</option>
                 {% endfor %}
             </select>
         </label>

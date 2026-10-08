@@ -26,6 +26,6 @@ final class ProjectStepPriorityTest extends TestCase
      */
     public function testValuesStored(): void
     {
-        $this->assertSame(['low', 'normal', 'high'], array_column(ProjectStepPriority::cases(), 'value'));
+        $this->assertSame(['basse', 'normale', 'haute'], array_column(ProjectStepPriority::cases(), 'value'));
     }
 }

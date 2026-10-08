@@ -3,6 +3,7 @@
 namespace App\Tests\Unit\Dto;
 
 use App\Dto\ProjectStepPayload;
+use App\Entity\ProjectStatus;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validation;
@@ -64,6 +65,20 @@ final class ProjectStepPayloadTest extends TestCase
 
         $this->assertCount(1, $violations);
         $this->assertSame('Le temps passé est trop grand.', $violations[0]->getMessage());
+    }
+
+    public function testKnownStatusIsAccepted(): void
+    {
+        $this->assertCount(0, $this->validate(new ProjectStepPayload(status: ProjectStatus::CODE_DONE)));
+    }
+
+    public function testUnknownStatusIsRefused(): void
+    {
+        // Ancienne valeur : refusée depuis le passage à la table project_status
+        $violations = $this->validate(new ProjectStepPayload(status: 'faite'));
+
+        $this->assertCount(1, $violations);
+        $this->assertSame('Ce statut n\'existe pas.', $violations[0]->getMessage());
     }
 
     /**

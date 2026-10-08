@@ -1,0 +1,56 @@
+{#
+    Coordonnées affichées à côté du formulaire de contact (sous le texte d'introduction).
+
+    ⚠ Provisoire : l'adresse e-mail et le profil GitHub (changement de pseudo prévu) seront mis à jour.
+    phone_link : le numéro sans espaces, au format international (+33…), pour les liens « tel: ».
+#}
+{% set email = 'frederic.caffier@hotmail.com' %}
+{% set phone = '06 19 84 74 29' %}
+{% set phone_link = '+33619847429' %}
+{% set linkedin_url = 'https://www.linkedin.com/in/frederic-caffier' %}
+{% set github_url = 'https://github.com/Pilou4' %}
+
+<dl class="contact-infos">
+    <div class="contact-infos__item">
+        <span class="contact-infos__icon"><img src="{{ asset('images/icones/contact-email.svg') }}" alt="" width="20" height="20"></span>
+        <dt class="contact-infos__label">E-mail</dt>
+        <dd class="contact-infos__value"><a href="mailto:{{ email }}" class="contact-infos__link">{{ email }}</a></dd>
+    </div>
+    <div class="contact-infos__item">
+        <span class="contact-infos__icon"><img src="{{ asset('images/icones/contact-phone.svg') }}" alt="" width="20" height="20"></span>
+        <dt class="contact-infos__label">Téléphone</dt>
+        <dd class="contact-infos__value"><a href="tel:{{ phone_link }}" class="contact-infos__link">{{ phone }}</a></dd>
+    </div>
+    <div class="contact-infos__item">
+        <span class="contact-infos__icon"><img src="{{ asset('images/icones/contact-zone.svg') }}" alt="" width="20" height="20"></span>
+        <dt class="contact-infos__label">Zone d'intervention</dt>
+        <dd class="contact-infos__value">France entière</dd>
+    </div>
+    <div class="contact-infos__item">
+        <span class="contact-infos__icon"><img src="{{ asset('images/icones/contact-remote.svg') }}" alt="" width="20" height="20"></span>
+        <dt class="contact-infos__label">Mode d'intervention</dt>
+        <dd class="contact-infos__value">À distance principalement</dd>
+    </div>
+    <div class="contact-infos__item">
+        <span class="contact-infos__icon"><img src="{{ asset('images/icones/contact-location.svg') }}" alt="" width="20" height="20"></span>
+        <dt class="contact-infos__label">Localisation</dt>
+        <dd class="contact-infos__value">Pézenas (Hérault)</dd>
+    </div>
+    <div class="contact-infos__item">
+        <span class="contact-infos__icon"><img src="{{ asset('images/icones/contact-network.svg') }}" alt="" width="20" height="20"></span>
+        <dt class="contact-infos__label">Réseaux</dt>
+        <dd class="contact-infos__value contact-infos__value--networks">
+            {# Autre site : nouvel onglet (rel : la page ouverte ne peut pas agir sur notre onglet) #}
+            <a href="{{ linkedin_url }}" class="contact-infos__network" target="_blank" rel="noopener noreferrer">
+                <img src="{{ asset('images/icones/linkedin.svg') }}" alt="" width="18" height="18">
+                <span>LinkedIn</span>
+                <span class="external-link__hint">(nouvel onglet)</span>
+            </a>
+            <a href="{{ github_url }}" class="contact-infos__network" target="_blank" rel="noopener noreferrer">
+                <img src="{{ asset('images/icones/github.svg') }}" alt="" width="18" height="18">
+                <span>GitHub</span>
+                <span class="external-link__hint">(nouvel onglet)</span>
+            </a>
+        </dd>
+    </div>
+</dl>

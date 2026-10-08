@@ -1,0 +1,92 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Politique de confidentialité · Plateforme Numérique{% endblock %}
+
+{% block metaTag %}
+    <meta name="description" content="Politique de confidentialité du site Plateforme Numérique : données collectées, utilisation, durée de conservation et droits.">
+{% endblock %}
+
+{% block url %}
+    <link rel="canonical" href="{{ url('privacy_policy') }}">
+{% endblock %}
+
+{#
+    Modèle à compléter : les passages surlignés (classe legal-content__todo) sont à remplacer
+    par tes informations avant la mise en ligne.
+#}
+{% block body %}
+<main id="privacy-policy" class="legal-page">
+    {{ include('legal/_hero.html.twig', {title: 'Politique de confidentialité', id: 'privacy-policy-title', updated_at: '8 octobre 2026'}, with_context = false) }}
+
+    <section class="home-section" aria-label="Contenu de la politique de confidentialité">
+        <div class="home-section__inner">
+            <div class="legal-content">
+                <h2 class="legal-content__title">Responsable du traitement</h2>
+                <p class="legal-content__text">
+                    Les données personnelles collectées sur ce site sont traitées par
+                    <mark class="legal-content__todo">[prénom et nom, ou nom de l'entreprise]</mark>,
+                    joignable à l'adresse <mark class="legal-content__todo">[adresse e-mail de contact]</mark>.
+                </p>
+
+                <h2 class="legal-content__title">Données collectées</h2>
+                <p class="legal-content__text">Le site ne collecte des données personnelles que lorsque vous utilisez le formulaire de contact :</p>
+                <ul class="legal-content__list">
+                    <li class="legal-content__item">prénom (obligatoire) ;</li>
+                    <li class="legal-content__item">nom (obligatoire) ;</li>
+                    <li class="legal-content__item">adresse e-mail (obligatoire) ;</li>
+                    <li class="legal-content__item">numéro de téléphone (facultatif) ;</li>
+                    <li class="legal-content__item">sujet (facultatif) ;</li>
+                    <li class="legal-content__item">message (obligatoire).</li>
+                </ul>
+                <p class="legal-content__text">Aucun compte n'est nécessaire pour consulter le site.</p>
+
+                <h2 class="legal-content__title">Utilisation des données</h2>
+                <p class="legal-content__text">
+                    Ces données servent uniquement à répondre à votre demande. Elles ne sont ni vendues, ni louées,
+                    ni utilisées pour vous envoyer de la publicité.
+                </p>
+                <p class="legal-content__text">
+                    Base légale : l'intérêt légitime à répondre aux demandes reçues (article 6.1.f du RGPD) ou,
+                    si votre demande concerne une prestation, les mesures précontractuelles prises à votre demande (article 6.1.b du RGPD).
+                </p>
+
+                <h2 class="legal-content__title">Destinataires</h2>
+                <p class="legal-content__text">
+                    Les messages sont enregistrés sur le site et transmis par e-mail au responsable du traitement, seul à y avoir accès.
+                    L'hébergeur du site et le service d'envoi des e-mails interviennent uniquement pour assurer ce stockage et ce transport.
+                </p>
+
+                <h2 class="legal-content__title">Durée de conservation</h2>
+                <p class="legal-content__text">
+                    Les messages sont enregistrés dans la base de données du site, avec leur date d'envoi.
+                    Ils sont conservés le temps nécessaire au traitement de votre demande, puis au maximum 3 ans après le dernier échange.
+                </p>
+
+                <h2 class="legal-content__title">Sécurité</h2>
+                <p class="legal-content__text">
+                    Le formulaire est protégé contre les envois automatiques (robots) et les envois en rafale.
+                    Les échanges avec le site sont chiffrés (HTTPS).
+                </p>
+
+                <h2 class="legal-content__title">Vos droits</h2>
+                <p class="legal-content__text">
+                    Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation, d'opposition
+                    et de portabilité sur vos données. Pour l'exercer, écrivez à
+                    <mark class="legal-content__todo">[adresse e-mail de contact]</mark>.
+                </p>
+                <p class="legal-content__text">
+                    Si vous estimez que vos droits ne sont pas respectés, vous pouvez adresser une réclamation à la CNIL :
+                    <a href="https://www.cnil.fr" class="legal-content__link" target="_blank" rel="noopener noreferrer">www.cnil.fr<span class="external-link__hint"> (nouvel onglet)</span></a>.
+                </p>
+
+                <h2 class="legal-content__title">Cookies</h2>
+                <p class="legal-content__text">
+                    Le site utilise uniquement des cookies techniques, nécessaires à son fonctionnement
+                    (par exemple pour afficher la confirmation d'envoi du formulaire). Aucun cookie publicitaire
+                    ni de mesure d'audience n'est déposé : aucun consentement n'est donc demandé.
+                </p>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}

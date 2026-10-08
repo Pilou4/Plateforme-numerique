@@ -4,10 +4,11 @@ namespace App\Tests\Unit\Service;
 
 use App\Dto\ProjectStepPayload;
 use App\Entity\Project;
+use App\Entity\ProjectStatus;
 use App\Entity\ProjectStep;
 use App\Entity\ProjectSubStep;
 use App\Enum\ProjectStepPriority;
-use App\Enum\ProjectStepStatus;
+use App\Repository\ProjectStatusRepository;
 use App\Repository\ProjectStepRepository;
 use App\Service\ProjectStepManager;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,6 +20,20 @@ use PHPUnit\Framework\TestCase;
  */
 final class ProjectStepManagerTest extends TestCase
 {
+    /**
+     * Les 3 statuts de la table project_status, créés ici sans base de données.
+     *
+     * @var array<string, ProjectStatus>
+     */
+    private array $statuses = [];
+
+    protected function setUp(): void
+    {
+        foreach (ProjectStatus::CODES as $position => $code) {
+            $this->statuses[$code] = new ProjectStatus($code, $code, $code, $position);
+        }
+    }
+
     /* ------------------------------------------------------------------
        Création
        ------------------------------------------------------------------ */
@@ -35,7 +50,7 @@ final class ProjectStepManagerTest extends TestCase
         $entityManager->expects($this->once())->method('persist')->with($this->isInstanceOf(ProjectStep::class));
         $entityManager->expects($this->once())->method('flush');
 
-        $step = (new ProjectStepManager($entityManager, $repository))->create($project, new ProjectStepPayload(
+        $step = (new ProjectStepManager($entityManager, $repository, $this->createStatusRepository()))->create($project, new ProjectStepPayload(
             title: '  Page d\'accueil  ',
             description: '  Première version  ',
         ));
@@ -44,7 +59,7 @@ final class ProjectStepManagerTest extends TestCase
         $this->assertSame('Page d\'accueil', $step->getTitle());
         $this->assertSame('Première version', $step->getDescription());
         $this->assertSame(3, $step->getPosition());
-        $this->assertSame(ProjectStepStatus::Todo, $step->getStatus());
+        $this->assertSame(ProjectStatus::CODE_TODO, $step->getStatusCode());
         $this->assertSame(ProjectStepPriority::Normal, $step->getPriority());
     }
 
@@ -59,11 +74,11 @@ final class ProjectStepManagerTest extends TestCase
     {
         $step = $this->createManager()->create(new Project(), new ProjectStepPayload(
             title: 'Tâche',
-            status: ProjectStepStatus::Done,
+            status: ProjectStatus::CODE_DONE,
             timeSpent: 120,
         ));
 
-        $this->assertSame(ProjectStepStatus::Todo, $step->getStatus());
+        $this->assertSame(ProjectStatus::CODE_TODO, $step->getStatusCode());
         $this->assertSame(0, $step->getTimeSpent());
     }
 
@@ -88,7 +103,7 @@ final class ProjectStepManagerTest extends TestCase
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects($this->once())->method('flush');
 
-        (new ProjectStepManager($entityManager, $this->createStub(ProjectStepRepository::class)))
+        (new ProjectStepManager($entityManager, $this->createStub(ProjectStepRepository::class), $this->createStatusRepository()))
             ->update($step, new ProjectStepPayload(priority: ProjectStepPriority::Low, timeSpent: 30));
 
         $this->assertSame('Titre', $step->getTitle());
@@ -101,9 +116,9 @@ final class ProjectStepManagerTest extends TestCase
     {
         $step = (new ProjectStep())->setTitle('Titre');
 
-        $this->createManager()->update($step, new ProjectStepPayload(status: ProjectStepStatus::Done));
+        $this->createManager()->update($step, new ProjectStepPayload(status: ProjectStatus::CODE_DONE));
 
-        $this->assertSame(ProjectStepStatus::Done, $step->getStatus());
+        $this->assertSame($this->statuses[ProjectStatus::CODE_DONE], $step->getStatus());
         $this->assertNotNull($step->getCompletedAt());
     }
 
@@ -159,7 +174,7 @@ final class ProjectStepManagerTest extends TestCase
         $entityManager->expects($this->once())->method('remove')->with($step);
         $entityManager->expects($this->once())->method('flush');
 
-        (new ProjectStepManager($entityManager, $this->createStub(ProjectStepRepository::class)))->delete($step);
+        (new ProjectStepManager($entityManager, $this->createStub(ProjectStepRepository::class), $this->createStatusRepository()))->delete($step);
     }
 
     /* ------------------------------------------------------------------
@@ -206,7 +221,7 @@ final class ProjectStepManagerTest extends TestCase
         $repository->method('findBy')->willReturn($projectSteps);
         $repository->method('findNextPosition')->willReturn(0);
 
-        return new ProjectStepManager($this->createStub(EntityManagerInterface::class), $repository);
+        return new ProjectStepManager($this->createStub(EntityManagerInterface::class), $repository, $this->createStatusRepository());
     }
 
     /**
@@ -218,5 +233,16 @@ final class ProjectStepManagerTest extends TestCase
         (new \ReflectionProperty(ProjectStep::class, 'id'))->setValue($step, $id);
 
         return $step;
+    }
+
+    /**
+     * Faux repository des statuts : getByCode() renvoie le statut correspondant de $this->statuses.
+     */
+    private function createStatusRepository(): ProjectStatusRepository
+    {
+        $repository = $this->createStub(ProjectStatusRepository::class);
+        $repository->method('getByCode')->willReturnCallback(fn (string $code): ProjectStatus => $this->statuses[$code]);
+
+        return $repository;
     }
 }
