@@ -9,7 +9,22 @@
 
 {% block body %}
 <div class="app-layout">
+    {#
+        Menu replié retenu (SidebarToggle.js) : appliqué ici, AVANT l'affichage du menu.
+        Les fichiers JS (modules) ne s'exécutent qu'une fois la page affichée : sans ce petit script,
+        le menu apparaît ouvert puis se referme à chaque rechargement.
+    #}
+    <script>
+        try {
+            if (window.localStorage.getItem('app-sidebar-collapsed') === '1') {
+                document.currentScript.parentElement.classList.add('app-layout--sidebar-collapsed');
+            }
+        } catch {}
+    </script>
     {% include 'app/_partials/_sidebar.html.twig' %}
+
+    {# Fond sombre derrière le menu ouvert en tiroir (mobile et tablette) : un clic dessus ferme le menu #}
+    <div class="app-sidebar-backdrop" data-app-menu-close aria-hidden="true"></div>
 
     <div class="app-layout__content">
         {% block app_body %}{% endblock %}

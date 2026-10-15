@@ -4,9 +4,11 @@
 #}
 {{ include('app/_partials/_page_header.html.twig', {
     title: title,
+    icon: 'documentation.svg',
     eyebrow: 'Documentation',
     lead: lead ?? null,
     search: search ?? null,
+    filters: filters ?? [],
     actions: actions ?? [],
     tabs_label: 'Sections de la documentation',
     tabs: [

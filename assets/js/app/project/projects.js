@@ -2,7 +2,10 @@
 // Gère les formulaires d'ajout et de modification d'un projet, affichés dans la modal,
 // et les sections de la présentation (page d'un projet).
 import { apiPost } from '../../fonctions/api.js';
-import { initSectionEditor } from '../../composants/SectionEditor.js';
+import { initProjectCardEditor } from './ProjectCardEditor.js';
+import { initProjectImageFields } from './ProjectImageFields.js';
+import { initProjectList } from './ProjectList.js';
+import { initProjectSections } from './sections/ProjectSections.js';
 
 /**
  * Envoi d'un formulaire de projet (création ou modification).
@@ -52,5 +55,11 @@ function showSavedProject(form, project) {
 }
 
 document.addEventListener('submit', handleProjectFormSubmit);
-// Sections de la présentation (page d'un projet uniquement)
-document.addEventListener('DOMContentLoaded', initSectionEditor);
+// Images du formulaire (logo, logo long, avatar) : aperçu et suppression
+initProjectImageFields();
+// Sections de la présentation en blocs (page d'un projet uniquement)
+document.addEventListener('DOMContentLoaded', initProjectSections);
+// Filtres, recherche et favoris (liste des projets uniquement)
+document.addEventListener('DOMContentLoaded', initProjectList);
+// Modification directe des cartes (liste des projets uniquement)
+document.addEventListener('DOMContentLoaded', initProjectCardEditor);

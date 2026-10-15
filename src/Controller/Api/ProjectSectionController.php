@@ -2,11 +2,11 @@
 
 namespace App\Controller\Api;
 
+use App\Dto\ProjectSectionPayload;
 use App\Dto\SectionMovePayload;
-use App\Dto\SectionPayload;
 use App\Entity\Project;
 use App\Entity\ProjectSection;
-use App\Service\SectionManager;
+use App\Service\ProjectSectionManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,36 +17,46 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * API des sections de la présentation d'un projet : /api/projet/{slug}/sections
  *
- * Comme pour les tutoriels : après chaque action, le JavaScript recharge la page
- * et le message de confirmation s'affiche en bandeau (message flash).
+ * L'éditeur envoie la section entière (titre + blocs, voir ProjectSectionPayload).
+ * Après chaque action, le JavaScript recharge la page et le message de confirmation
+ * s'affiche en bandeau (message flash). Un bloc mal rempli renvoie une erreur 422 qui dit lequel.
  */
 #[Route('/api/projet/{slug:project}/sections', name: 'api_project_sections_', requirements: ['slug' => '[a-z0-9-]+', 'id' => '\d+'])]
 final class ProjectSectionController extends AbstractController
 {
     public function __construct(
-        private readonly SectionManager $sectionManager,
+        private readonly ProjectSectionManager $projectSectionManager,
     ) {
     }
 
     #[Route('', name: 'create', methods: ['POST'])]
-    public function create(Project $project, #[MapRequestPayload] SectionPayload $payload): JsonResponse
+    public function create(Project $project, #[MapRequestPayload] ProjectSectionPayload $payload): JsonResponse
     {
-        $section = new ProjectSection();
-        $project->addSection($section);
-        $this->sectionManager->add($project->getSections(), $section, $payload);
+        try {
+            $section = $this->projectSectionManager->create($project, $payload);
+        } catch (\DomainException $exception) {
+            return $this->json(['detail' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         $this->addFlash('success', \sprintf('La section « %s » a été ajoutée.', $section->getTitle()));
 
-        return $this->json(['url' => $this->getProjectUrl($project)], Response::HTTP_CREATED);
+        return $this->json(['url' => $this->getSectionUrl($project, $section)], Response::HTTP_CREATED);
     }
 
-    #[Route('/{id:section}', name: 'update', methods: ['PATCH'])]
-    public function update(Project $project, ProjectSection $section, #[MapRequestPayload] SectionPayload $payload): JsonResponse
+    #[Route('/{id:section}', name: 'update', methods: ['PUT'])]
+    public function update(Project $project, ProjectSection $section, #[MapRequestPayload] ProjectSectionPayload $payload): JsonResponse
     {
         $this->assertBelongsToProject($project, $section);
-        $this->sectionManager->update($section, $payload);
+
+        try {
+            $this->projectSectionManager->update($section, $payload);
+        } catch (\DomainException $exception) {
+            return $this->json(['detail' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         $this->addFlash('success', \sprintf('La section « %s » a été modifiée.', $section->getTitle()));
 
-        return $this->json(['url' => $this->getProjectUrl($project)]);
+        return $this->json(['url' => $this->getSectionUrl($project, $section)]);
     }
 
     #[Route('/{id:section}', name: 'delete', methods: ['DELETE'])]
@@ -54,10 +64,10 @@ final class ProjectSectionController extends AbstractController
     {
         $this->assertBelongsToProject($project, $section);
         $title = $section->getTitle();
-        $this->sectionManager->delete($project->getSections(), $section);
+        $this->projectSectionManager->delete($project, $section);
         $this->addFlash('success', \sprintf('La section « %s » a été supprimée.', $title));
 
-        return $this->json(['url' => $this->getProjectUrl($project)]);
+        return $this->json(['url' => $this->generateUrl('app_project_show', ['slug' => $project->getSlug()])]);
     }
 
     /**
@@ -67,9 +77,9 @@ final class ProjectSectionController extends AbstractController
     public function move(Project $project, ProjectSection $section, #[MapRequestPayload] SectionMovePayload $payload): JsonResponse
     {
         $this->assertBelongsToProject($project, $section);
-        $this->sectionManager->move($project->getSections(), $section, $payload->direction);
+        $this->projectSectionManager->move($project, $section, (string) $payload->direction);
 
-        return $this->json(['url' => $this->getProjectUrl($project)]);
+        return $this->json(['url' => $this->getSectionUrl($project, $section)]);
     }
 
     private function assertBelongsToProject(Project $project, ProjectSection $section): void
@@ -79,8 +89,11 @@ final class ProjectSectionController extends AbstractController
         }
     }
 
-    private function getProjectUrl(Project $project): string
+    /**
+     * La page du projet, positionnée sur la section (ancre #section-{id}).
+     */
+    private function getSectionUrl(Project $project, ProjectSection $section): string
     {
-        return $this->generateUrl('app_project_show', ['slug' => $project->getSlug()]);
+        return $this->generateUrl('app_project_show', ['slug' => $project->getSlug(), '_fragment' => 'section-'.$section->getId()]);
     }
 }

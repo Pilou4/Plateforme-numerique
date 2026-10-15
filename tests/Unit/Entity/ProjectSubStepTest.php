@@ -25,7 +25,7 @@ final class ProjectSubStepTest extends TestCase
     {
         $subStep = new ProjectSubStep();
 
-        $subStep->setStatus(self::status(ProjectStatus::CODE_DONE));
+        $subStep->setStatus(self::createStatus(ProjectStatus::CODE_DONE));
 
         $this->assertTrue($subStep->isDone());
         $this->assertSame(ProjectStatus::CODE_DONE, $subStep->getStatusCode());
@@ -34,19 +34,19 @@ final class ProjectSubStepTest extends TestCase
 
     public function testSettingDoneAgainKeepsTheFirstCompletionDate(): void
     {
-        $subStep = (new ProjectSubStep())->setStatus(self::status(ProjectStatus::CODE_DONE));
+        $subStep = (new ProjectSubStep())->setStatus(self::createStatus(ProjectStatus::CODE_DONE));
         $completedAt = $subStep->getCompletedAt();
 
-        $subStep->setStatus(self::status(ProjectStatus::CODE_DONE));
+        $subStep->setStatus(self::createStatus(ProjectStatus::CODE_DONE));
 
         $this->assertSame($completedAt, $subStep->getCompletedAt());
     }
 
     public function testLeavingDoneClearsTheCompletionDate(): void
     {
-        $subStep = (new ProjectSubStep())->setStatus(self::status(ProjectStatus::CODE_DONE));
+        $subStep = (new ProjectSubStep())->setStatus(self::createStatus(ProjectStatus::CODE_DONE));
 
-        $subStep->setStatus(self::status(ProjectStatus::CODE_TODO));
+        $subStep->setStatus(self::createStatus(ProjectStatus::CODE_TODO));
 
         $this->assertNull($subStep->getCompletedAt());
     }
@@ -63,7 +63,7 @@ final class ProjectSubStepTest extends TestCase
     /**
      * Statut de la table project_status, créé ici sans base de données.
      */
-    private static function status(string $code): ProjectStatus
+    private static function createStatus(string $code): ProjectStatus
     {
         return new ProjectStatus($code, $code, $code, array_search($code, ProjectStatus::CODES, true));
     }

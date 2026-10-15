@@ -43,7 +43,7 @@ final class ProjectStepTest extends TestCase
     {
         $step = new ProjectStep();
 
-        $step->setStatus(self::status(ProjectStatus::CODE_DONE));
+        $step->setStatus(self::createStatus(ProjectStatus::CODE_DONE));
 
         $this->assertTrue($step->isDone());
         $this->assertSame(ProjectStatus::CODE_DONE, $step->getStatusCode());
@@ -52,19 +52,19 @@ final class ProjectStepTest extends TestCase
 
     public function testSettingDoneAgainKeepsTheFirstCompletionDate(): void
     {
-        $step = (new ProjectStep())->setStatus(self::status(ProjectStatus::CODE_DONE));
+        $step = (new ProjectStep())->setStatus(self::createStatus(ProjectStatus::CODE_DONE));
         $completedAt = $step->getCompletedAt();
 
-        $step->setStatus(self::status(ProjectStatus::CODE_DONE));
+        $step->setStatus(self::createStatus(ProjectStatus::CODE_DONE));
 
         $this->assertSame($completedAt, $step->getCompletedAt());
     }
 
     public function testLeavingDoneClearsTheCompletionDate(): void
     {
-        $step = (new ProjectStep())->setStatus(self::status(ProjectStatus::CODE_DONE));
+        $step = (new ProjectStep())->setStatus(self::createStatus(ProjectStatus::CODE_DONE));
 
-        $step->setStatus(self::status(ProjectStatus::CODE_IN_PROGRESS));
+        $step->setStatus(self::createStatus(ProjectStatus::CODE_IN_PROGRESS));
 
         $this->assertNull($step->getCompletedAt());
     }
@@ -152,7 +152,7 @@ final class ProjectStepTest extends TestCase
         $step = new ProjectStep();
 
         foreach ($subStepCodes as $code) {
-            $step->addSubStep((new ProjectSubStep())->setStatus(self::status($code)));
+            $step->addSubStep((new ProjectSubStep())->setStatus(self::createStatus($code)));
         }
 
         $this->assertSame($expected, $step->getStatusCodeFromSubSteps());
@@ -175,7 +175,7 @@ final class ProjectStepTest extends TestCase
     /**
      * Statut de la table project_status, créé ici sans base de données.
      */
-    private static function status(string $code): ProjectStatus
+    private static function createStatus(string $code): ProjectStatus
     {
         return new ProjectStatus($code, $code, $code, array_search($code, ProjectStatus::CODES, true));
     }

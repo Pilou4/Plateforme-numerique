@@ -1,17 +1,23 @@
 {#
-    En-tête commun des pages de l'app : titre, recherche, boutons d'action, onglets.
+    En-tête commun des pages de l'app, sur trois lignes :
+      1. bouton rond « + » (action principale), titre … autres boutons, recherche
+      2. filtres de la page
+      3. onglets
     Tout est facultatif sauf le titre : ce qui n'est pas donné ne s'affiche pas.
 
     {{ include('app/_partials/_page_header.html.twig', {
         title: 'Glossaire',                         (obligatoire)
         eyebrow: 'Documentation',                   petite étiquette au-dessus du titre
         eyebrow_url: path('app_documentation'),     → l'étiquette devient un lien « ← … »
-        logo_url: path('app_project_logo', …),      image à gauche du titre
         count: terms|length,                        compteur à droite du titre
         lead: 'Une phrase de présentation.',
         search: 'Rechercher un terme…',             barre de recherche (texte d'aide) ;
                                                     le filtrage est fait par la page (voir PageSearch.js)
-        actions: [
+        filters: [                                  filtres de la page, en listes déroulantes (voir PageFilters.js)
+            {name: 'state', label: 'Statut', icon: 'filter-status.svg', color: 'blue', value: '',
+             options: [{value: '', label: 'Tous'}, {value: 'en_cours', label: 'En cours', color: 'blue'}]},
+        ],
+        actions: [                                  la 1re action principale devient le bouton rond « + » (label = infobulle)
             {label: 'Ajouter un terme', icon: 'plus.svg', modal: 'glossary-term-add', modal_title: 'Nouveau terme', modal_size: 'medium'},
             {label: 'Modifier', href: path(…), variant: 'ghost'},
             {label: 'Supprimer', variant: 'ghost', attributes: {'data-topic-delete': ''}},   attributs libres (pour le JavaScript)
@@ -25,15 +31,23 @@
 #}
 {% set eyebrow = eyebrow ?? null %}
 {% set eyebrow_url = eyebrow_url ?? null %}
-{% set logo_url = logo_url ?? null %}
 {% set count = count ?? null %}
 {% set lead = lead ?? null %}
 {% set search = search ?? null %}
+{% set filters = filters ?? [] %}
 {% set actions = actions ?? [] %}
 {% set tabs = tabs ?? [] %}
+{# Le bouton rond « + » à gauche du titre : la première action principale. Les autres actions vont à droite. #}
+{% set add_action = actions|filter(action => (action.variant ?? 'primary') != 'ghost')|first %}
+{% set other_actions = actions|filter(action => action is not same as(add_action)) %}
 
 <header class="page-header{{ tabs is not empty ? ' page-header--with-tabs' }}">
+    {# Ligne 1 : « + », titre … boutons secondaires, recherche #}
     <div class="page-header__main">
+        {% if add_action %}
+            {{ _self.add_button(add_action) }}
+        {% endif %}
+
         <div class="page-header__titles">
             {% if eyebrow %}
                 <p class="page-header__eyebrow">
@@ -46,9 +60,6 @@
             {% endif %}
 
             <div class="page-header__heading">
-                {% if logo_url %}
-                    <img src="{{ logo_url }}" alt="" class="page-header__logo" width="44" height="44">
-                {% endif %}
                 <h1 class="page-header__title">{{ title }}</h1>
                 {% if count is not null %}
                     <span class="page-header__count">{{ count }}</span>
@@ -60,37 +71,36 @@
             {% endif %}
         </div>
 
-        {% if search or actions is not empty %}
+        {% if search or other_actions is not empty %}
             <div class="page-header__actions">
+                {% for action in other_actions %}
+                    {{ _self.action_button(action) }}
+                {% endfor %}
+
                 {% if search %}
                     <label class="page-search">
                         <img src="{{ asset('images/icones/search.svg') }}" alt="" class="page-search__icon" width="16" height="16">
-                        <input type="search" class="page-search__input" data-page-search placeholder="{{ search }}" aria-label="{{ search }}" autocomplete="off">
+                        <input type="search" class="page-search__input" data-page-search placeholder="{{ search }}" aria-label="{{ search }}" aria-keyshortcuts="Control+K" autocomplete="off">
+                        <kbd class="page-search__shortcut" aria-hidden="true">Ctrl K</kbd>
                     </label>
                 {% endif %}
-
-                {% for action in actions %}
-                    {% set action_class = 'page-header__button' ~ ((action.variant ?? 'primary') == 'ghost' ? ' page-header__button--ghost') %}
-                    {% if action.href ?? null %}
-                        <a href="{{ action.href }}" class="{{ action_class }}"{% for name, value in action.attributes ?? {} %} {{ name }}="{{ value }}"{% endfor %}>
-                            {% if action.icon ?? null %}<img src="{{ asset('images/icones/' ~ action.icon) }}" alt="" width="16" height="16">{% endif %}
-                            <span>{{ action.label }}</span>
-                        </a>
-                    {% else %}
-                        <button type="button" class="{{ action_class }}"
-                                {% if action.modal ?? null %}data-modal-open="{{ action.modal }}"{% endif %}
-                                {% if action.modal_title ?? null %}data-modal-title="{{ action.modal_title }}"{% endif %}
-                                {% if action.modal_size ?? null %}data-modal-size="{{ action.modal_size }}"{% endif %}
-                                {% for name, value in action.attributes ?? {} %}{{ name }}="{{ value }}" {% endfor %}>
-                            {% if action.icon ?? null %}<img src="{{ asset('images/icones/' ~ action.icon) }}" alt="" width="16" height="16">{% endif %}
-                            <span>{{ action.label }}</span>
-                        </button>
-                    {% endif %}
-                {% endfor %}
             </div>
         {% endif %}
     </div>
 
+    {#
+        Ligne 2 : filtres de la page. Chaque filtre est une tuile de largeur fixe (icône, nom, valeur)
+        qui ouvre sa liste de choix (PageFilters.js) ; le filtrage est fait par la page.
+    #}
+    {% if filters is not empty %}
+        <div class="page-header__filters" role="group" aria-label="Filtres">
+            {% for filter in filters %}
+                {{ _self.filter(filter) }}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# Ligne 3 : onglets #}
     {% if tabs is not empty %}
         <nav class="page-tabs" aria-label="{{ tabs_label ?? 'Onglets de la page' }}">
             {% for tab in tabs %}
@@ -104,3 +114,85 @@
         </nav>
     {% endif %}
 </header>
+
+{#
+    Bouton rond « + » de l'action principale : le texte du bouton devient son infobulle et son nom pour les lecteurs d'écran.
+#}
+{% macro add_button(action) %}
+    {% if action.href ?? null %}
+        <a href="{{ action.href }}" class="page-header__add" title="{{ action.label }}" aria-label="{{ action.label }}"{% for name, value in action.attributes ?? {} %} {{ name }}="{{ value }}"{% endfor %}>
+            <img src="{{ asset('images/icones/' ~ (action.icon ?? 'plus.svg')) }}" alt="" width="22" height="22">
+        </a>
+    {% else %}
+        <button type="button" class="page-header__add" title="{{ action.label }}" aria-label="{{ action.label }}"
+                {% if action.modal ?? null %}data-modal-open="{{ action.modal }}"{% endif %}
+                {% if action.modal_title ?? null %}data-modal-title="{{ action.modal_title }}"{% endif %}
+                {% if action.modal_size ?? null %}data-modal-size="{{ action.modal_size }}"{% endif %}
+                {% for name, value in action.attributes ?? {} %}{{ name }}="{{ value }}" {% endfor %}>
+            <img src="{{ asset('images/icones/' ~ (action.icon ?? 'plus.svg')) }}" alt="" width="22" height="22">
+        </button>
+    {% endif %}
+{% endmacro %}
+
+{#
+    Bouton d'une action secondaire (à droite, avant la recherche).
+#}
+{% macro action_button(action) %}
+    {% if action.href ?? null %}
+        <a href="{{ action.href }}" class="page-header__button page-header__button--ghost"{% for name, value in action.attributes ?? {} %} {{ name }}="{{ value }}"{% endfor %}>
+            {% if action.icon ?? null %}<img src="{{ asset('images/icones/' ~ action.icon) }}" alt="" width="16" height="16">{% endif %}
+            <span>{{ action.label }}</span>
+        </a>
+    {% else %}
+        <button type="button" class="page-header__button page-header__button--ghost"
+                {% if action.modal ?? null %}data-modal-open="{{ action.modal }}"{% endif %}
+                {% if action.modal_title ?? null %}data-modal-title="{{ action.modal_title }}"{% endif %}
+                {% if action.modal_size ?? null %}data-modal-size="{{ action.modal_size }}"{% endif %}
+                {% for name, value in action.attributes ?? {} %}{{ name }}="{{ value }}" {% endfor %}>
+            {% if action.icon ?? null %}<img src="{{ asset('images/icones/' ~ action.icon) }}" alt="" width="16" height="16">{% endif %}
+            <span>{{ action.label }}</span>
+        </button>
+    {% endif %}
+{% endmacro %}
+
+{#
+    Un filtre de l'en-tête. La valeur choisie est gardée dans data-value (lue par PageFilters.js).
+    - color : couleur de la tuile (blue, green, yellow)
+    - icon  : icône de la tuile (public/images/icones/)
+    - options[].color : pastille de couleur devant le choix (couleur d'un statut : violet, blue, green…)
+#}
+{% macro filter(filter) %}
+    {% set value = filter.value ?? '' %}
+    {% set current = filter.options|filter(option => option.value ~ '' == value ~ '')|first ?: filter.options|first %}
+    {% set menu_id = 'page-filter-' ~ filter.name %}
+    <div class="page-filter page-filter--{{ filter.color ?? 'blue' }}{{ value != (filter.options|first).value ~ '' ? ' page-filter--active' }}"
+         data-page-filter="{{ filter.name }}"
+         data-value="{{ value }}"
+         data-default-value="{{ (filter.options|first).value }}">
+        <button type="button" class="page-filter__button" data-filter-toggle aria-haspopup="listbox" aria-expanded="false" aria-controls="{{ menu_id }}">
+            <span class="page-filter__icon">
+                <img src="{{ asset('images/icones/' ~ (filter.icon ?? 'filter-status.svg')) }}" alt="" width="18" height="18">
+            </span>
+            <span class="page-filter__text">
+                <span class="page-filter__label">{{ filter.label }}</span>
+                <span class="page-filter__value" data-filter-value>
+                    {{ _self.dot(current.color ?? null) }}<span class="page-filter__value-text">{{ current.label }}</span>
+                </span>
+            </span>
+            <img src="{{ asset('images/icones/chevron-down.svg') }}" alt="" class="page-filter__chevron" width="14" height="14">
+        </button>
+
+        <div class="page-filter__menu" id="{{ menu_id }}" role="listbox" aria-label="{{ filter.label }}" data-filter-menu hidden>
+            {% for option in filter.options %}
+                <button type="button" class="page-filter__option" role="option" data-filter-option="{{ option.value }}" aria-selected="{{ option.value ~ '' == value ~ '' ? 'true' : 'false' }}">
+                    {{ _self.dot(option.color ?? null) }}<span class="page-filter__value-text">{{ option.label }}</span>
+                    <img src="{{ asset('images/icones/check.svg') }}" alt="" class="page-filter__check" width="16" height="16">
+                </button>
+            {% endfor %}
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro dot(color) %}
+    {%- if color -%}<span class="page-filter__dot page-filter__dot--{{ color }}" aria-hidden="true"></span>{%- endif -%}
+{% endmacro %}

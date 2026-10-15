@@ -6,6 +6,7 @@ use App\Dto\ProjectFilePayload;
 use App\Entity\Project;
 use App\Entity\ProjectFile;
 use App\Repository\ProjectFileRepository;
+use App\Repository\ProjectSectionBlockFileRepository;
 use App\Service\ProjectFileManager;
 use App\Service\ProjectFilePreview;
 use App\Validator\ProjectFileUpload;
@@ -27,6 +28,7 @@ final class ProjectFileController extends AbstractController
     public function __construct(
         private readonly ProjectFileManager $projectFileManager,
         private readonly ProjectFilePreview $projectFilePreview,
+        private readonly ProjectSectionBlockFileRepository $projectSectionBlockFileRepository,
     ) {
     }
 
@@ -111,6 +113,8 @@ final class ProjectFileController extends AbstractController
             'preview' => $this->projectFilePreview->getPreviewKind($file),
             'viewUrl' => $this->generateUrl('app_project_file', $routeParameters),
             'downloadUrl' => $this->generateUrl('app_project_file_download', $routeParameters),
+            // Sections de la présentation qui affichent ce fichier (cités avant une suppression)
+            'usedInSections' => $this->projectSectionBlockFileRepository->findSectionTitlesUsingFile($file),
         ];
     }
 }

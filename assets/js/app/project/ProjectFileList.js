@@ -389,7 +389,7 @@ export class ProjectFileList {
        ------------------------------------------------------------------ */
 
     async deleteFile(file) {
-        if (!window.confirm(`Supprimer « ${file.title} » ? Le fichier sera définitivement effacé.`)) {
+        if (!window.confirm(deleteQuestion(file))) {
             return;
         }
 
@@ -418,4 +418,21 @@ export class ProjectFileList {
     getFileUrl(id) {
         return `${this.apiUrl}/${id}`;
     }
+}
+
+/**
+ * Question posée avant de supprimer un fichier : elle cite les sections de la présentation
+ * qui l'affichent (le fichier disparaîtra de leurs blocs images ou documents).
+ */
+function deleteQuestion(file) {
+    const question = `Supprimer « ${file.title} » ? Le fichier sera définitivement effacé.`;
+    const sections = file.usedInSections ?? [];
+
+    if (sections.length === 0) {
+        return question;
+    }
+
+    const where = sections.length === 1 ? 'la section' : 'les sections';
+
+    return `${question}\n\nIl est affiché dans ${where} : ${sections.join(', ')}. Il en sera retiré.`;
 }

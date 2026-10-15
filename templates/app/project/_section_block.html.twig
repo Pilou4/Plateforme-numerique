@@ -1,0 +1,100 @@
+{#
+    Affichage d'un bloc de section (App\Entity\ProjectSectionBlock) : l'app fabrique les balises,
+    aucun HTML n'est saisi. Les textes passent par le filtre inline_format (gras, italique, code, lien),
+    qui échappe tout le reste.
+
+    {{ include('app/project/_section_block.html.twig', {block: block, project: project}, with_context = false) }}
+#}
+{% set type = block.type.value %}
+
+{% if type == 'paragraphe' %}
+    {% for paragraph in block.paragraphs %}
+        <p class="section-block section-block__text">{{ paragraph.text|inline_format }}</p>
+    {% endfor %}
+
+{% elseif type == 'sous_titre' %}
+    <h3 class="section-block section-block__subtitle">{{ block.subtitle }}</h3>
+
+{% elseif type == 'liste' %}
+    {% set list_tag = block.ordered ? 'ol' : 'ul' %}
+    <{{ list_tag }} class="section-block section-block__list{{ block.ordered ? ' section-block__list--ordered' }}">
+        {% for item in block.listItems %}
+            <li class="section-block__list-item">{{ item.text|inline_format }}</li>
+        {% endfor %}
+    </{{ list_tag }}>
+
+{% elseif type == 'tableau' %}
+    {# Le tableau défile sur le côté s'il est plus large que l'écran #}
+    <div class="section-block section-block__table-wrap">
+        <table class="section-block__table">
+            <thead>
+                <tr>
+                    {% for column in block.tableColumns %}
+                        <th scope="col" class="section-block__table-head">{{ column.label }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in block.tableRows %}
+                    <tr>
+                        {% for cell in row.orderedCells %}
+                            <td class="section-block__table-cell">{{ cell.text|inline_format }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% elseif type == 'tags' %}
+    <ul class="section-block section-block__tags">
+        {% for tag in block.tags %}
+            <li class="section-block__tag">{{ tag.label }}</li>
+        {% endfor %}
+    </ul>
+
+{% elseif type == 'definitions' %}
+    <dl class="section-block section-block__definitions">
+        {% for definition in block.definitions %}
+            <div class="section-block__definition">
+                <dt class="section-block__term">{{ definition.term }}</dt>
+                <dd class="section-block__description">{{ definition.definition|inline_format }}</dd>
+            </div>
+        {% endfor %}
+    </dl>
+
+{% elseif type == 'images' %}
+    {# Un clic sur une image l'ouvre en grand (ProjectSections.js) #}
+    <div class="section-block section-block__gallery{{ block.files|length == 1 ? ' section-block__gallery--single' }}">
+        {% for link in block.files %}
+            {% set file = link.file %}
+            <figure class="section-block__figure">
+                <button type="button" class="section-block__zoom" data-image-zoom="{{ path('app_project_file', {slug: project.slug, id: file.id}) }}" data-image-title="{{ link.caption ?? file.title }}" aria-label="Voir « {{ link.caption ?? file.title }} » en grand">
+                    <img src="{{ path('app_project_file', {slug: project.slug, id: file.id}) }}" alt="{{ link.caption ?? file.title }}" class="section-block__image" loading="lazy">
+                </button>
+                {% if link.caption %}
+                    <figcaption class="section-block__caption">{{ link.caption }}</figcaption>
+                {% endif %}
+            </figure>
+        {% endfor %}
+    </div>
+
+{% elseif type == 'documents' %}
+    {% set icons = {pdf: 'file-pdf.svg', doc: 'file-word.svg', docx: 'file-word.svg', odt: 'file-word.svg', xls: 'file-excel.svg', xlsx: 'file-excel.svg', ods: 'file-excel.svg', csv: 'file-excel.svg', ppt: 'file-powerpoint.svg', pptx: 'file-powerpoint.svg', odp: 'file-powerpoint.svg', txt: 'file-text.svg', md: 'file-text.svg'} %}
+    <ul class="section-block section-block__documents">
+        {% for link in block.files %}
+            {% set file = link.file %}
+            <li class="section-block__document">
+                <img src="{{ asset('images/icones/' ~ (icons[file.extension] ?? 'file-other.svg')) }}" alt="" class="section-block__document-icon" width="32" height="32">
+                <span class="section-block__document-text">
+                    <span class="section-block__document-title">{{ link.caption ?? file.title }}</span>
+                    <span class="section-block__document-meta">{{ file.extension|upper }} · {{ file.size < 1048576 ? (file.size / 1024)|round ~ ' Ko' : (file.size / 1048576)|round(1) ~ ' Mo' }}</span>
+                </span>
+                <a href="{{ path('app_project_file_download', {slug: project.slug, id: file.id}) }}" class="section-block__download">
+                    <img src="{{ asset('images/icones/download.svg') }}" alt="" width="16" height="16">
+                    Télécharger
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}

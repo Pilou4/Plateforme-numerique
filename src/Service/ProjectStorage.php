@@ -57,6 +57,15 @@ final class ProjectStorage
         $this->filesystem->remove($this->getPath($project, $fileName, $folder));
     }
 
+    /**
+     * Supprime tout le dossier d'un projet (logo, images et documents).
+     * Reçoit l'id et non le projet : après sa suppression en base, Doctrine efface l'id du projet.
+     */
+    public function deleteProjectDirectory(int $projectId): void
+    {
+        $this->filesystem->remove($this->storageDirectory.'/'.$projectId);
+    }
+
     private function getDirectory(Project $project, ?string $folder): string
     {
         $directory = $this->storageDirectory.'/'.$project->getId();

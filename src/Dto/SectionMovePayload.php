@@ -5,7 +5,8 @@ namespace App\Dto;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Déplacement d'une section d'un cran : vers le haut ou vers le bas.
+ * Déplacement d'un cran vers le haut ou vers le bas : sections (tutoriels, projets),
+ * catégories et statuts des projets (page Paramètres).
  */
 final readonly class SectionMovePayload
 {

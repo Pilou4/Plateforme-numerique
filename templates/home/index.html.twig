@@ -13,10 +13,10 @@
 {# contact_form : formulaire de contact, envoyé par HomeController #}
 
 {% set domains = [
-    {title: 'Intelligence artificielle', icon: 'service-ia.svg', text: 'Assistants IA, automatisation, analyse documentaire et intégration de solutions d\'intelligence artificielle.'},
-    {title: 'Développement', icon: 'service-web.svg', text: 'Applications web, outils métier et solutions numériques sur mesure.'},
-    {title: 'Cybersécurité', icon: 'service-securite.svg', text: 'Sensibilisation, bonnes pratiques et accompagnement pour améliorer la sécurité numérique.'},
-    {title: 'Formation', icon: 'service-formation.svg', text: 'Formation et accompagnement pour particuliers, étudiants et professionnels.'},
+    {title: 'Intelligence artificielle', color: 'ia', icon: 'service-ia.svg', text: 'Assistants IA, automatisation, analyse documentaire et intégration de solutions d\'intelligence artificielle.'},
+    {title: 'Développement', color: 'dev', icon: 'service-web.svg', text: 'Applications web, outils métier et solutions numériques sur mesure.'},
+    {title: 'Cybersécurité', color: 'cyber', icon: 'service-securite.svg', text: 'Sensibilisation, bonnes pratiques et accompagnement pour améliorer la sécurité numérique.'},
+    {title: 'Formation', color: 'formation', icon: 'service-formation.svg', text: 'Formation et accompagnement pour particuliers, étudiants et professionnels.'},
 ] %}
 
 {% set technologies = ['Symfony 8', 'PHP', 'Docker', 'MySQL', 'Git', 'PHPUnit', 'JavaScript', 'IA'] %}
@@ -39,20 +39,26 @@
                 </div>
             </div>
 
-            {# Illustration décorative : une fenêtre de code stylisée #}
+            {#
+                Illustration décorative : la plateforme elle-même (suivi des tâches d'un projet).
+                Au chargement, la barre de progression se remplit puis une nouvelle tâche apparaît.
+                Contenu d'exemple, ignoré par les lecteurs d'écran (aria-hidden).
+            #}
             <div class="home-hero__visual" aria-hidden="true">
-                <div class="home-hero__card home-hero__card--back"></div>
-                <div class="home-hero__card home-hero__card--front">
-                    <span class="home-hero__dots">
-                        <span class="home-hero__dot"></span>
-                        <span class="home-hero__dot"></span>
-                        <span class="home-hero__dot"></span>
-                    </span>
-                    <span class="home-hero__line home-hero__line--long"></span>
-                    <span class="home-hero__line home-hero__line--medium"></span>
-                    <span class="home-hero__line home-hero__line--short"></span>
-                    <span class="home-hero__line home-hero__line--long"></span>
-                    <span class="home-hero__badge">Symfony · Docker · IA</span>
+                <div class="home-board">
+                    <p class="home-board__head">
+                        Plateforme Numérique
+                        <span class="home-board__count">17 tâches sur 25</span>
+                    </p>
+                    <div class="home-board__progress">
+                        <div class="home-board__bar"></div>
+                    </div>
+                    <ul class="home-board__list">
+                        <li class="home-board__task">Page d'accueil <span class="home-board__status home-board__status--done">Terminée</span></li>
+                        <li class="home-board__task">Formulaire de contact <span class="home-board__status home-board__status--done">Terminée</span></li>
+                        <li class="home-board__task">Tests unitaires <span class="home-board__status home-board__status--doing">En cours</span></li>
+                        <li class="home-board__task home-board__task--new">Assistant IA <span class="home-board__status home-board__status--todo">Pas commencée</span></li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -81,7 +87,7 @@
             <h2 class="home-section__title" id="home-domains-title">Domaines d'expertise</h2>
             <ul class="home-domains">
                 {% for domain in domains %}
-                    <li class="home-domain">
+                    <li class="home-domain home-domain--{{ domain.color }}">
                         <span class="home-domain__icon">
                             <img src="{{ asset('images/icones/' ~ domain.icon) }}" alt="" width="24" height="24">
                         </span>
@@ -120,7 +126,7 @@
     <section class="home-section home-section--alt" id="vision" aria-labelledby="home-vision-title">
         <div class="home-section__inner">
             <h2 class="home-section__title" id="home-vision-title">Une vision à long terme</h2>
-            <div class="home-text">
+            <div class="home-text home-vision">
                 <p class="home-text__paragraph">Construire une entreprise capable d'accompagner les particuliers et les professionnels dans leur transition numérique.</p>
                 <ul class="service-examples home-vision__list">
                     <li class="service-examples__item">Créer des solutions utiles.</li>

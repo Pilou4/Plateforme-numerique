@@ -1,38 +1,405 @@
 /* ==========================================================================
-   App (partie connectée) : layout et menu de gauche
+   App (partie connectée) : couleurs, layout et menu de gauche
    Ce fichier n'est chargé que sur les pages de l'app (templates/app/base.html.twig).
    ========================================================================== */
+
+/*
+ * Couleurs de l'app (style « clair » : contenu sur fond bleu très pâle, menu bleu nuit).
+ * À réutiliser plutôt que de réécrire les valeurs.
+ */
+:root {
+    --app-bg: #f1f7fd;
+    --app-surface: #ffffff;
+    --app-border: #e3e9f4;
+    --app-navy: #0b1a3a;
+    --app-text: #1e2a44;
+    --app-muted: #5b6b8c;
+    --app-blue: #1d6ff2;
+    --app-blue-dark: #123c9c;
+    --app-cyan: #22c3e6;
+    --app-yellow: #f5b324;
+    --app-gradient: linear-gradient(135deg, #1d6ff2 0%, #22c3e6 100%);
+    --app-shadow: 0 10px 30px rgba(29, 62, 130, 0.08);
+    --app-shadow-hover: 0 16px 40px rgba(29, 62, 130, 0.14);
+    --app-radius: 18px;
+}
+
+/*
+ * Police Lexend (déclarée dans styles.css) dans toute l'app et les fenêtres modales.
+ * Le code (code, pre) garde sa police à chasse fixe.
+ */
+.app-layout,
+.app-layout *:not(code, pre),
+.modal,
+.modal *:not(code, pre) {
+    font-family: "Lexend", system-ui, sans-serif;
+}
+
+/* --- Nav du haut (dans l'app uniquement) : l'onglet actif n'a pas de pastille, seul son texte passe en jaune --- */
+
+/* .site-header en plus : styles.css est chargé après ce fichier, il faut une règle plus précise */
+.site-header .main-nav__link[aria-current="page"] {
+    color: #fed846;
+    background: none;
+    border: none;
+    box-shadow: none;
+}
 
 /* 72px = hauteur du header : le menu commence sous la nav et va jusqu'en bas de l'écran */
 .app-layout {
     display: flex;
     min-height: calc(100vh - 72px);
+    background-color: var(--app-bg);
 }
 
 .app-sidebar {
+    position: relative;
     flex: 0 0 240px;
-    background-color: #0f172a;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    /* min-width: 0 : sans ça, la colonne ne peut pas devenir plus étroite que ses liens (menu replié) */
+    min-width: 0;
+    transition: flex-basis 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    /* clip et non hidden : hidden empêcherait le menu de rester collé en haut (position: sticky) */
+    overflow: clip;
+    background: linear-gradient(180deg, #091b3d 0%, #081631 100%);
 }
 
+/* Vague décorative en bas du menu */
+
 /*
- * Le menu reste visible quand on fait défiler la page (le fond de la colonne, lui, suit la page).
- * max-height + overflow-y : si le menu devient plus haut que l'écran, il défile tout seul.
+ * Contenu du menu (bouton, liens, encart d'aide) : reste visible quand on fait défiler la page
+ * (le fond de la colonne, lui, suit la page). Il fait la hauteur de l'écran : l'encart d'aide est en bas.
+ * overflow-y : si le menu devient plus haut que l'écran, il défile tout seul.
  */
-.app-sidebar__nav {
+.app-sidebar__inner {
     position: sticky;
+    z-index: 1;
     /* Sous la nav du haut quand elle est visible (variable mise à jour par AutoHideHeader.js) */
     top: var(--site-header-height, 0px);
-    transition: top 250ms ease;
-    max-height: calc(100vh - var(--site-header-height, 0px));
-    padding: 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    height: calc(100vh - var(--site-header-height, 0px));
+    padding: 1.25rem 1rem;
+    overflow-x: hidden;
     overflow-y: auto;
+    /* Vague décorative : une courbe plus claire qui part du bord gauche, au tiers du menu, et descend vers la droite */
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 600' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0.35' y2='1'%3E%3Cstop offset='0' stop-color='%231e5fc4' stop-opacity='0.55'/%3E%3Cstop offset='0.45' stop-color='%23123f8a' stop-opacity='0.18'/%3E%3Cstop offset='1' stop-color='%23081631' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 0 C 95 0 160 70 240 190 L240 600 L0 600 Z' fill='url(%23g)'/%3E%3C/svg%3E") no-repeat left bottom / 100% 72%;
+    transition: top 250ms ease, height 250ms ease;
+}
+
+/* --- Bouton qui replie ou déplie le menu --- */
+
+.app-sidebar__toggle {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 36px;
+    padding: 0;
+    background: linear-gradient(180deg, #154a93 0%, #13438a 100%);
+    border: 1px solid transparent;
+    /* 2px à gauche : le bouton (40px) est centré dans la colonne repliée (44px utiles), sans bouger */
+    margin-left: 2px;
+    border-radius: 12px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 12px rgba(2, 8, 24, 0.35);
+    cursor: pointer;
+    transition: background 250ms ease, border-color 250ms ease, filter 150ms ease;
+}
+
+.app-sidebar__toggle:hover {
+    filter: brightness(1.12);
+}
+
+.app-sidebar__toggle-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.app-sidebar__toggle:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 2px;
+}
+
+/* Les deux icônes sont superposées : l'une apparaît pendant que l'autre disparaît en tournant */
+.app-sidebar__toggle-icon {
+    position: absolute;
+    transition: opacity 250ms ease, transform 300ms ease;
+}
+
+.app-sidebar__toggle-icon--closed {
+    opacity: 0;
+    transform: rotate(-90deg);
+}
+
+/* Libellés : ils s'effacent mais restent lus par les lecteurs d'écran */
+.app-sidebar__label {
+    transition: opacity 200ms ease 120ms;
+}
+
+/* Menu replié : seulement sur grand écran (sur mobile et tablette, le menu est un tiroir, voir plus bas) */
+@media (min-width: 901px) {
+    /*
+     * Menu replié : une colonne étroite avec le bouton « › » et les icônes des liens.
+     * Pour une animation fluide, rien ne change de place : seule la largeur de la colonne diminue.
+     * Les icônes sont déjà à l'endroit où elles seront centrées dans la colonne repliée (voir padding
+     * du lien) ; les textes s'effacent et sont coupés par le bord de la colonne.
+     */
+    .app-layout--sidebar-collapsed .app-sidebar {
+        flex-basis: 76px;
+    }
+
+    .app-layout--sidebar-collapsed .app-sidebar__label {
+        opacity: 0;
+        transition: opacity 120ms ease;
+    }
+
+    /* Flèche et sous-menu : ils s'effacent, le sous-menu se referme en douceur */
+    .app-layout--sidebar-collapsed .app-sidebar__submenu-toggle,
+    .app-layout--sidebar-collapsed .app-sidebar__submenu {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    /* La flèche ne prend plus de place : le lien Documentation garde toute la largeur pour son icône */
+    .app-layout--sidebar-collapsed .app-sidebar__submenu-toggle {
+        width: 0;
+        margin-right: 0;
+        /* visibility attend la fin du fondu pour passer à « caché » */
+        transition: opacity 150ms ease, width 300ms cubic-bezier(0.4, 0, 0.2, 1), margin-right 300ms cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 150ms;
+    }
+
+    .app-layout--sidebar-collapsed .app-sidebar__submenu {
+        grid-template-rows: 0fr;
+    }
+
+    /* Une page du sous-menu est en cours (ex. Glossaire) : l'icône Documentation prend la pastille */
+    .app-layout--sidebar-collapsed .app-sidebar__item--current > .app-sidebar__row {
+        background: linear-gradient(90deg, #0a6fd8 0%, #1559b4 45%, #134790 100%);
+        box-shadow: 0 8px 24px rgba(10, 111, 216, 0.35);
+    }
+}
+
+/* Infobulle du menu replié (créée par SidebarTooltip.js, ajoutée à la fin de <body>) */
+.app-sidebar-tooltip {
+    position: fixed;
+    z-index: 1000;
+    padding: 0.45rem 0.75rem;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: #ffffff;
+    background: #0b1a3a;
+    border: 1px solid rgba(147, 197, 253, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(2, 8, 24, 0.35);
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-4px, -50%);
+    transition: opacity 150ms ease, transform 150ms ease;
+}
+
+/* Petite pointe vers l'icône */
+.app-sidebar-tooltip::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -5px;
+    width: 8px;
+    height: 8px;
+    background: #0b1a3a;
+    border-bottom: 1px solid rgba(147, 197, 253, 0.2);
+    border-left: 1px solid rgba(147, 197, 253, 0.2);
+    transform: translateY(-50%) rotate(45deg);
+}
+
+.app-sidebar-tooltip--visible {
+    opacity: 1;
+    transform: translate(0, -50%);
+}
+
+@media (min-width: 901px) {
+    /* Menu replié : bouton plus sombre, bordure bleue fine et chevron « › » */
+    .app-layout--sidebar-collapsed .app-sidebar__toggle {
+        background: #0f2448;
+        border-color: rgba(59, 130, 246, 0.45);
+    }
+
+    .app-layout--sidebar-collapsed .app-sidebar__toggle-icon--open {
+        opacity: 0;
+        transform: rotate(90deg);
+    }
+
+    .app-layout--sidebar-collapsed .app-sidebar__toggle-icon--closed {
+        opacity: 1;
+        transform: rotate(0deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-sidebar,
+    .app-sidebar__label,
+    .app-sidebar__submenu-toggle,
+    .app-sidebar__submenu,
+    .app-sidebar__toggle-icon,
+    .app-sidebar-tooltip {
+        transition: none;
+    }
+}
+
+@media (min-width: 901px) {
+    .app-layout--sidebar-collapsed ~ .notices {
+        left: 76px;
+    }
+}
+
+/* ==========================================================================
+   Menu en tiroir : mobile et tablette (900px et moins)
+   Le menu de gauche sort de la page et glisse depuis la gauche, par-dessus le contenu.
+   Ouvert par le bouton « burger » de la nav du haut. JS : assets/js/app/MobileMenu.js
+   ========================================================================== */
+
+/* Bouton « burger » (nav du haut) et croix du menu : cachés sur grand écran */
+.main-nav__burger,
+.app-sidebar__close,
+.app-sidebar-backdrop {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    /* Le contenu prend toute la largeur : le menu n'est plus une colonne */
+    .app-layout {
+        display: block;
+    }
+
+    .main-nav__burger {
+        display: inline-flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        margin-right: 0.75rem;
+        padding: 0;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(147, 197, 253, 0.25);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: background-color 150ms ease;
+    }
+
+    .main-nav__burger:hover {
+        background: rgba(255, 255, 255, 0.14);
+    }
+
+    .main-nav__burger:focus-visible {
+        outline: 2px solid #67e8f9;
+        outline-offset: 2px;
+    }
+
+    /* Le tiroir : caché à gauche de l'écran, il glisse vers la droite à l'ouverture */
+    .app-sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1100;
+        width: min(300px, 85vw);
+        overflow-y: auto;
+        box-shadow: 12px 0 40px rgba(2, 8, 24, 0.45);
+        visibility: hidden;
+        transform: translateX(-100%);
+        /* visibility attend la fin du glissement pour passer à « caché » (liens non atteignables au clavier) */
+        transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 300ms;
+    }
+
+    .app-layout--menu-open .app-sidebar {
+        visibility: visible;
+        transform: translateX(0);
+        transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1), visibility 0s;
+    }
+
+    /* Dans le tiroir, le contenu du menu n'a plus besoin de rester collé en haut */
+    .app-sidebar__inner {
+        position: static;
+        height: auto;
+        min-height: 100%;
+    }
+
+    /* Le bouton replier/déplier n'a pas de sens dans le tiroir : remplacé par la croix */
+    .app-sidebar__toggle {
+        display: none;
+    }
+
+    .app-sidebar__close {
+        display: inline-flex;
+        flex-shrink: 0;
+        align-self: flex-start;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        margin-left: 2px;
+        padding: 0;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(147, 197, 253, 0.25);
+        border-radius: 12px;
+        cursor: pointer;
+    }
+
+    /* Croix grise passée en blanc sur le fond bleu nuit */
+    .app-sidebar__close img {
+        filter: brightness(0) invert(1);
+    }
+
+    .app-sidebar__close:focus-visible {
+        outline: 2px solid #67e8f9;
+        outline-offset: 2px;
+    }
+
+    /* Fond sombre derrière le tiroir ouvert */
+    .app-sidebar-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1090;
+        display: block;
+        background: rgba(5, 12, 30, 0.55);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 300ms ease, visibility 0s linear 300ms;
+    }
+
+    .app-layout--menu-open .app-sidebar-backdrop {
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 300ms ease, visibility 0s;
+    }
+
+    /* Menu ouvert : la page derrière ne défile plus */
+    html.app-menu-open {
+        overflow: hidden;
+    }
+
+    /* Les bandeaux de message prennent toute la largeur */
+    .app-layout ~ .notices {
+        left: 0;
+    }
+}
+
+@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
+    .app-sidebar,
+    .app-sidebar-backdrop {
+        transition: none;
+    }
 }
 
 .app-sidebar__list {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.35rem;
     list-style: none;
 }
 
@@ -40,14 +407,17 @@
     position: relative;
     display: flex;
     align-items: center;
-    gap: 0.65rem;
-    padding: 0.6rem 0.9rem;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    gap: 0.75rem;
+    white-space: nowrap;
+    /* 13px à gauche : l'icône (18px) est centrée dans la colonne repliée (44px utiles), sans bouger */
+    padding: 0.7rem 0.95rem 0.7rem 13px;
+    overflow: hidden;
     font-size: 0.95rem;
     font-weight: 500;
-    color: #a9b8d9;
+    color: #c3cee6;
     text-decoration: none;
-    transition: color 200ms ease;
+    border-radius: 12px;
+    transition: color 200ms ease, background-color 200ms ease;
 }
 
 .app-sidebar__icon {
@@ -59,22 +429,28 @@
     color: #ffffff;
 }
 
-/* Page en cours : texte blanc en gras + petite barre bleue à gauche */
+/*
+ * La pastille (survol, page en cours) est posée sur toute la ligne :
+ * le lien ET la flèche du sous-menu (Documentation) sont dedans.
+ */
+.app-sidebar__row:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Page en cours : pastille bleu vif, texte blanc */
+.app-sidebar__row:has(> .app-sidebar__link[aria-current="page"]) {
+    background: linear-gradient(90deg, #0a6fd8 0%, #1559b4 45%, #134790 100%);
+    box-shadow: 0 8px 24px rgba(10, 111, 216, 0.35);
+}
+
 .app-sidebar__link[aria-current="page"] {
     font-weight: 600;
     color: #ffffff;
 }
 
-.app-sidebar__link[aria-current="page"]::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 0;
-    width: 3px;
-    height: 1.1rem;
-    background-color: #3b82f6;
-    border-radius: 3px;
-    transform: translateY(-50%);
+/* Flèche du sous-menu en blanc sur la pastille bleue */
+.app-sidebar__row:has(> .app-sidebar__link[aria-current="page"]) .app-sidebar__submenu-icon {
+    filter: brightness(0) invert(1);
 }
 
 /* Lien principal dont une page du sous-menu est en cours */
@@ -90,50 +466,292 @@
 .app-layout__content {
     flex: 1;
     min-width: 0;
+    color: var(--app-text);
 }
 
-/* Bandeaux de message (composant notice) : dans l'app, ils commencent après le menu de gauche */
-.app-layout ~ .notices {
-    left: 240px;
+/* Bandeaux de message (composant notice) : dans l'app, ils commencent après le menu de gauche (grand écran) */
+@media (min-width: 901px) {
+    .app-layout ~ .notices {
+        left: 240px;
+    }
 }
 
 /* ==========================================================================
    En-tête des pages de l'app (.page-header)
    HTML : templates/app/_partials/_page_header.html.twig
-   Bandeau sombre dans la continuité de la nav : titre, recherche, boutons, onglets.
+   Bandeau blanc sur toute la largeur, en trois lignes séparées par un trait :
+     1. bouton rond « + », titre … boutons secondaires, recherche
+     2. filtres de la page (.page-header__filters)
+     3. onglets (.page-tabs)
    ========================================================================== */
 
 .page-header {
-    padding: 1.75rem 2.5rem 1.75rem;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: linear-gradient(120deg, #0f172a 0%, #13224b 60%, #1a2f63 100%);
-    border-bottom: 1px solid rgba(96, 165, 250, 0.2);
-}
-
-/* Avec des onglets, ils sont collés en bas du bandeau */
-.page-header--with-tabs {
-    padding-bottom: 0;
+    background-color: var(--app-surface);
+    border-bottom: 1px solid var(--app-border);
 }
 
 .page-header__main {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1rem 2rem;
+    align-items: center;
+    gap: 1rem 1.5rem;
+    padding: 1.5rem 2.5rem;
 }
 
 .page-header__titles {
+    flex: 1;
     min-width: 0;
 }
 
-.page-header__eyebrow {
-    margin-bottom: 0.4rem;
-    font-size: 0.78rem;
+/* Bouton rond « + » de l'action principale, à gauche du titre */
+.page-header__add {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    background-color: var(--app-blue);
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 8px 20px rgba(29, 111, 242, 0.3);
+    cursor: pointer;
+    transition: box-shadow 150ms ease, transform 120ms ease;
+}
+
+.page-header__add:hover {
+    box-shadow: 0 10px 24px rgba(29, 111, 242, 0.42);
+}
+
+.page-header__add:active {
+    transform: scale(0.95);
+}
+
+.page-header__add:focus-visible {
+    outline: 2px solid var(--app-navy);
+    outline-offset: 3px;
+}
+
+/* Ligne 2 : filtres de la page */
+.page-header__filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    padding: 0.75rem 2.5rem;
+    border-top: 1px solid var(--app-border);
+}
+
+/*
+ * Un filtre (PageFilters.js) : tuile de largeur fixe teintée de la couleur du filtre,
+ * icône dans un carré blanc, nom au-dessus de la valeur. Choisir une valeur ne change pas
+ * la taille de la tuile : un texte trop long se termine par « … ».
+ * Couleurs : --filter-color (texte, contour), --filter-bg (fond), --filter-ring (contour au survol).
+ */
+.page-filter {
+    --filter-color: #1d5fd8;
+    --filter-bg: #e8f0ff;
+    --filter-ring: #b9d0fb;
+    position: relative;
+}
+
+.page-filter--green {
+    --filter-color: #0b7a4b;
+    --filter-bg: #e3f6ec;
+    --filter-ring: #a9dfc3;
+}
+
+.page-filter--yellow {
+    --filter-color: #a06c00;
+    --filter-bg: #fff3d6;
+    --filter-ring: #f2d48a;
+}
+
+.page-filter__button {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 220px;
+    height: 52px;
+    padding: 0 0.85rem 0 0.5rem;
+    font: inherit;
+    text-align: left;
+    background-color: var(--filter-bg);
+    border: 1px solid transparent;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: border-color 150ms ease;
+}
+
+.page-filter__button:hover,
+.page-filter--open .page-filter__button {
+    border-color: var(--filter-ring);
+}
+
+/* Un filtre choisi (autre que « tous ») : contour et valeur de sa couleur */
+.page-filter--active .page-filter__button {
+    border-color: var(--filter-color);
+}
+
+.page-filter__button:focus-visible {
+    outline: 2px solid var(--filter-color);
+    outline-offset: 2px;
+}
+
+.page-filter__icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(11, 26, 58, 0.08);
+}
+
+.page-filter__text {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+    line-height: 1.25;
+}
+
+.page-filter__label {
+    font-size: 0.68rem;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: #67e8f9;
+    color: var(--filter-color);
+    opacity: 0.75;
+}
+
+.page-filter__value {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--app-navy);
+}
+
+.page-filter--active .page-filter__value {
+    font-weight: 600;
+    color: var(--filter-color);
+}
+
+.page-filter__value-text {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.page-filter__chevron {
+    flex-shrink: 0;
+    transition: transform 150ms ease;
+}
+
+.page-filter--open .page-filter__chevron {
+    transform: rotate(180deg);
+}
+
+/* Liste des choix, sous la tuile et de la même largeur */
+.page-filter__menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    z-index: 60;
+    display: grid;
+    width: 100%;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 0.4rem;
+    background-color: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 14px;
+    box-shadow: 0 18px 40px rgba(11, 26, 58, 0.14);
+}
+
+.page-filter__menu[hidden] {
+    display: none;
+}
+
+.page-filter__option {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+    padding: 0.55rem 0.65rem;
+    font: inherit;
+    font-size: 0.88rem;
+    text-align: left;
+    color: var(--app-text);
+    background: none;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.page-filter__option:hover,
+.page-filter__option:focus-visible {
+    background-color: #f4f7fc;
+    outline: none;
+}
+
+.page-filter__check {
+    flex-shrink: 0;
+    margin-left: auto;
+    visibility: hidden;
+}
+
+.page-filter__option[aria-selected="true"] {
+    font-weight: 600;
+}
+
+.page-filter__option[aria-selected="true"] .page-filter__check {
+    visibility: visible;
+}
+
+/* Pastille de couleur devant un choix (couleur d'un statut, voir App\Enum\ProjectStateColor) */
+.page-filter__dot {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.page-filter__dot--violet {
+    background-color: #5b3fd6;
+}
+
+.page-filter__dot--blue {
+    background-color: #1458c9;
+}
+
+.page-filter__dot--green {
+    background-color: #0b7a4b;
+}
+
+.page-filter__dot--orange {
+    background-color: #b45309;
+}
+
+.page-filter__dot--red {
+    background-color: #c62828;
+}
+
+.page-filter__dot--grey {
+    background-color: #475569;
+}
+
+
+.page-header__eyebrow {
+    margin-bottom: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--app-blue);
 }
 
 .page-header__back {
@@ -150,47 +768,45 @@
 }
 
 .page-header__back:focus-visible {
-    outline: 2px solid #67e8f9;
+    outline: 2px solid var(--app-blue);
     outline-offset: 2px;
 }
 
 .page-header__heading {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-}
-
-.page-header__logo {
-    flex-shrink: 0;
-    width: 44px;
-    height: 44px;
-    object-fit: contain;
-    background-color: #ffffff;
-    border-radius: 10px;
+    gap: 0.9rem;
 }
 
 .page-header__title {
     font-size: 2rem;
     font-weight: 700;
     line-height: 1.2;
-    color: #ffffff;
+    letter-spacing: -0.015em;
+    color: var(--app-navy);
 }
 
+/* Compteur : pastille jaune */
 .page-header__count {
-    padding: 0.1rem 0.55rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #67e8f9;
-    background-color: rgba(34, 211, 238, 0.14);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.6rem;
+    height: 1.6rem;
+    padding: 0 0.45rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--app-navy);
+    background-color: var(--app-yellow);
     border-radius: 99px;
 }
 
 .page-header__lead {
     max-width: 720px;
-    margin-top: 0.5rem;
-    font-size: 0.95rem;
+    margin-top: 0.4rem;
+    font-size: 0.97rem;
     line-height: 1.5;
-    color: #a9b8d9;
+    color: var(--app-muted);
 }
 
 /*
@@ -207,7 +823,7 @@
 }
 
 .page-header--stuck {
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+    box-shadow: 0 10px 24px rgba(29, 62, 130, 0.1);
 }
 
 /* --- Recherche et boutons --- */
@@ -217,7 +833,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.75rem;
     margin-left: auto;
 }
 
@@ -229,122 +845,184 @@
 
 .page-search__icon {
     position: absolute;
-    left: 0.75rem;
+    left: 1rem;
     pointer-events: none;
 }
 
 .page-search__input {
-    width: 260px;
-    padding: 0.6rem 0.8rem 0.6rem 2.2rem;
+    width: 320px;
+    padding: 0.8rem 4.5rem 0.8rem 2.6rem;
     font: inherit;
-    font-size: 0.92rem;
-    color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(148, 163, 184, 0.3);
-    border-radius: 8px;
+    font-size: 0.93rem;
+    color: var(--app-text);
+    background-color: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(29, 62, 130, 0.05);
     outline: none;
-    transition: border-color 150ms ease, background-color 150ms ease;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .page-search__input::placeholder {
-    color: #94a3b8;
+    color: #8a98b5;
+}
+
+/* Raccourci clavier affiché à droite du champ (Ctrl + K) */
+.page-search__shortcut {
+    position: absolute;
+    right: 0.8rem;
+    padding: 0.15rem 0.45rem;
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #7c8aa8;
+    background-color: #f1f5fd;
+    border: 1px solid var(--app-border);
+    border-radius: 6px;
+    pointer-events: none;
+}
+
+.page-search__input:focus + .page-search__shortcut {
+    display: none;
 }
 
 .page-search__input:focus {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: #38bdf8;
+    border-color: var(--app-blue);
+    box-shadow: 0 0 0 4px rgba(29, 111, 242, 0.12);
 }
 
+/* Bouton principal (style « verre ») : blanc translucide, le « + » dans une pastille bleue ronde */
 .page-header__button {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.62rem 1.1rem;
+    gap: 0.6rem;
+    height: 44px;
+    padding: 0 1.15rem 0 0.4rem;
     font: inherit;
-    font-size: 0.92rem;
+    font-size: 0.95rem;
     font-weight: 600;
     white-space: nowrap;
-    color: #ffffff;
+    color: var(--app-navy);
     text-decoration: none;
-    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-    border: 1px solid transparent;
-    border-radius: 8px;
-    box-shadow: 0 6px 18px rgba(59, 130, 246, 0.35);
+    background: rgba(255, 255, 255, 0.72);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: none;
+    border-radius: 999px;
+    box-shadow: 0 0 0 0.5px rgba(11, 26, 58, 0.12), 0 4px 14px rgba(11, 26, 58, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
     cursor: pointer;
-    transition: transform 150ms ease, box-shadow 150ms ease;
+    transition: background-color 150ms ease, box-shadow 150ms ease, transform 120ms ease;
+}
+
+.page-header__button-dot {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--app-blue);
+    border-radius: 50%;
+}
+
+.page-header__button-dot img {
+    width: 14px;
+    height: 14px;
 }
 
 .page-header__button:hover {
-    box-shadow: 0 8px 22px rgba(59, 130, 246, 0.45);
-    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 0 0.5px rgba(11, 26, 58, 0.16), 0 6px 18px rgba(11, 26, 58, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Petit enfoncement au clic */
+.page-header__button:active {
+    transform: scale(0.97);
 }
 
 .page-header__button:focus-visible {
-    outline: 2px solid #67e8f9;
-    outline-offset: 2px;
+    outline: 2px solid var(--app-navy);
+    outline-offset: 3px;
 }
 
-/* Action secondaire : transparente, bordure claire */
+/* Action secondaire : blanche, bordure claire, taille normale */
 .page-header__button--ghost {
-    color: #e2e8f0;
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(148, 163, 184, 0.35);
-    box-shadow: none;
+    gap: 0.5rem;
+    padding: 0 1.2rem;
+    font-size: 0.95rem;
+    color: var(--app-text);
+    background: var(--app-surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border: 1px solid var(--app-border);
+    box-shadow: 0 4px 14px rgba(29, 62, 130, 0.05);
+}
+
+.page-header__button--ghost img {
+    width: 16px;
+    height: 16px;
 }
 
 .page-header__button--ghost:hover {
-    background: rgba(255, 255, 255, 0.09);
-    box-shadow: none;
+    background: #f6f9ff;
+    box-shadow: 0 6px 16px rgba(29, 62, 130, 0.08);
 }
 
-/* --- Onglets : l'onglet actif est blanc et rejoint le contenu de la page --- */
+/* Icônes blanches des boutons secondaires : passées en bleu nuit sur fond blanc */
+.page-header__button--ghost img {
+    filter: brightness(0.25);
+}
+
+/* --- Ligne 3 : onglets, l'onglet actif est bleu --- */
 
 .page-tabs {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem;
-    margin-top: 1.4rem;
+    gap: 0.35rem;
+    padding: 0.5rem 2.5rem;
+    background-color: var(--app-surface);
+    border-top: 1px solid var(--app-border);
 }
 
 .page-tabs__link {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
-    padding: 0.65rem 1rem;
+    gap: 0.5rem;
+    padding: 0.6rem 1.1rem;
     font-size: 0.92rem;
     font-weight: 600;
-    color: #a9b8d9;
+    color: var(--app-text);
     text-decoration: none;
-    border-radius: 10px 10px 0 0;
+    border-radius: 12px;
     transition: color 150ms ease, background-color 150ms ease;
 }
 
 .page-tabs__link:hover {
-    color: #ffffff;
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: #f1f5fd;
 }
 
 .page-tabs__link[aria-current="page"] {
-    color: #0f172a;
-    background-color: #ffffff;
+    color: #ffffff;
+    background: var(--app-blue);
+    box-shadow: 0 6px 16px rgba(29, 111, 242, 0.3);
 }
 
 .page-tabs__link:focus-visible {
-    outline: 2px solid #67e8f9;
-    outline-offset: -2px;
+    outline: 2px solid var(--app-blue);
+    outline-offset: 2px;
 }
 
 .page-tabs__count {
     padding: 0 0.45rem;
     font-size: 0.75rem;
-    color: #a9b8d9;
-    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--app-muted);
+    background-color: #eef3fb;
     border-radius: 99px;
 }
 
 .page-tabs__link[aria-current="page"] .page-tabs__count {
-    color: #1e40af;
-    background-color: #dbeafe;
+    color: var(--app-navy);
+    background-color: var(--app-yellow);
 }
 
 /* Éléments masqués par la recherche : l'attribut hidden doit gagner sur leur display */
@@ -355,12 +1033,21 @@
 }
 
 @media (max-width: 700px) {
-    .page-header {
-        padding: 1.25rem 1rem;
+    .page-header__main,
+    .page-header__filters,
+    .page-tabs {
+        padding-right: 1rem;
+        padding-left: 1rem;
     }
 
-    .page-header--with-tabs {
-        padding-bottom: 0;
+    .page-header__main {
+        padding-top: 1.1rem;
+        padding-bottom: 1.1rem;
+    }
+
+    .page-header__add {
+        width: 46px;
+        height: 46px;
     }
 
     .page-header__title {
@@ -385,6 +1072,8 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
+    border-radius: 12px;
+    transition: background-color 200ms ease;
 }
 
 .app-sidebar__row .app-sidebar__link {
@@ -399,10 +1088,13 @@
     justify-content: center;
     width: 2rem;
     height: 2rem;
+    margin-right: 0.4rem;
     padding: 0;
+    overflow: hidden;
     background: none;
     border: none;
     cursor: pointer;
+    transition: opacity 150ms ease, width 300ms cubic-bezier(0.4, 0, 0.2, 1), margin-right 300ms cubic-bezier(0.4, 0, 0.2, 1), visibility 0s;
 }
 
 .app-sidebar__submenu-toggle:focus-visible {
@@ -426,7 +1118,7 @@
 .app-sidebar__submenu {
     display: grid;
     grid-template-rows: 0fr;
-    transition: grid-template-rows 200ms ease;
+    transition: grid-template-rows 200ms ease, opacity 150ms ease;
 }
 
 .app-sidebar__item--open .app-sidebar__submenu {
@@ -454,10 +1146,9 @@
     display: block;
     margin-left: 1.45rem;
     padding: 0.5rem 0.9rem;
-    border-left: 1px solid rgba(147, 197, 253, 0.15);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    border-left: 1px solid rgba(147, 197, 253, 0.2);
     font-size: 0.9rem;
-    color: #8193b8;
+    color: #9fb0d6;
     text-decoration: none;
     transition: color 200ms ease, border-color 200ms ease;
 }
@@ -692,10 +1383,10 @@
 
 #project .project__card {
     padding: 1.25rem;
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-top: 3px solid #3b82f6;
-    border-radius: 8px;
+    background-color: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 14px;
+    box-shadow: var(--app-shadow);
 }
 
 /* --- Pied de page --- */
@@ -739,9 +1430,10 @@
 
 /* --- Liste des tutoriels --- */
 
+/* Cartes de largeur fixe : même taille menu ouvert ou replié (voir .projects__list) */
 .doc-topics {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 260px));
     gap: 1rem;
     list-style: none;
 }
@@ -753,15 +1445,15 @@
     padding: 1.25rem;
     color: inherit;
     text-decoration: none;
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-top: 3px solid #3b82f6;
-    border-radius: 8px;
+    background-color: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    box-shadow: var(--app-shadow);
     transition: box-shadow 200ms ease, transform 200ms ease;
 }
 
 .doc-topics__link:hover {
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    box-shadow: var(--app-shadow-hover);
     transform: translateY(-2px);
 }
 
@@ -774,13 +1466,13 @@
     margin-bottom: 0.4rem;
     font-size: 1.1rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--app-navy);
 }
 
 .doc-topics__summary {
     flex: 1;
     margin-bottom: 0.75rem;
-    color: #4b5563;
+    color: var(--app-muted);
 }
 
 .doc-topics__meta {
@@ -1047,9 +1739,11 @@
 }
 
 .steps__stat {
-    padding: 1rem 1.25rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
+    padding: 1.1rem 1.3rem;
+    background-color: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 16px;
+    box-shadow: var(--app-shadow);
 }
 
 .steps__stat-value {
@@ -1097,24 +1791,27 @@
 }
 
 .steps__filter {
-    padding: 0.35rem 0.8rem;
+    padding: 0.45rem 0.95rem;
     font: inherit;
     font-size: 0.85rem;
-    color: #4b5563;
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
+    font-weight: 500;
+    color: var(--app-text);
+    background-color: var(--app-surface);
+    border: 1px solid var(--app-border);
     border-radius: 99px;
     cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease;
 }
 
 .steps__filter:hover {
-    border-color: #9ca3af;
+    border-color: #b9c7e2;
 }
 
 .steps__filter--active {
     color: #ffffff;
-    background-color: #0f172a;
-    border-color: #0f172a;
+    background-color: var(--app-blue);
+    border-color: var(--app-blue);
+    box-shadow: 0 6px 14px rgba(29, 111, 242, 0.25);
 }
 
 .steps__filter:focus-visible {
@@ -1132,11 +1829,14 @@
 /* --- Tableau --- */
 
 .steps-table__wrapper {
+    /* relative : les textes cachés (position absolute) du tableau restent dans la zone qui défile,
+       sinon ils agrandissent la page et créent un défilement horizontal sur mobile */
+    position: relative;
     overflow-x: auto;
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    background-color: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    box-shadow: var(--app-shadow);
 }
 
 .steps-table {
@@ -1742,102 +2442,590 @@
    ========================================================================== */
 
 .projects {
+    /* Même espace sous l'en-tête que les autres pages de l'app */
     padding: 2.5rem 2.5rem 4rem;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     line-height: 1.5;
-    color: #1f2937;
+    color: var(--app-text);
 }
 
 .projects__empty {
     padding: 2rem;
     text-align: center;
-    color: #6b7280;
-    background-color: #f9fafb;
-    border: 1px dashed #d1d5db;
-    border-radius: 10px;
+    color: var(--app-muted);
+    background-color: var(--app-surface);
+    border: 1px dashed #c9d5ea;
+    border-radius: var(--app-radius);
 }
 
+/*
+ * Cartes de largeur fixe (420px) : elles gardent la même taille quand le menu de gauche se replie
+ * ou s'ouvre ; la place gagnée reste libre à droite, ou accueille une colonne de plus si elle suffit.
+ * min(100%, 420px) : sur un petit écran, la carte prend toute la largeur disponible.
+ */
 .projects__list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 420px));
+    gap: 1.4rem;
     list-style: none;
+}
+
+/* Carte masquée par un filtre ou la recherche : hidden doit gagner sur le display de la carte */
+.projects__item[hidden],
+.projects__empty[hidden] {
+    display: none;
+}
+
+/* --- Recherche et filtres --- */
+
+.projects__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+}
+
+.projects__search {
+    flex: 1 1 320px;
+    max-width: 560px;
+}
+
+.projects__search .page-search__input {
+    width: 100%;
+}
+
+/* Les filtres forment un bandeau blanc arrondi ; le filtre actif est une pastille bleue */
+.projects__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.35rem;
+    background-color: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(29, 62, 130, 0.05);
+}
+
+.projects__filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--app-text);
+    background: none;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 150ms ease, color 150ms ease;
+}
+
+.projects__filter:hover {
+    background-color: #f1f5fd;
+}
+
+.projects__filter[aria-pressed="true"] {
+    font-weight: 600;
+    color: #ffffff;
+    background-color: var(--app-blue);
+    box-shadow: 0 6px 16px rgba(29, 111, 242, 0.3);
+}
+
+/* Icônes en blanc sur le filtre actif */
+.projects__filter[aria-pressed="true"] img {
+    filter: brightness(0) invert(1);
+}
+
+.projects__filter:focus-visible {
+    outline: 2px solid var(--app-blue);
+    outline-offset: 2px;
 }
 
 /* --- Carte d'un projet --- */
 
+/*
+ * Carte d'un projet (templates/app/project/_project_card.html.twig) : couverture (logo long) en haut,
+ * avatar et logo qui chevauchent la couverture, statut à droite sur la même ligne.
+ * Tout se modifie directement dans la carte (assets/js/app/project/ProjectCardEditor.js).
+ * position: relative : repère de la liste de choix (catégorie, statut).
+ */
 .project-card {
+    position: relative;
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 1.5rem;
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-top: 3px solid #3b82f6;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-    transition: box-shadow 200ms ease;
+    background-color: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    box-shadow: var(--app-shadow);
+    transition: box-shadow 200ms ease, opacity 200ms ease;
 }
 
 .project-card:hover {
-    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+    box-shadow: var(--app-shadow-hover);
+}
+
+/* Pendant l'enregistrement d'une modification */
+.project-card--saving {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* --- Couverture (logo long) et outils --- */
+
+.project-card__cover {
+    position: relative;
+}
+
+.project-card__tools {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 2;
+    display: flex;
+    gap: 0.3rem;
+}
+
+.project-card__tool {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    background-color: rgba(255, 255, 255, 0.92);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(11, 26, 58, 0.1);
+    cursor: pointer;
+    transition: background-color 150ms ease, opacity 150ms ease;
+}
+
+.project-card__tool:hover {
+    background-color: #ffffff;
+}
+
+.project-card__tool:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+.project-card__tool:focus-visible {
+    outline: 2px solid var(--app-blue);
+    outline-offset: 2px;
+}
+
+/* Étoile des favoris : sans cadre ni ombre, juste l'étoile */
+.project-card__tool--favorite,
+.project-card__tool--favorite:hover {
+    background: none;
+    box-shadow: none;
+}
+
+.project-card__tool--favorite img {
+    transition: transform 150ms ease;
+}
+
+.project-card__tool--favorite:hover img {
+    transform: scale(1.12);
+}
+
+/* Corbeille : visible au survol de la carte (ou au clavier) */
+.project-card__tool--delete {
+    opacity: 0;
+}
+
+.project-card:hover .project-card__tool--delete,
+.project-card__tool--delete:focus-visible {
+    opacity: 1;
+}
+
+.project-card__tool--delete:hover {
+    background-color: #fdecec;
+}
+
+/* --- Images : logo long (couverture), avatar, logo --- */
+
+.project-card__image {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.project-card__image-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    background-color: #f2f4f8;
+    border: 1.5px dashed #cdd6e5;
+    cursor: pointer;
+    transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.project-card__image-tile:hover {
+    background-color: #eef4ff;
+    border-color: var(--app-blue);
+}
+
+.project-card__image-tile:focus-within {
+    outline: 3px solid rgba(29, 111, 242, 0.25);
+    outline-offset: 2px;
+}
+
+.project-card__image--filled .project-card__image-tile {
+    background-color: #ffffff;
+    border: 1px solid var(--app-border);
+}
+
+/* Le champ fichier reste dans la page (clavier, lecteurs d'écran) mais invisible */
+.project-card__image-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.project-card__image-placeholder {
+    opacity: 0.45;
+}
+
+.project-card__image-name {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--app-muted);
+}
+
+.project-card__image-preview {
+    width: 100%;
+    height: 100%;
+    padding: 6px;
+    object-fit: contain;
+}
+
+/* Croix « retirer l'image », visible au survol de l'image */
+.project-card__image-remove {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    background-color: #ffffff;
+    border: 0;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(11, 26, 58, 0.25);
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 150ms ease;
+}
+
+.project-card__image:hover .project-card__image-remove,
+.project-card__image-remove:focus-visible {
+    opacity: 1;
+}
+
+.project-card__image-remove:hover {
+    background-color: #fdecec;
+}
+
+/* Couverture : toute la largeur de la carte, coins du haut arrondis */
+.project-card__image--cover {
+    height: 120px;
+}
+
+.project-card__image--cover .project-card__image-tile {
+    border-width: 0 0 1px;
+    border-radius: var(--app-radius) var(--app-radius) 0 0;
+}
+
+.project-card__image--cover .project-card__image-preview {
+    padding: 0;
+    object-fit: cover;
+}
+
+/* La croix de la couverture ne passe pas sous l'étoile */
+.project-card__image--cover .project-card__image-remove {
+    top: auto;
+    right: 0.75rem;
+    bottom: 0.75rem;
+}
+
+/* Avatar et logo : bordure blanche, ils chevauchent le bas de la couverture */
+.project-card__image--avatar,
+.project-card__image--logo {
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(11, 26, 58, 0.12);
+}
+
+.project-card__image--avatar {
+    width: 64px;
+    height: 64px;
+}
+
+.project-card__image--logo {
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+}
+
+.project-card__image--avatar .project-card__image-tile,
+.project-card__image--logo .project-card__image-tile {
+    border-radius: inherit;
+    outline: 3px solid #ffffff;
+}
+
+.project-card__image--avatar .project-card__image-preview {
+    padding: 0;
+    object-fit: cover;
+}
+
+.project-card__image--avatar .project-card__image-remove,
+.project-card__image--logo .project-card__image-remove {
+    top: -4px;
+    right: -4px;
+}
+
+/* Image vide trop petite pour son nom : l'icône suffit */
+.project-card__image--logo .project-card__image-name {
+    display: none;
+}
+
+/* --- Contenu --- */
+
+.project-card__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0 1.4rem 1.3rem;
+}
+
+.project-card__identity {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.6rem;
+    margin-top: -32px;
+    margin-bottom: 0.3rem;
+}
+
+/* Statut complètement à droite, sur la ligne de l'avatar et du logo */
+.project-card__state {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-left: auto;
+    padding: 0.3rem 0.75rem;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 0;
+    border-radius: 99px;
+    cursor: pointer;
+}
+
+.project-card__state:focus-visible {
+    outline: 2px solid var(--app-blue);
+    outline-offset: 2px;
+}
+
+.project-card__state-dot {
+    width: 8px;
+    height: 8px;
+    background-color: currentColor;
+    border-radius: 50%;
+}
+
+/* Textes modifiables : léger fond au survol, comme un champ */
+.project-card__editable {
+    margin: 0 -0.4rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 8px;
+    cursor: text;
+    transition: background-color 150ms ease;
+}
+
+.project-card__editable:hover {
+    background-color: #f1f5fd;
+}
+
+.project-card__editable:focus-visible {
+    outline: 2px solid var(--app-blue);
+    outline-offset: 1px;
+}
+
+.project-card__placeholder {
+    color: #9aa7c0;
 }
 
 .project-card__title {
-    margin-bottom: 0.5rem;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    color: #0f172a;
+    line-height: 1.3;
+    color: var(--app-navy);
+}
+
+/* Catégorie à gauche, date à droite */
+.project-card__line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.project-card__category {
+    margin-right: 0;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-align: left;
+    color: var(--app-muted);
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.project-card__date {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    color: var(--app-muted);
 }
 
 .project-card__summary {
     flex: 1;
-    margin-bottom: 1.25rem;
-    color: #4b5563;
-}
-
-.project-card__links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.project-card__link {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.55rem 1rem;
     font-size: 0.9rem;
-    font-weight: 600;
-    color: #374151;
-    text-decoration: none;
+    line-height: 1.55;
+    color: #4b5875;
+}
+
+/* Champ ouvert pour modifier le nom ou la description */
+.project-card__field {
+    width: 100%;
+    margin: -0.15rem 0;
+    padding: 0.15rem 0.4rem;
+    font: inherit;
+    color: inherit;
     background-color: #ffffff;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--app-blue);
     border-radius: 8px;
-    transition: background-color 200ms ease;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(29, 111, 242, 0.12);
+}
+
+.project-card__field--summary {
+    min-height: 4.5rem;
+    resize: none;
+}
+
+/* Liste de choix (catégorie, statut), sous le bouton cliqué */
+.project-card__choices {
+    position: absolute;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    min-width: 180px;
+    padding: 0.35rem;
+    background-color: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(11, 26, 58, 0.16);
+}
+
+.project-card__choice {
+    padding: 0.5rem 0.7rem;
+    font: inherit;
+    font-size: 0.86rem;
+    text-align: left;
+    color: var(--app-text);
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.project-card__choice:hover,
+.project-card__choice:focus-visible {
+    background-color: #f1f5fd;
+    outline: none;
+}
+
+.project-card__choice--current {
+    font-weight: 600;
+    color: var(--app-blue);
+}
+
+/* --- Pied : nombre de tâches (lien vers les tâches) à gauche, voir le projet à droite --- */
+
+.project-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-top: 0.6rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid #eef2f8;
+}
+
+/* Action principale de la carte : dégradé bleu → cyan, comme les boutons des formulaires */
+.project-card__link {
+    padding: 0.5rem 0.95rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: #ffffff;
+    text-decoration: none;
+    background: var(--app-gradient);
+    border-radius: 10px;
+    box-shadow: 0 6px 16px rgba(29, 111, 242, 0.28);
+    transition: box-shadow 200ms ease, transform 150ms ease;
 }
 
 .project-card__link:hover {
-    background-color: #f3f4f6;
+    box-shadow: 0 8px 20px rgba(29, 111, 242, 0.4);
+    transform: translateY(-1px);
 }
 
-.project-card__link--primary {
-    color: #ffffff;
-    background-color: #3b82f6;
-    border-color: #3b82f6;
+.project-card__tasks {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    color: #1458c9;
+    text-decoration: none;
+    background-color: #e8f0ff;
+    border-radius: 10px;
+    transition: background-color 150ms ease;
 }
 
-.project-card__link--primary:hover {
-    background-color: #2563eb;
+.project-card__tasks:hover {
+    background-color: #d9e6ff;
 }
 
-.project-card__link:focus-visible {
-    outline: 2px solid #1e40af;
+.project-card__tasks-count {
+    font-weight: 700;
+}
+
+.project-card__link:focus-visible,
+.project-card__tasks:focus-visible {
+    outline: 2px solid var(--app-blue);
     outline-offset: 2px;
 }
 
 #project .project__empty {
     padding: 2rem 0;
-    color: #6b7280;
+    color: var(--app-muted);
 }
 
 @media (max-width: 700px) {
@@ -1848,146 +3036,193 @@
 
 /* ==========================================================================
    Projets : bouton et formulaire d'ajout, logos
+   Boutons et champs utilisés aussi dans les fenêtres modales des autres pages.
    ========================================================================== */
 
+/* Bouton principal des formulaires : dégradé bleu → cyan */
 .projects__button {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.65rem 1.1rem;
+    gap: 0.45rem;
+    padding: 0.7rem 1.3rem;
     font: inherit;
-    font-size: 0.95rem;
+    font-size: 0.93rem;
     font-weight: 600;
     white-space: nowrap;
     color: #ffffff;
-    background-color: #3b82f6;
-    border: 1px solid #3b82f6;
-    border-radius: 8px;
+    background: var(--app-gradient);
+    border: 1px solid transparent;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(29, 111, 242, 0.3);
     cursor: pointer;
-    transition: background-color 200ms ease;
+    transition: box-shadow 200ms ease, transform 150ms ease;
 }
 
 .projects__button:hover {
-    background-color: #2563eb;
+    box-shadow: 0 10px 24px rgba(29, 111, 242, 0.4);
+    transform: translateY(-1px);
 }
 
 .projects__button:disabled {
     opacity: 0.6;
     cursor: wait;
+    transform: none;
 }
 
 .projects__button:focus-visible {
-    outline: 2px solid #1e40af;
+    outline: 2px solid var(--app-navy);
     outline-offset: 2px;
 }
 
 .projects__button--ghost {
-    color: #374151;
-    background-color: #ffffff;
-    border-color: #d1d5db;
+    color: var(--app-text);
+    background: var(--app-surface);
+    border-color: var(--app-border);
+    box-shadow: none;
 }
 
 .projects__button--ghost:hover {
-    background-color: #f3f4f6;
+    background: #f4f7fd;
+    box-shadow: none;
 }
 
-/* --- Logo sur la carte d'un projet --- */
-
-.project-card__header {
-    display: flex;
-    align-items: center;
-    gap: 0.9rem;
-    margin-bottom: 0.75rem;
+/*
+ * Couleurs des statuts de projet (choisies dans Paramètres, voir App\Enum\ProjectStateColor).
+ * Utilisées par la pastille de la carte d'un projet et par la page Paramètres.
+ */
+.project-state--violet {
+    color: #5b3fd6;
+    background-color: #efebff;
 }
 
-.project-card__header .project-card__title {
-    margin-bottom: 0;
+.project-state--blue {
+    color: #1458c9;
+    background-color: #e6f0ff;
 }
 
-.project-card__logo {
-    flex-shrink: 0;
-    width: 48px;
-    height: 48px;
-    object-fit: contain;
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
+.project-state--green {
+    color: #0b7a4b;
+    background-color: #e3f8ee;
 }
 
-/* Sans logo : l'initiale du projet dans une pastille */
-.project-card__logo--initial {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #1e40af;
-    background: linear-gradient(135deg, #eff6ff, #dbeafe);
-    border-color: #dbeafe;
+.project-state--orange {
+    color: #b45309;
+    background-color: #fff1e0;
+}
+
+.project-state--red {
+    color: #c62828;
+    background-color: #fdecec;
+}
+
+.project-state--grey {
+    color: #475569;
+    background-color: #eef2f7;
 }
 
 /* --- Formulaire d'ajout d'un projet (dans la modal) --- */
 
 .project-form__fields {
     display: grid;
+    /* minmax(0, 1fr) : la colonne ne s'élargit pas à la taille naturelle des champs (débordement sur mobile) */
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.1rem;
 }
 
 .project-form__field {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.4rem;
 }
 
 .project-form__label {
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: #374151;
+    color: var(--app-navy);
 }
 
 .project-form__optional {
     font-weight: 400;
-    color: #9ca3af;
+    color: #8a98b5;
+}
+
+.project-form__required {
+    color: #e5484d;
+}
+
+/* Deux champs côte à côte (catégorie et statut) */
+.project-form__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.project-form__input--textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+/* Liste déroulante : flèche dessinée par le site, identique sur tous les navigateurs */
+.project-form__select {
+    padding-right: 2.4rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6b8c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.8rem center;
+    background-repeat: no-repeat;
+    appearance: none;
+    cursor: pointer;
+}
+
+@media (max-width: 600px) {
+    .project-form__row {
+        grid-template-columns: 1fr;
+    }
 }
 
 .project-form__input {
-    padding: 0.55rem 0.7rem;
+    min-width: 0;
+    padding: 0.7rem 0.85rem;
     font: inherit;
     font-size: 0.92rem;
-    color: #111827;
-    background-color: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
+    color: var(--app-text);
+    background-color: #f8fafd;
+    border: 1px solid #dfe6f1;
+    border-radius: 12px;
+    transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.project-form__input::placeholder {
+    color: #9aa7c0;
 }
 
 .project-form__input:focus {
-    border-color: #3b82f6;
-    outline: 2px solid rgba(59, 130, 246, 0.25);
+    background-color: #ffffff;
+    border-color: var(--app-blue);
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(29, 111, 242, 0.12);
 }
 
 .project-form__input--file {
-    padding: 0.45rem;
-    background-color: #f9fafb;
+    padding: 0.5rem;
     border-style: dashed;
     cursor: pointer;
 }
 
 .project-form__input--file::file-selector-button {
     margin-right: 0.75rem;
-    padding: 0.4rem 0.8rem;
+    padding: 0.45rem 0.9rem;
     font: inherit;
     font-size: 0.85rem;
     font-weight: 600;
-    color: #1e40af;
-    background-color: #eff6ff;
-    border: 1px solid #dbeafe;
-    border-radius: 6px;
+    color: var(--app-blue);
+    background-color: #e8f0ff;
+    border: 1px solid #d6e3fb;
+    border-radius: 8px;
     cursor: pointer;
 }
 
 .project-form__help {
     font-size: 0.78rem;
-    color: #6b7280;
+    color: var(--app-muted);
 }
 
 .project-form__error {
@@ -2010,59 +3245,193 @@
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     margin-left: auto;
     padding: 0;
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     transition: background-color 200ms ease, border-color 200ms ease;
 }
 
 .project-card__edit:hover {
-    background-color: #f3f4f6;
-    border-color: #e5e7eb;
+    background-color: #f4f7fd;
+    border-color: var(--app-border);
 }
 
 .project-card__edit:focus-visible {
-    outline: 2px solid #1e40af;
+    outline: 2px solid var(--app-blue);
     outline-offset: 2px;
 }
 
-/* Formulaire de modification : logo actuel + case « Supprimer le logo » */
-.project-form__current-logo {
-    display: flex;
-    align-items: center;
-    gap: 0.9rem;
-    margin-bottom: 0.4rem;
+/* --- Images du projet : logo, logo long, avatar (images cliquables sur toute la largeur) --- */
+
+.project-form__images {
+    display: grid;
+    gap: 0.6rem;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
 }
 
-.project-form__logo-preview {
-    flex-shrink: 0;
-    width: 48px;
-    height: 48px;
+.project-form__images > .project-form__label {
+    margin-bottom: 0.15rem;
+    padding: 0;
+}
+
+/* Logo et avatar gardent leur taille, le logo long prend toute la place qui reste */
+.project-form__image-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1.25rem;
+}
+
+.project-form__image {
+    display: grid;
+    justify-items: center;
+    gap: 0.15rem;
+}
+
+.project-form__image--wide {
+    flex: 1;
+    min-width: 180px;
+}
+
+.project-form__image-frame {
+    position: relative;
+}
+
+.project-form__image--wide .project-form__image-frame {
+    width: 100%;
+}
+
+/* L'image cliquable : vide (pointillés + icône) ou avec l'aperçu */
+.project-form__image-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-color: #f2f4f8;
+    border: 1.5px dashed #cdd6e5;
+    cursor: pointer;
+    transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.project-form__image-tile:hover {
+    background-color: #eef4ff;
+    border-color: var(--app-blue);
+}
+
+.project-form__image-tile:focus-within {
+    outline: 3px solid rgba(29, 111, 242, 0.25);
+    outline-offset: 2px;
+}
+
+.project-form__image--square .project-form__image-tile {
+    width: 112px;
+    height: 112px;
+    border-radius: 24px;
+}
+
+.project-form__image--wide .project-form__image-tile {
+    width: 100%;
+    height: 112px;
+    border-radius: 18px;
+}
+
+.project-form__image--round .project-form__image-tile {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+}
+
+.project-form__image--filled .project-form__image-tile {
+    border-style: solid;
+    border-color: var(--app-border);
+}
+
+/* Le champ fichier reste dans la page (clavier, lecteurs d'écran) mais invisible */
+.project-form__image-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.project-form__image-placeholder {
+    width: 28px;
+    height: 28px;
+    opacity: 0.45;
+    transition: opacity 150ms ease;
+}
+
+.project-form__image-tile:hover .project-form__image-placeholder {
+    opacity: 0.8;
+}
+
+.project-form__image-preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 10px;
     object-fit: contain;
     background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
 }
 
-.project-form__checkbox {
-    display: inline-flex;
+.project-form__image--round .project-form__image-preview {
+    padding: 0;
+    object-fit: cover;
+}
+
+.project-form__image-preview[hidden] {
+    display: none;
+}
+
+/* Croix « retirer l'image », visible seulement quand il y a une image */
+.project-form__image-remove {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    z-index: 1;
+    display: none;
     align-items: center;
-    gap: 0.45rem;
-    font-size: 0.88rem;
-    color: #374151;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background-color: #ffffff;
+    border: 0;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(11, 26, 58, 0.25);
     cursor: pointer;
 }
 
-.project-form__checkbox input {
-    width: 16px;
-    height: 16px;
-    margin: 0;
-    accent-color: #b91c1c;
+.project-form__image-remove:hover {
+    background-color: #fdecec;
+}
+
+.project-form__image--filled .project-form__image-remove {
+    display: flex;
+}
+
+/* Nom dans l'image vide ; caché quand une image est choisie */
+.project-form__image-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--app-muted);
+}
+
+.project-form__image--filled .project-form__image-name {
+    display: none;
 }
 
 /* ==========================================================================
@@ -2422,9 +3791,10 @@
 
 /* --- Icônes --- */
 
+/* Cases de largeur fixe : même taille menu ouvert ou replié (voir .projects__list) */
 .elements__icons {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 150px));
     gap: 0.75rem;
     list-style: none;
 }
@@ -2612,14 +3982,1117 @@
     text-align: center;
 }
 
-.icon-viewer__path {
+/* Bas de la modal : chemin du fichier à gauche, bouton « Télécharger l'icône » à droite */
+.icon-viewer__footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
     margin-top: 1.25rem;
-    text-align: center;
+}
+
+.icon-viewer__path {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.icon-viewer__download {
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: center;
+    height: 40px;
+    padding: 0 1.1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ffffff;
+    text-decoration: none;
+    white-space: nowrap;
+    background: var(--app-blue);
+    border-radius: 999px;
+    box-shadow: 0 4px 12px rgba(29, 111, 242, 0.25);
+    transition: background-color 150ms ease, transform 120ms ease;
+}
+
+/* Icône grise passée en blanc sur le bouton bleu */
+.icon-viewer__download img {
+    filter: brightness(0) invert(1);
+}
+
+.icon-viewer__download:hover {
+    background: #1a63db;
+}
+
+.icon-viewer__download:active {
+    transform: scale(0.97);
+}
+
+.icon-viewer__download:focus-visible {
+    outline: 2px solid var(--app-navy);
+    outline-offset: 3px;
 }
 
 @media (max-width: 600px) {
     .icon-viewer__sizes {
         grid-template-columns: 1fr;
+    }
+
+    .icon-viewer__footer {
+        justify-content: center;
+        text-align: center;
+    }
+}
+
+/* ==========================================================================
+   Sections en blocs : affichage (page Projet)
+   HTML : templates/app/project/_section_block.html.twig
+   ========================================================================== */
+
+.section-blocks {
+    display: grid;
+    gap: 1rem;
+}
+
+.section-blocks__empty {
+    color: var(--app-muted);
+    font-style: italic;
+}
+
+.section-block__text {
+    line-height: 1.7;
+}
+
+/* Les paragraphes d'un même bloc se suivent de près */
+.section-block__text + .section-block__text {
+    margin-top: -0.4rem;
+}
+
+.section-block__subtitle {
+    margin-top: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--app-navy);
+}
+
+.section-block__list {
+    padding-left: 1.4rem;
+    line-height: 1.8;
+}
+
+.section-block__list--ordered {
+    list-style: decimal;
+}
+
+.section-block__table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--app-border);
+    border-radius: 12px;
+}
+
+.section-block__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+.section-block__table-head {
+    padding: 0.65rem 0.9rem;
+    font-weight: 600;
+    text-align: left;
+    color: var(--app-navy);
+    background-color: #f4f7fc;
+}
+
+.section-block__table-cell {
+    padding: 0.65rem 0.9rem;
+    border-top: 1px solid var(--app-border);
+    vertical-align: top;
+}
+
+.section-block__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+}
+
+.section-block__tag {
+    padding: 0.3rem 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1446b8;
+    background-color: #e8f0fe;
+    border-radius: 999px;
+}
+
+.section-block__definitions {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.section-block__definition {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 1.25rem;
+}
+
+.section-block__term {
+    font-weight: 700;
+    color: var(--app-navy);
+}
+
+.section-block__description {
+    line-height: 1.6;
+}
+
+.section-block__gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+    gap: 1rem;
+}
+
+/* Une seule image : elle prend la largeur, sans dépasser sa taille réelle */
+.section-block__gallery--single {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.section-block__figure {
+    overflow: hidden;
+    background-color: #fbfcfe;
+    border: 1px solid var(--app-border);
+    border-radius: 14px;
+}
+
+.section-block__zoom {
+    display: block;
+    width: 100%;
+    padding: 0;
+    background-color: #ffffff;
+    border: 0;
+    cursor: zoom-in;
+}
+
+.section-block__image {
+    display: block;
+    width: 100%;
+    height: 180px;
+    object-fit: contain;
+}
+
+.section-block__gallery--single .section-block__image {
+    height: auto;
+    max-height: 480px;
+}
+
+.section-block__caption {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.85rem;
+    color: var(--app-muted);
+    border-top: 1px solid var(--app-border);
+}
+
+.section-block__zoomed-image {
+    display: block;
+    max-width: 100%;
+    max-height: 75vh;
+    margin: 0 auto;
+}
+
+.section-block__documents {
+    display: grid;
+    gap: 0.6rem;
+    list-style: none;
+}
+
+.section-block__document {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--app-border);
+    border-radius: 14px;
+}
+
+.section-block__document-icon {
+    flex-shrink: 0;
+}
+
+.section-block__document-text {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+}
+
+.section-block__document-title {
+    overflow: hidden;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--app-navy);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.section-block__document-meta {
+    font-size: 0.8rem;
+    color: var(--app-muted);
+}
+
+.section-block__download {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--app-blue);
+    text-decoration: none;
+}
+
+.section-block__download:hover {
+    text-decoration: underline;
+}
+
+/* Mise en forme des textes (App\Service\InlineFormatter) */
+.inline-format__bold {
+    font-weight: 700;
+}
+
+.inline-format__italic {
+    font-style: italic;
+}
+
+.inline-format__code {
+    padding: 0.1rem 0.4rem;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    color: #1446b8;
+    background-color: #eef3fb;
+    border-radius: 6px;
+}
+
+.inline-format__link {
+    color: var(--app-blue);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* ==========================================================================
+   Sections en blocs : éditeur (page Projet)
+   HTML : templates/app/project/_section_editor.html.twig
+   JS : assets/js/app/project/sections/SectionBlockEditor.js et BlockFieldsRenderer.js
+   ========================================================================== */
+
+/* Un éditeur ouvert : en faisant défiler (ou au clavier), un champ ne s'arrête pas sous les onglets
+   collés en haut ni sous les boutons Annuler / Enregistrer collés en bas */
+.section-editor-open {
+    scroll-padding-top: calc(var(--page-header-visible-height, 0px) + var(--site-header-height, 0px) + 4rem);
+    scroll-padding-bottom: 5.5rem;
+}
+
+.section-editor {
+    margin: 1.5rem 0;
+    padding: 1.5rem 1.75rem 0;
+    background-color: var(--app-surface);
+    border: 2px solid #cfe0fb;
+    border-radius: var(--app-radius);
+    box-shadow: 0 18px 44px rgba(29, 62, 130, 0.14);
+    scroll-margin-top: calc(var(--page-header-visible-height, 0px) + var(--site-header-height, 0px) + 1rem);
+}
+
+.section-editor__label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--app-navy);
+}
+
+.section-editor__title,
+.section-editor__input,
+.section-editor__textarea {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    font: inherit;
+    font-size: 0.92rem;
+    color: var(--app-text);
+    background-color: #f8fafd;
+    border: 1px solid #dfe6f1;
+    border-radius: 12px;
+}
+
+.section-editor__title {
+    padding: 0.75rem 0.9rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--app-navy);
+}
+
+.section-editor__textarea {
+    min-height: 110px;
+    line-height: 1.6;
+    resize: vertical;
+}
+
+.section-editor__title:focus,
+.section-editor__input:focus,
+.section-editor__textarea:focus {
+    background-color: #ffffff;
+    border-color: var(--app-blue);
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(29, 111, 242, 0.12);
+}
+
+/* Barre de mise en forme : reste visible en haut de l'écran pendant qu'on fait défiler les blocs,
+   juste sous la nav du haut et les onglets de la page (eux aussi collés en haut) */
+.section-editor__toolbar {
+    position: sticky;
+    top: calc(var(--page-header-visible-height, 0px) + var(--site-header-height, 0px));
+    transition: top 250ms ease;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 1.1rem -1.75rem 0;
+    padding: 0.6rem 1.75rem;
+    background-color: rgba(255, 255, 255, 0.92);
+    border-top: 1px solid var(--app-border);
+    border-bottom: 1px solid var(--app-border);
+    backdrop-filter: blur(8px);
+}
+
+.section-editor__toolbar-label {
+    margin-right: 0.3rem;
+    font-size: 0.78rem;
+    color: var(--app-muted);
+}
+
+.section-editor__format {
+    min-width: 34px;
+    height: 32px;
+    padding: 0 0.55rem;
+    font: inherit;
+    font-size: 0.88rem;
+    color: var(--app-navy);
+    background-color: #ffffff;
+    border: 1px solid var(--app-border);
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.section-editor__format:hover {
+    background-color: #eef3fb;
+}
+
+.section-editor__format--bold {
+    font-weight: 700;
+}
+
+.section-editor__format--italic {
+    font-family: Georgia, serif;
+    font-style: italic;
+}
+
+.section-editor__format--code {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+}
+
+.section-editor__toolbar-help {
+    display: flex;
+    gap: 0.3rem;
+    margin-left: auto;
+    font-size: 0.76rem;
+    color: var(--app-muted);
+}
+
+.section-editor__syntax {
+    padding: 0.05rem 0.3rem;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    background-color: #f1f5fb;
+    border-radius: 5px;
+}
+
+.section-editor__blocks {
+    padding: 1.1rem 0 0.4rem;
+}
+
+.section-editor__block {
+    margin-bottom: 0.6rem;
+    background-color: #ffffff;
+    border: 1px solid var(--app-border);
+    border-radius: 14px;
+}
+
+.section-editor__block-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.6rem 0.5rem 0.9rem;
+    background-color: #fafcff;
+    border-bottom: 1px solid #eef2f7;
+    border-radius: 14px 14px 0 0;
+}
+
+.section-editor__block-type {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--app-navy);
+}
+
+.section-editor__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #1446b8;
+    background-color: #e8f0fe;
+    border-radius: 7px;
+}
+
+.section-editor__block-tools {
+    display: flex;
+    gap: 0.25rem;
+    margin-left: auto;
+}
+
+.section-editor__tool {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background-color: #ffffff;
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.section-editor__tool:hover {
+    background-color: #f1f5fd;
+}
+
+.section-editor__tool--delete:hover {
+    background-color: #fdecec;
+    border-color: #f8caca;
+}
+
+.section-editor__tool:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.section-editor__block-body {
+    padding: 0.9rem;
+}
+
+.section-editor__hint {
+    margin-top: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--app-muted);
+}
+
+/* Liste : à puces / numérotée */
+.section-editor__switch {
+    display: inline-flex;
+    margin-bottom: 0.75rem;
+    padding: 3px;
+    background-color: #eef2f7;
+    border-radius: 10px;
+}
+
+.section-editor__switch-button {
+    padding: 0.35rem 0.9rem;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--app-muted);
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.section-editor__switch-button[aria-pressed="true"] {
+    color: var(--app-navy);
+    background-color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.section-editor__rows {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.section-editor__row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-editor__row-mark {
+    flex-shrink: 0;
+    width: 22px;
+    font-size: 0.85rem;
+    text-align: center;
+    color: var(--app-muted);
+}
+
+.section-editor__remove {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    opacity: 0.55;
+    cursor: pointer;
+}
+
+.section-editor__remove:hover {
+    background-color: #fdecec;
+    opacity: 1;
+}
+
+.section-editor__add-line {
+    margin-top: 0.6rem;
+    padding: 0.25rem 0;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--app-blue);
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.section-editor__line-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+/* Tableau : grille de champs, défile sur le côté si elle est trop large */
+.section-editor__grid-wrap {
+    overflow-x: auto;
+}
+
+.section-editor__grid {
+    border-collapse: separate;
+    border-spacing: 6px;
+}
+
+.section-editor__grid-cell {
+    padding: 0;
+    vertical-align: middle;
+}
+
+.section-editor__grid .section-editor__input {
+    width: 160px;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.86rem;
+}
+
+/* La première ligne contient les en-têtes */
+.section-editor__grid thead .section-editor__input {
+    font-weight: 600;
+    color: var(--app-navy);
+    background-color: #eaf1fd;
+    border-color: #cfe0fb;
+}
+
+.section-editor__remove-column {
+    width: 100%;
+    padding: 0.2rem;
+    font: inherit;
+    font-size: 0.72rem;
+    color: var(--app-muted);
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.section-editor__remove-column:hover {
+    color: #c62828;
+    background-color: #fdecec;
+}
+
+/* Tags */
+.section-editor__chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background-color: #f8fafd;
+    border: 1px solid #dfe6f1;
+    border-radius: 12px;
+}
+
+.section-editor__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.35rem 0.3rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1446b8;
+    background-color: #e8f0fe;
+    border-radius: 999px;
+}
+
+.section-editor__chip-remove {
+    padding: 0 0.3rem;
+    font-size: 1rem;
+    line-height: 1;
+    color: #5f86d6;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.section-editor__chip-input {
+    flex: 1;
+    min-width: 140px;
+    padding: 0.35rem;
+    font: inherit;
+    font-size: 0.88rem;
+    background: none;
+    border: 0;
+}
+
+.section-editor__chip-input:focus {
+    outline: none;
+}
+
+/* Définitions : terme à gauche, définition à droite */
+.section-editor__definition {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr) 30px;
+    gap: 0.5rem;
+    align-items: start;
+}
+
+.section-editor__definition .section-editor__textarea {
+    min-height: 44px;
+}
+
+/* Images */
+.section-editor__files {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr));
+    gap: 0.75rem;
+}
+
+.section-editor__file-card {
+    overflow: hidden;
+    background-color: #fbfcfe;
+    border: 1px solid var(--app-border);
+    border-radius: 12px;
+}
+
+.section-editor__file-image {
+    display: block;
+    width: 100%;
+    height: 100px;
+    object-fit: contain;
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--app-border);
+}
+
+.section-editor__file-body {
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.5rem;
+}
+
+.section-editor__file-name {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.3rem;
+    min-width: 0;
+}
+
+.section-editor__file-title {
+    overflow: hidden;
+    font-size: 0.75rem;
+    color: var(--app-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.section-editor__file-body .section-editor__input {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+.section-editor__file-add {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 170px;
+    padding: 0.6rem;
+    font: inherit;
+    text-align: center;
+    color: var(--app-blue);
+    background-color: #f6f9fe;
+    border: 2px dashed #cfe0fb;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.section-editor__file-add:hover {
+    border-color: var(--app-blue);
+}
+
+.section-editor__file-add-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.section-editor__file-add-help {
+    font-size: 0.75rem;
+    color: var(--app-muted);
+}
+
+/* Documents */
+.section-editor__documents {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.section-editor__document {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) minmax(0, 220px) 30px;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--app-border);
+    border-radius: 12px;
+}
+
+.section-editor__document-text {
+    display: grid;
+    min-width: 0;
+}
+
+.section-editor__document-title {
+    overflow: hidden;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--app-navy);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.section-editor__document-meta {
+    font-size: 0.78rem;
+    color: var(--app-muted);
+}
+
+.section-editor__document .section-editor__input {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.82rem;
+}
+
+/* « Insérer un bloc ici », entre deux blocs : discret tant qu'on ne le survole pas */
+.section-editor__insert {
+    display: flex;
+    justify-content: center;
+    margin: -0.25rem 0 0.35rem;
+}
+
+.section-editor__insert-button {
+    padding: 0.1rem 0.75rem;
+    font: inherit;
+    font-size: 0.75rem;
+    color: var(--app-muted);
+    background-color: #ffffff;
+    border: 1px dashed #c8d6ee;
+    border-radius: 999px;
+    opacity: 0.55;
+    cursor: pointer;
+}
+
+.section-editor__insert-button:hover,
+.section-editor__insert-button:focus-visible {
+    color: var(--app-blue);
+    border-color: var(--app-blue);
+    opacity: 1;
+}
+
+.section-editor__add-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.85rem;
+    font: inherit;
+    font-weight: 600;
+    color: var(--app-blue);
+    background-color: #f8fbff;
+    border: 2px dashed #cfe0fb;
+    border-radius: 14px;
+    cursor: pointer;
+}
+
+.section-editor__add-button:hover {
+    border-color: var(--app-blue);
+}
+
+.section-editor__menu {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin: 0.6rem 0;
+    padding: 0.75rem;
+    background-color: #ffffff;
+    border: 1px solid var(--app-border);
+    border-radius: 14px;
+    box-shadow: var(--app-shadow);
+}
+
+.section-editor__menu[hidden] {
+    display: none;
+}
+
+.section-editor__menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.75rem;
+    font: inherit;
+    text-align: left;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.section-editor__menu-item:hover,
+.section-editor__menu-item:focus-visible {
+    background-color: #f4f8ff;
+    border-color: #dbe7fb;
+}
+
+.section-editor__menu-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--app-navy);
+}
+
+.section-editor__menu-help {
+    font-size: 0.75rem;
+    color: var(--app-muted);
+}
+
+.section-editor__error {
+    margin-top: 0.75rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #c62828;
+}
+
+.section-editor__error:empty {
+    display: none;
+}
+
+/* Boutons Annuler / Enregistrer : restent visibles en bas de l'écran */
+.section-editor__footer {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin: 1.1rem -1.75rem 0;
+    padding: 0.9rem 1.75rem;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-top: 1px solid var(--app-border);
+    border-radius: 0 0 var(--app-radius) var(--app-radius);
+    backdrop-filter: blur(8px);
+}
+
+/* ==========================================================================
+   Choix des fichiers d'un bloc (dans la modal)
+   JS : assets/js/app/project/sections/ProjectFilePicker.js
+   ========================================================================== */
+
+.file-picker {
+    display: grid;
+    gap: 1rem;
+}
+
+.file-picker__upload {
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.9rem 1rem;
+    background-color: #f6f9fe;
+    border: 2px dashed #cfe0fb;
+    border-radius: 12px;
+}
+
+.file-picker__upload-label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--app-navy);
+}
+
+.file-picker__upload-input {
+    max-width: 100%;
+    font: inherit;
+    font-size: 0.85rem;
+}
+
+.file-picker__upload-help,
+.file-picker__status {
+    font-size: 0.8rem;
+    color: var(--app-muted);
+}
+
+.file-picker__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+    gap: 0.6rem;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.file-picker__item {
+    display: grid;
+    grid-template-columns: auto 48px minmax(0, 1fr);
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--app-border);
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.file-picker__item:hover {
+    background-color: #f8fbff;
+}
+
+.file-picker__item:has(.file-picker__checkbox:checked) {
+    background-color: #eef4ff;
+    border-color: var(--app-blue);
+}
+
+.file-picker__image,
+.file-picker__extension {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+}
+
+.file-picker__image {
+    object-fit: cover;
+    background-color: #ffffff;
+    border: 1px solid var(--app-border);
+}
+
+.file-picker__extension {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #1446b8;
+    background-color: #e8f0fe;
+}
+
+.file-picker__text {
+    display: grid;
+    min-width: 0;
+}
+
+.file-picker__title {
+    overflow: hidden;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--app-navy);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-picker__meta {
+    font-size: 0.75rem;
+    color: var(--app-muted);
+}
+
+.file-picker__error {
+    font-size: 0.85rem;
+    color: #c62828;
+}
+
+.file-picker__error:empty {
+    display: none;
+}
+
+.file-picker__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
+
+@media (max-width: 700px) {
+    .section-block__definition {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.2rem;
+    }
+
+    .section-editor {
+        padding: 1.1rem 1rem 0;
+    }
+
+    .section-editor__toolbar,
+    .section-editor__footer {
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .section-editor__toolbar-help {
+        display: none;
+    }
+
+    .section-editor__menu {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .section-editor__definition {
+        grid-template-columns: minmax(0, 1fr) 30px;
+    }
+
+    .section-editor__definition .section-editor__textarea {
+        grid-column: 1;
+    }
+
+    .section-editor__document {
+        grid-template-columns: 28px minmax(0, 1fr) 30px;
+    }
+
+    .section-editor__document .section-editor__input {
+        grid-column: 2 / 3;
     }
 }
 
@@ -2632,6 +5105,11 @@
 .section-editable {
     display: flow-root;
     scroll-margin-top: 1rem;
+}
+
+/* Section cachée pendant sa modification (l'éditeur s'affiche à sa place) */
+.section-editable[hidden] {
+    display: none;
 }
 
 /* Boutons à droite du titre, visibles au survol de la section ou au clavier.
@@ -2701,5 +5179,312 @@
     /* Pas de survol sur mobile : boutons toujours visibles */
     .section-tools {
         opacity: 1;
+    }
+}
+
+/* ==========================================================================
+   Page Paramètres (#settings) : catégories et statuts des projets
+   HTML : templates/app/settings/ — JS : assets/js/app/settings/SettingsEditor.js
+   ========================================================================== */
+
+/* Deux listes côte à côte sur grand écran, l'une sous l'autre sinon */
+.settings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+    align-items: start;
+    gap: 1.5rem;
+    padding: 2.5rem 2.5rem 4rem;
+}
+
+.settings-panel {
+    padding: 1.5rem;
+    background-color: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    box-shadow: var(--app-shadow);
+}
+
+.settings-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.settings-panel__title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--app-navy);
+}
+
+.settings-panel__count {
+    padding: 0.1rem 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--app-muted, #64748b);
+    background-color: #eef2f7;
+    border-radius: 999px;
+}
+
+.settings-panel__text {
+    margin-top: 0.3rem;
+    font-size: 0.88rem;
+    color: #64748b;
+}
+
+/* Bouton « Ajouter » : le même bouton verre que l'en-tête des pages, un peu plus petit */
+.settings-panel__add {
+    flex-shrink: 0;
+    height: 40px;
+    font-size: 0.9rem;
+}
+
+.settings-panel__add .page-header__button-dot {
+    width: 28px;
+    height: 28px;
+}
+
+.settings-panel__empty {
+    padding: 1.5rem 0 0.5rem;
+    font-size: 0.92rem;
+    color: #64748b;
+    text-align: center;
+}
+
+/* --- Lignes : nom, nombre de projets, boutons --- */
+
+.settings-list {
+    list-style: none;
+    border-top: 1px solid #eef2f7;
+}
+
+.settings-list__item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-height: 56px;
+    padding: 0.5rem 0.25rem 0.5rem 0.5rem;
+    border-bottom: 1px solid #eef2f7;
+    transition: background-color 150ms ease;
+}
+
+.settings-list__item:last-child {
+    border-bottom: none;
+}
+
+.settings-list__item:hover {
+    background-color: #f8fafd;
+}
+
+.settings-list__name {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--app-navy);
+    overflow-wrap: anywhere;
+}
+
+.settings-list__meta {
+    flex-shrink: 0;
+    font-size: 0.82rem;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+/* Statut : la même pastille que sur la carte d'un projet (couleurs .project-state--…) */
+.settings-list__state,
+.settings-colors__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: 999px;
+}
+
+.settings-list__state-dot {
+    width: 8px;
+    height: 8px;
+    background-color: currentColor;
+    border-radius: 50%;
+}
+
+.settings-list__actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.25rem;
+}
+
+.settings-list__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.settings-list__action:hover {
+    background-color: #f1f5fd;
+    border-color: #e1e9f5;
+}
+
+.settings-list__action--delete:hover {
+    background-color: #fdecec;
+    border-color: #f8caca;
+}
+
+.settings-list__action:focus-visible {
+    outline: 2px solid var(--app-blue);
+    outline-offset: 2px;
+}
+
+/* Premier élément : pas de « monter » ; dernier : pas de « descendre » */
+.settings-list__action:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.settings-list__action:disabled:hover {
+    background: none;
+    border-color: transparent;
+}
+
+/* --- Formulaire d'un statut : choix de la couleur parmi les pastilles --- */
+
+.settings-colors {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.settings-colors > .project-form__label {
+    margin-bottom: 0.5rem;
+    padding: 0;
+}
+
+.settings-colors__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.settings-colors__choice {
+    position: relative;
+    cursor: pointer;
+}
+
+/* Le bouton radio est caché : c'est la pastille qui montre le choix */
+.settings-colors__input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.settings-colors__pill {
+    border: 2px solid transparent;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.settings-colors__input:checked + .settings-colors__pill {
+    border-color: currentColor;
+    box-shadow: 0 0 0 3px #ffffff, 0 0 0 4px currentColor;
+}
+
+.settings-colors__input:focus-visible + .settings-colors__pill {
+    outline: 2px solid var(--app-blue);
+    outline-offset: 4px;
+}
+
+@media (max-width: 700px) {
+    .settings {
+        padding: 1.5rem 1rem 3rem;
+    }
+
+    .settings-panel {
+        padding: 1.1rem;
+    }
+
+    /* Le nombre de projets passe sous le nom pour laisser la place aux boutons */
+    .settings-list__item {
+        flex-wrap: wrap;
+        row-gap: 0.2rem;
+    }
+
+    .settings-list__name {
+        flex-basis: calc(100% - 90px);
+    }
+
+    .settings-list__meta {
+        order: 3;
+        flex-basis: 100%;
+    }
+}
+
+/* ==========================================================================
+   Mobile (600px et moins) : réglages communs à toutes les pages de l'app
+   ========================================================================== */
+
+@media (max-width: 600px) {
+    /*
+     * Onglets (Présentation / Tâches / Fichiers…) et filtres (Tous / En cours…) :
+     * sur une seule ligne, sur toute la largeur, chaque bouton prend une part égale.
+     */
+    .page-tabs,
+    .projects__filters {
+        display: flex;
+        flex-wrap: nowrap;
+        width: 100%;
+    }
+
+    .page-tabs__link,
+    .projects__filter {
+        flex: 1 1 auto;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0.55rem 0.5rem;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    /* Filtres des projets : les mots suffisent, les icônes prendraient trop de place */
+    .projects__filter img {
+        display: none;
+    }
+
+    /* Raccourci clavier Ctrl K : inutile sur un écran tactile */
+    .page-search__shortcut {
+        display: none;
+    }
+
+}
+
+/*
+ * Mobile et tablette (900px et moins) : il n'y a plus de menu à replier, donc plus de raison de garder
+ * des cartes de largeur fixe (voir .projects__list) ; elles se partagent toute la largeur disponible.
+ */
+@media (max-width: 900px) {
+    .projects__list {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    }
+
+    .doc-topics {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+    }
+
+    .elements__icons {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     }
 }

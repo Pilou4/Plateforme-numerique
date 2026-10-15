@@ -9,6 +9,9 @@
 
 const STICKY_CLASS = 'page-header--sticky';
 const STUCK_CLASS = 'page-header--stuck';
+// Hauteur de l'en-tête restée visible une fois collé (les onglets), sur <html> : d'autres éléments
+// collants de la page se placent juste en dessous (barre de l'éditeur des sections d'un projet)
+const VISIBLE_HEIGHT_VARIABLE = '--page-header-visible-height';
 
 export class StickyPageHeader {
     constructor(header) {
@@ -31,6 +34,7 @@ export class StickyPageHeader {
     updateOffset() {
         this.offset = this.header.offsetHeight - this.tabs.offsetHeight;
         this.header.style.setProperty('--page-header-offset', `${-this.offset}px`);
+        document.documentElement.style.setProperty(VISIBLE_HEIGHT_VARIABLE, `${this.tabs.offsetHeight}px`);
         this.updateStuckState();
     }
 

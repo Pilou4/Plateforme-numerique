@@ -1,0 +1,117 @@
+{#
+    Carte d'un projet de la liste (page Projets). Tout se modifie directement dans la carte
+    (assets/js/app/project/ProjectCardEditor.js) : nom, description, catégorie, statut et images.
+    Renvoyée aussi par l'API après une modification, pour remplacer la carte sans recharger la page.
+
+    {{ include('app/project/_project_card.html.twig', {project: project}, with_context = false) }}
+
+    En haut, la couverture : le logo long. Dessous, l'avatar et le logo chevauchent la couverture,
+    le statut est à droite sur la même ligne. Le nombre de tâches mène à la page des tâches.
+#}
+{% set months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'] %}
+{% set step_count = project.steps|length %}
+{% set done_count = project.steps|filter(step => step.done)|length %}
+<article class="project-card"
+         data-project-card
+         data-update-url="{{ path('api_projects_update', {slug: project.slug}) }}"
+         data-name="{{ project.name }}"
+         data-summary="{{ project.summary }}"
+         data-state="{{ project.state.code }}"
+         data-category="{{ project.category.id ?? '' }}"
+         data-favorite="{{ project.favorite ? 'true' : 'false' }}"
+         data-search-text="{{ project.name }} {{ project.summary }} {{ project.category.name ?? '' }}">
+
+    <div class="project-card__cover">
+        {{ _self.image(project, 'logoWide', 'Logo long', 'app_project_logo_wide', 'cover') }}
+
+        <div class="project-card__tools">
+            {# Corbeille, visible au survol de la carte (suppression après confirmation, ProjectList.js) #}
+            <button type="button" class="project-card__tool project-card__tool--delete"
+                    data-project-delete="{{ path('api_projects_delete', {slug: project.slug}) }}"
+                    data-project-name="{{ project.name }}"
+                    title="Supprimer le projet"
+                    aria-label="Supprimer le projet « {{ project.name }} »">
+                <img src="{{ asset('images/icones/delete.svg') }}" alt="" width="18" height="18">
+            </button>
+            {# Étoile (sans cadre), tout à droite : ajoute ou retire des favoris #}
+            <button type="button" class="project-card__tool project-card__tool--favorite"
+                    data-favorite-toggle
+                    data-api-url="{{ path('api_projects_favorite', {slug: project.slug}) }}"
+                    data-project-name="{{ project.name }}"
+                    data-icon-on="{{ asset('images/icones/star-filled.svg') }}"
+                    data-icon-off="{{ asset('images/icones/star.svg') }}"
+                    aria-pressed="{{ project.favorite ? 'true' : 'false' }}"
+                    aria-label="{{ project.favorite ? 'Retirer « ' ~ project.name ~ ' » des favoris' : 'Ajouter « ' ~ project.name ~ ' » aux favoris' }}">
+                <img src="{{ asset('images/icones/' ~ (project.favorite ? 'star-filled.svg' : 'star.svg')) }}" alt="" width="18" height="18">
+            </button>
+        </div>
+    </div>
+
+    <div class="project-card__body">
+        <div class="project-card__identity">
+            {{ _self.image(project, 'avatar', 'Avatar', 'app_project_avatar', 'avatar') }}
+            {{ _self.image(project, 'logo', 'Logo', 'app_project_logo', 'logo') }}
+
+            <button type="button" class="project-card__state project-state--{{ project.state.color.cssModifier }}" data-card-edit="state" aria-label="Statut : {{ project.state.label }} (changer)">
+                <span class="project-card__state-dot" aria-hidden="true"></span>
+                {{ project.state.label }}
+            </button>
+        </div>
+
+        <h2 class="project-card__title project-card__editable" data-card-edit="name" tabindex="0" title="Cliquer pour modifier">{{ project.name }}</h2>
+
+        <div class="project-card__line">
+            <button type="button" class="project-card__category project-card__editable" data-card-edit="category" title="Changer la catégorie">
+                {% if project.category %}
+                    {{ project.category.name }}
+                {% else %}
+                    <span class="project-card__placeholder">Ajouter une catégorie</span>
+                {% endif %}
+            </button>
+            <time class="project-card__date" datetime="{{ project.createdAt|date('Y-m-d') }}">
+                Créé le {{ project.createdAt|date('j') }} {{ months[project.createdAt|date('n') - 1] }} {{ project.createdAt|date('Y') }}
+            </time>
+        </div>
+
+        <p class="project-card__summary project-card__editable" data-card-edit="summary" tabindex="0" title="Cliquer pour modifier">
+            {%- if project.summary -%}
+                {{ project.summary }}
+            {%- else -%}
+                <span class="project-card__placeholder">Ajouter une description</span>
+            {%- endif -%}
+        </p>
+
+        <div class="project-card__footer">
+            <a href="{{ path('app_project_steps', {slug: project.slug}) }}" class="project-card__tasks">
+                <strong class="project-card__tasks-count">{{ step_count }}</strong>
+                {{ step_count > 1 ? 'tâches' : 'tâche' }} · {{ done_count }} {{ done_count > 1 ? 'terminées' : 'terminée' }}
+                <span aria-hidden="true">→</span>
+            </a>
+            <a href="{{ path('app_project_show', {slug: project.slug}) }}" class="project-card__link">Voir le projet</a>
+        </div>
+    </div>
+</article>
+
+{#
+    Une image de la carte (logo long, avatar, logo) : un clic ouvre le choix du fichier, enregistré tout de suite.
+    Sans image : une image vide avec son nom ; avec image : une croix pour la retirer.
+#}
+{% macro image(project, name, label, route, place) %}
+    {% set current = attribute(project, name) %}
+    <div class="project-card__image project-card__image--{{ place }}{{ current ? ' project-card__image--filled' }}" data-card-image="{{ name }}">
+        <label class="project-card__image-tile" title="{{ current ? 'Changer' : 'Choisir' }} : {{ label }}">
+            <input type="file" class="project-card__image-input" accept="image/png,image/jpeg,image/webp,image/svg+xml" aria-label="{{ label }}" data-card-image-input>
+            {% if current %}
+                <img src="{{ path(route, {slug: project.slug}) }}" alt="" class="project-card__image-preview">
+            {% else %}
+                <img src="{{ asset('images/icones/image-placeholder.svg') }}" alt="" class="project-card__image-placeholder" width="22" height="22">
+                <span class="project-card__image-name">{{ label }}</span>
+            {% endif %}
+        </label>
+        {% if current %}
+            <button type="button" class="project-card__image-remove" data-card-image-remove title="Retirer l'image" aria-label="Retirer : {{ label }}">
+                <img src="{{ asset('images/icones/close.svg') }}" alt="" width="12" height="12">
+            </button>
+        {% endif %}
+    </div>
+{% endmacro %}

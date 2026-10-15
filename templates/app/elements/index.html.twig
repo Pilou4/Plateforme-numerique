@@ -11,11 +11,56 @@
 #}
 {% block app_body %}
 <main id="elements">
+    {#
+        Démonstration de l'en-tête complet : bouton « + » (ouvre une modal d'exemple), recherche,
+        filtres et onglets. Ici, la recherche et les filtres ne filtrent rien.
+    #}
+    {% set demo_tab = app.request.query.get('onglet', '1') %}
     {{ include('app/_partials/_page_header.html.twig', {
         title: 'Éléments',
         eyebrow: 'Interface',
+        count: 3,
         lead: 'Les éléments de base de l\'app et leur rendu.',
+        search: 'Rechercher…',
+        actions: [
+            {label: 'Exemple d\'action', icon: 'plus.svg', modal: 'elements-demo-modal', modal_title: 'Exemple de modal', modal_size: 'small',
+             attributes: {'data-modal-icon': asset('images/icones/elements.svg')}},
+            {label: 'Action secondaire', icon: 'edit-light.svg', variant: 'ghost', modal: 'elements-demo-modal', modal_title: 'Exemple de modal', modal_size: 'small'},
+        ],
+        filters: [
+            {name: 'demo-state', label: 'Statut', icon: 'filter-status.svg', color: 'blue', options: [
+                {value: '', label: 'Tous les statuts'},
+                {value: 'pas_commence', label: 'Pas commencés', color: 'violet'},
+                {value: 'en_cours', label: 'En cours', color: 'blue'},
+                {value: 'termine', label: 'Terminés', color: 'green'},
+                {value: 'en_pause', label: 'En pause', color: 'orange'},
+            ]},
+            {name: 'demo-category', label: 'Catégorie', icon: 'filter-category.svg', color: 'green', options: [
+                {value: '', label: 'Toutes les catégories'},
+                {value: 'web', label: 'Application web'},
+                {value: 'outils', label: 'Outils de gestion interne de l\'entreprise'},
+            ]},
+            {name: 'demo-favorite', label: 'Favoris', icon: 'filter-favorite.svg', color: 'yellow', options: [
+                {value: '', label: 'Tous'},
+                {value: 'oui', label: 'Favoris seulement'},
+            ]},
+        ],
+        tabs_label: 'Onglets de démonstration',
+        tabs: [
+            {label: 'Onglet 1', url: path('app_elements'), count: 12, active: demo_tab == '1'},
+            {label: 'Onglet 2', url: path('app_elements', {onglet: 2}), count: 4, active: demo_tab == '2'},
+            {label: 'Onglet 3', url: path('app_elements', {onglet: 3}), active: demo_tab == '3'},
+        ],
     }, with_context = false) }}
+
+    {# Contenu de la modal ouverte par les boutons de l'en-tête de démonstration #}
+    <template id="elements-demo-modal">
+        <p class="elements__section-text">Exemple de modal : en-tête bleu, contenu, puis les boutons séparés par le trait bleu.</p>
+        <div class="modal__actions">
+            <button type="button" class="projects__button projects__button--ghost" data-modal-close>Annuler</button>
+            <button type="button" class="projects__button" data-modal-close>Valider</button>
+        </div>
+    </template>
 
     <div class="elements" data-elements>
         {# --- Bandeaux de message (composant notice) --- #}
@@ -90,9 +135,16 @@
                         <figcaption class="icon-viewer__caption" data-icon-natural-caption>Taille réelle</figcaption>
                     </figure>
                 </div>
-                <p class="icon-viewer__path">
-                    <code class="elements__code" data-icon-path></code>
-                </p>
+                <div class="icon-viewer__footer">
+                    <p class="icon-viewer__path">
+                        <code class="elements__code" data-icon-path></code>
+                    </p>
+                    {# href et nom du fichier remplis par IconViewer.js ; download : le navigateur enregistre le fichier au lieu de l'ouvrir #}
+                    <a href="" download="" class="icon-viewer__download" data-icon-download>
+                        <img src="{{ asset('images/icones/download.svg') }}" alt="" width="16" height="16">
+                        <span>Télécharger l'icône</span>
+                    </a>
+                </div>
             </div>
         </template>
     </div>

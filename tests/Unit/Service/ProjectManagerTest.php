@@ -4,7 +4,12 @@ namespace App\Tests\Unit\Service;
 
 use App\Dto\ProjectPayload;
 use App\Entity\Project;
+use App\Entity\ProjectCategory;
+use App\Entity\ProjectState;
+use App\Enum\ProjectImage;
+use App\Repository\ProjectCategoryRepository;
 use App\Repository\ProjectRepository;
+use App\Repository\ProjectStateRepository;
 use App\Service\ProjectManager;
 use App\Service\ProjectStorage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,8 +29,18 @@ final class ProjectManagerTest extends TestCase
     private string $directory;
     private ProjectStorage $storage;
 
+    /** @var array<string, ProjectState> */
+    private array $states = [];
+    private ProjectCategory $category;
+
     protected function setUp(): void
     {
+        foreach (ProjectState::CODES as $position => $code) {
+            $this->states[$code] = new ProjectState($code, $code, $code, $position);
+        }
+
+        $this->category = new ProjectCategory('Jeu', 0);
+
         $this->filesystem = new Filesystem();
         $this->directory = sys_get_temp_dir().'/plateforme-tests-'.bin2hex(random_bytes(4));
         $this->storage = new ProjectStorage($this->directory, $this->filesystem);
@@ -46,7 +61,7 @@ final class ProjectManagerTest extends TestCase
         $entityManager->expects($this->once())->method('persist')->with($this->isInstanceOf(Project::class));
         $entityManager->expects($this->once())->method('flush');
 
-        $project = $this->createManager($entityManager)->create(new ProjectPayload('  Site vitrine Dupont  ', '  '), null);
+        $project = $this->createManager($entityManager)->create(new ProjectPayload('  Site vitrine Dupont  ', '  '));
 
         $this->assertSame('Site vitrine Dupont', $project->getName());
         $this->assertSame('site-vitrine-dupont', $project->getSlug());
@@ -66,7 +81,7 @@ final class ProjectManagerTest extends TestCase
         // Une fois pour avoir l'id, une fois pour le logo
         $entityManager->expects($this->exactly(2))->method('flush');
 
-        $project = $this->createManager($entityManager)->create(new ProjectPayload('Plateforme'), $this->createUploadedFile());
+        $project = $this->createManager($entityManager)->create(new ProjectPayload('Plateforme'), ['logo' => $this->createUploadedFile()]);
 
         $this->assertNotNull($project->getLogo());
         $this->assertFileExists($this->directory.'/7/'.$project->getLogo());
@@ -78,13 +93,13 @@ final class ProjectManagerTest extends TestCase
 
         $this->expectException(\DomainException::class);
 
-        $manager->create(new ProjectPayload('Plateforme'), null);
+        $manager->create(new ProjectPayload('Plateforme'));
     }
 
     public function testSlugAlreadyTakenGetsANumber(): void
     {
         // Un autre projet a déjà le slug « plateforme » (nom différent, ex. « Plateforme ! »)
-        $project = $this->createManager(takenSlugs: ['plateforme'])->create(new ProjectPayload('Plateforme'), null);
+        $project = $this->createManager(takenSlugs: ['plateforme'])->create(new ProjectPayload('Plateforme'));
 
         $this->assertSame('plateforme-2', $project->getSlug());
     }
@@ -97,7 +112,7 @@ final class ProjectManagerTest extends TestCase
     {
         $project = $this->createProject();
 
-        $this->createManager()->update($project, new ProjectPayload('Nouveau nom', 'Résumé'), null, false);
+        $this->createManager()->update($project, new ProjectPayload('Nouveau nom', 'Résumé'));
 
         $this->assertSame('nouveau-nom', $project->getSlug());
         $this->assertSame('Résumé', $project->getSummary());
@@ -111,8 +126,8 @@ final class ProjectManagerTest extends TestCase
         $repository = $this->createStub(ProjectRepository::class);
         $repository->method('findOneBy')->willReturn($project);
 
-        (new ProjectManager($this->createStub(EntityManagerInterface::class), $repository, new AsciiSlugger(), $this->storage))
-            ->update($project, new ProjectPayload('Plateforme'), null, false);
+        (new ProjectManager($this->createStub(EntityManagerInterface::class), $repository, new AsciiSlugger(), $this->storage, $this->createStateRepository(), $this->createCategoryRepository()))
+            ->update($project, new ProjectPayload('Plateforme'));
 
         $this->assertSame('plateforme', $project->getSlug());
     }
@@ -123,7 +138,7 @@ final class ProjectManagerTest extends TestCase
         $oldLogo = $this->storage->store($project, $this->createUploadedFile(), 'logo');
         $project->setLogo($oldLogo);
 
-        $this->createManager()->update($project, new ProjectPayload('Plateforme'), $this->createUploadedFile(), false);
+        $this->createManager()->update($project, new ProjectPayload('Plateforme'), ['logo' => $this->createUploadedFile()]);
 
         $this->assertNotSame($oldLogo, $project->getLogo());
         $this->assertFalse($this->storage->exists($project, $oldLogo));
@@ -136,7 +151,7 @@ final class ProjectManagerTest extends TestCase
         $oldLogo = $this->storage->store($project, $this->createUploadedFile(), 'logo');
         $project->setLogo($oldLogo);
 
-        $this->createManager()->update($project, new ProjectPayload('Plateforme'), null, true);
+        $this->createManager()->update($project, new ProjectPayload('Plateforme'), [], [ProjectImage::Logo]);
 
         $this->assertNull($project->getLogo());
         $this->assertFalse($this->storage->exists($project, $oldLogo));
@@ -146,9 +161,217 @@ final class ProjectManagerTest extends TestCase
     {
         $project = $this->createProject()->setLogo('logo.png');
 
-        $this->createManager()->update($project, new ProjectPayload('Plateforme'), null, false);
+        $this->createManager()->update($project, new ProjectPayload('Plateforme'));
 
         $this->assertSame('logo.png', $project->getLogo());
+    }
+
+    /* ------------------------------------------------------------------
+       État, catégorie et favori
+       ------------------------------------------------------------------ */
+
+    /**
+     * Sans statut dans le formulaire, le projet prend le premier statut de la liste.
+     */
+    public function testNewProjectGetsTheFirstStateWithoutCategory(): void
+    {
+        $project = $this->createManager()->create(new ProjectPayload('Plateforme'));
+
+        $this->assertSame($this->states[ProjectState::CODE_NOT_STARTED], $project->getState());
+        $this->assertNull($project->getCategory());
+        $this->assertFalse($project->isFavorite());
+    }
+
+    public function testCreateWithStateAndCategory(): void
+    {
+        $project = $this->createManager()->create(new ProjectPayload('Plateforme', null, ProjectState::CODE_IN_PROGRESS, '1'));
+
+        $this->assertSame($this->states[ProjectState::CODE_IN_PROGRESS], $project->getState());
+        $this->assertSame($this->category, $project->getCategory());
+    }
+
+    public function testUnknownCategoryIsRefused(): void
+    {
+        $this->expectException(\DomainException::class);
+
+        $this->createManager()->create(new ProjectPayload('Plateforme', null, null, '99'));
+    }
+
+    public function testUpdateWithAnEmptyCategoryRemovesIt(): void
+    {
+        $project = $this->createProject()->setState($this->states[ProjectState::CODE_IN_PROGRESS])->setCategory($this->category);
+
+        $this->createManager()->update($project, new ProjectPayload('Plateforme', null, null, ''));
+
+        $this->assertNull($project->getCategory());
+        // État non envoyé : inchangé
+        $this->assertSame($this->states[ProjectState::CODE_IN_PROGRESS], $project->getState());
+    }
+
+    public function testUpdateChangesTheState(): void
+    {
+        $project = $this->createProject()->setState($this->states[ProjectState::CODE_IN_PROGRESS]);
+
+        $this->createManager()->update($project, new ProjectPayload('Plateforme', null, ProjectState::CODE_DONE));
+
+        $this->assertSame($this->states[ProjectState::CODE_DONE], $project->getState());
+    }
+
+    public function testSetFavorite(): void
+    {
+        $project = $this->createProject();
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->once())->method('flush');
+
+        $this->createManager($entityManager)->setFavorite($project, true);
+
+        $this->assertTrue($project->isFavorite());
+    }
+
+    public function testUnknownStateIsRefused(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Ce statut n\'existe pas.');
+
+        $this->createManager()->create(new ProjectPayload('Plateforme', null, 'abandonne'));
+    }
+
+    /**
+     * Tous les statuts ont été supprimés de la table : impossible de créer un projet.
+     */
+    public function testCreateWithoutAnyStateIsRefused(): void
+    {
+        $this->states = [];
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Aucun statut de projet n\'existe : ajoute-en un dans les Paramètres.');
+
+        $this->createManager()->create(new ProjectPayload('Plateforme'));
+    }
+
+    /**
+     * Un statut ajouté depuis les Paramètres (son code n'est pas un des trois de départ) est accepté.
+     */
+    public function testStateCreatedFromTheSettingsIsAccepted(): void
+    {
+        $this->states['en_pause'] = new ProjectState('en_pause', 'En pause', 'En pause', 3);
+
+        $project = $this->createManager()->create(new ProjectPayload('Plateforme', null, 'en_pause'));
+
+        $this->assertSame($this->states['en_pause'], $project->getState());
+    }
+
+    /* ------------------------------------------------------------------
+       Logo long et avatar
+       ------------------------------------------------------------------ */
+
+    public function testCreateWithTheThreeImages(): void
+    {
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('persist')->willReturnCallback(
+            static function (Project $project): void {
+                (new \ReflectionProperty(Project::class, 'id'))->setValue($project, 7);
+            },
+        );
+
+        $project = $this->createManager($entityManager)->create(new ProjectPayload('Plateforme'), [
+            'logo' => $this->createUploadedFile(),
+            'logoWide' => $this->createUploadedFile(),
+            'avatar' => $this->createUploadedFile(),
+        ]);
+
+        $this->assertStringStartsWith('logo-', (string) $project->getLogo());
+        $this->assertStringStartsWith('logo-long-', (string) $project->getLogoWide());
+        $this->assertStringStartsWith('avatar-', (string) $project->getAvatar());
+
+        foreach (ProjectImage::cases() as $image) {
+            $this->assertTrue($this->storage->exists($project, (string) $project->getImage($image)));
+        }
+    }
+
+    public function testUpdateWithANewAvatarKeepsTheOtherImages(): void
+    {
+        $project = $this->createProject()->setLogo('logo.png')->setLogoWide('logo-long.png');
+        $oldAvatar = $this->storage->store($project, $this->createUploadedFile(), 'avatar');
+        $project->setAvatar($oldAvatar);
+
+        $this->createManager()->update($project, new ProjectPayload('Plateforme'), ['avatar' => $this->createUploadedFile()]);
+
+        $this->assertNotSame($oldAvatar, $project->getAvatar());
+        $this->assertFalse($this->storage->exists($project, $oldAvatar));
+        $this->assertSame('logo.png', $project->getLogo());
+        $this->assertSame('logo-long.png', $project->getLogoWide());
+    }
+
+    public function testUpdateRemovingTheLogoWideOnly(): void
+    {
+        $project = $this->createProject()->setLogo('logo.png')->setAvatar('avatar.png');
+        $oldLogoWide = $this->storage->store($project, $this->createUploadedFile(), 'logo-long');
+        $project->setLogoWide($oldLogoWide);
+
+        $this->createManager()->update($project, new ProjectPayload('Plateforme'), [], [ProjectImage::LogoWide]);
+
+        $this->assertNull($project->getLogoWide());
+        $this->assertFalse($this->storage->exists($project, $oldLogoWide));
+        $this->assertSame('logo.png', $project->getLogo());
+        $this->assertSame('avatar.png', $project->getAvatar());
+    }
+
+    /**
+     * Une nouvelle image l'emporte sur la case « Supprimer » cochée en même temps.
+     */
+    public function testNewImageWinsOverRemoval(): void
+    {
+        $project = $this->createProject()->setAvatar('ancien.png');
+
+        $this->createManager()->update($project, new ProjectPayload('Plateforme'), ['avatar' => $this->createUploadedFile()], [ProjectImage::Avatar]);
+
+        $this->assertStringStartsWith('avatar-', (string) $project->getAvatar());
+    }
+
+    /* ------------------------------------------------------------------
+       Suppression
+       ------------------------------------------------------------------ */
+
+    public function testDeleteRemovesTheProjectAndItsFolder(): void
+    {
+        $project = $this->createProject();
+        $logo = $this->storage->store($project, $this->createUploadedFile(), 'logo');
+        $project->setLogo($logo);
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->once())->method('remove')->with($project);
+        // Comme Doctrine, le flush efface l'id du projet supprimé : le dossier doit quand même être trouvé
+        $entityManager->expects($this->once())->method('flush')->willReturnCallback(
+            static function () use ($project): void {
+                (new \ReflectionProperty(Project::class, 'id'))->setValue($project, null);
+            },
+        );
+
+        $this->createManager($entityManager)->delete($project);
+
+        $this->assertDirectoryDoesNotExist($this->directory.'/42');
+    }
+
+    /**
+     * Si la base refuse la suppression, les fichiers du projet ne sont pas effacés.
+     */
+    public function testDeleteKeepsTheFolderIfTheDatabaseFails(): void
+    {
+        $project = $this->createProject();
+        $logo = $this->storage->store($project, $this->createUploadedFile(), 'logo');
+
+        $entityManager = $this->createStub(EntityManagerInterface::class);
+        $entityManager->method('flush')->willThrowException(new \RuntimeException('Base indisponible'));
+
+        try {
+            $this->createManager($entityManager)->delete($project);
+            $this->fail('L\'erreur de la base aurait dû remonter.');
+        } catch (\RuntimeException) {
+        }
+
+        $this->assertTrue($this->storage->exists($project, $logo));
     }
 
     /**
@@ -172,7 +395,32 @@ final class ProjectManagerTest extends TestCase
             $repository,
             new AsciiSlugger(),
             $this->storage,
+            $this->createStateRepository(),
+            $this->createCategoryRepository(),
         );
+    }
+
+    /**
+     * Faux repository des états : getByCode() renvoie toujours le même objet pour un même code.
+     */
+    private function createStateRepository(): ProjectStateRepository
+    {
+        $repository = $this->createStub(ProjectStateRepository::class);
+        $repository->method('findFirst')->willReturnCallback(fn (): ?ProjectState => $this->states[ProjectState::CODE_NOT_STARTED] ?? null);
+        $repository->method('findOneBy')->willReturnCallback(fn (array $criteria): ?ProjectState => $this->states[$criteria['code']] ?? null);
+
+        return $repository;
+    }
+
+    /**
+     * Faux repository des catégories : seule la catégorie n°1 (« Jeu ») existe.
+     */
+    private function createCategoryRepository(): ProjectCategoryRepository
+    {
+        $repository = $this->createStub(ProjectCategoryRepository::class);
+        $repository->method('find')->willReturnCallback(fn (mixed $id): ?ProjectCategory => 1 === $id ? $this->category : null);
+
+        return $repository;
     }
 
     private function createProject(): Project

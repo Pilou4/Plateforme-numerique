@@ -2,6 +2,7 @@ import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '../../fonctions/ap
 import { formatDuration, joinDuration, splitDuration } from '../../fonctions/duration.js';
 import { getModal, openModalFromTemplate } from '../../composants/Modal.js';
 import { showNotice } from '../../composants/Notice.js';
+import { PAGE_FILTER_EVENT } from '../../composants/PageFilters.js';
 import { matchesSearch, PAGE_SEARCH_EVENT } from '../../composants/PageSearch.js';
 
 const FILTER_ALL = 'all';
@@ -37,7 +38,6 @@ export class ProjectStepList {
         this.emptyMessage = root.querySelector('[data-empty]');
         this.stepTemplate = root.querySelector('[data-template="step"]');
         this.subStepTemplate = root.querySelector('[data-template="sub-step"]');
-        this.filterButtons = root.querySelectorAll('[data-filter]');
         this.sortHeads = root.querySelectorAll('[data-sort-head]');
         this.progress = root.querySelector('[data-progress]');
         this.progressBar = root.querySelector('[data-progress-bar]');
@@ -56,6 +56,7 @@ export class ProjectStepList {
 
         // Les méthodes branchées sur des événements gardent "this" = l'instance
         this.handleClick = this.handleClick.bind(this);
+        this.handleFilter = this.handleFilter.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
         this.handleAddSubmit = this.handleAddSubmit.bind(this);
         this.handleFocusIn = this.handleFocusIn.bind(this);
@@ -73,6 +74,10 @@ export class ProjectStepList {
 
     async init() {
         this.root.addEventListener('click', this.handleClick);
+
+        // Le filtre par statut est une liste déroulante de l'en-tête de la page (PageFilters.js)
+        document.addEventListener(PAGE_FILTER_EVENT, this.handleFilter);
+
         // La barre de recherche est dans l'en-tête de la page, hors de this.root
         document.addEventListener(PAGE_SEARCH_EVENT, this.handleSearch);
         // Le formulaire d'ajout est dans la modal, en dehors de la page : écoute sur document
@@ -115,7 +120,6 @@ export class ProjectStepList {
 
     render() {
         this.renderStats();
-        this.renderFilters();
         this.renderSortHeads();
         this.renderList();
     }
@@ -133,14 +137,6 @@ export class ProjectStepList {
 
         this.progressBar.style.width = `${percent}%`;
         this.progress.setAttribute('aria-valuenow', String(percent));
-    }
-
-    renderFilters() {
-        for (const button of this.filterButtons) {
-            const isActive = button.dataset.filter === this.filter;
-            button.setAttribute('aria-pressed', String(isActive));
-            button.classList.toggle('steps__filter--active', isActive);
-        }
     }
 
     renderSortHeads() {
@@ -281,15 +277,16 @@ export class ProjectStepList {
        Clics (délégation : un seul écouteur pour toute la page)
        ------------------------------------------------------------------ */
 
-    handleClick(event) {
-        const filterButton = event.target.closest('[data-filter]');
-
-        if (filterButton) {
-            this.setFilter(filterButton.dataset.filter);
-
-            return;
+    /**
+     * Filtre par statut (liste déroulante de l'en-tête de la page).
+     */
+    handleFilter(event) {
+        if (event.detail.name === 'status') {
+            this.setFilter(event.detail.value);
         }
+    }
 
+    handleClick(event) {
         const sortButton = event.target.closest('[data-sort]');
 
         if (sortButton) {

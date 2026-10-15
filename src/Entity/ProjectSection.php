@@ -3,16 +3,20 @@
 namespace App\Entity;
 
 use App\Repository\ProjectSectionRepository;
-use Doctrine\DBAL\Types\Types;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Une partie de la présentation d'un projet (Vision, Philosophie, Stack…).
- * Le contenu est du HTML, nettoyé à l'affichage.
+ * Une partie de la présentation d'un projet (Vision, Base de données…) :
+ * un titre (h2) et des blocs rangés dans l'ordre (paragraphe, liste, tableau, images…).
+ *
+ * Aucun HTML n'est enregistré : l'app fabrique les balises à l'affichage
+ * (templates/app/project/_section_block.html.twig).
  */
 #[ORM\Entity(repositoryClass: ProjectSectionRepository::class)]
 #[ORM\HasLifecycleCallbacks]
-class ProjectSection implements ContentSectionInterface
+class ProjectSection
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -23,14 +27,24 @@ class ProjectSection implements ContentSectionInterface
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Project $project = null;
 
+    /**
+     * Titre de la section, affiché en h2.
+     */
     #[ORM\Column(length: 255)]
     private ?string $title = null;
 
-    #[ORM\Column(type: Types::TEXT)]
-    private ?string $content = null;
-
+    /**
+     * Ordre de la section dans la présentation du projet : 0, 1, 2…
+     */
     #[ORM\Column]
     private int $position = 0;
+
+    /**
+     * @var Collection<int, ProjectSectionBlock>
+     */
+    #[ORM\OneToMany(targetEntity: ProjectSectionBlock::class, mappedBy: 'section', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OrderBy(['position' => 'ASC'])]
+    private Collection $blocks;
 
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
@@ -41,6 +55,7 @@ class ProjectSection implements ContentSectionInterface
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->blocks = new ArrayCollection();
     }
 
     #[ORM\PreUpdate]
@@ -78,18 +93,6 @@ class ProjectSection implements ContentSectionInterface
         return $this;
     }
 
-    public function getContent(): ?string
-    {
-        return $this->content;
-    }
-
-    public function setContent(string $content): static
-    {
-        $this->content = $content;
-
-        return $this;
-    }
-
     public function getPosition(): int
     {
         return $this->position;
@@ -98,6 +101,40 @@ class ProjectSection implements ContentSectionInterface
     public function setPosition(int $position): static
     {
         $this->position = $position;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ProjectSectionBlock>
+     */
+    public function getBlocks(): Collection
+    {
+        return $this->blocks;
+    }
+
+    /**
+     * Le bloc est ajouté à la fin de la section.
+     */
+    public function addBlock(ProjectSectionBlock $block): static
+    {
+        if (!$this->blocks->contains($block)) {
+            $block->setPosition($this->blocks->count());
+            $this->blocks->add($block);
+            $block->setSection($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Retire tous les blocs (ils sont supprimés de la base au prochain flush : orphanRemoval).
+     */
+    public function clearBlocks(): static
+    {
+        foreach ($this->blocks->toArray() as $block) {
+            $this->blocks->removeElement($block);
+        }
 
         return $this;
     }

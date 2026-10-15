@@ -1,6 +1,7 @@
 {#
     Boutons d'une section modifiable (tutoriel ou présentation d'un projet) :
-    monter, descendre, modifier, supprimer. Gérés par assets/js/composants/SectionEditor.js.
+    monter, descendre, modifier, supprimer. Gérés par assets/js/composants/SectionEditor.js (tutoriels)
+    et assets/js/app/project/sections/ProjectSections.js (présentation d'un projet).
 
     {{ include('app/_partials/_section_tools.html.twig', {section: section, is_first: loop.first, is_last: loop.last}, with_context = false) }}
 #}

@@ -2,7 +2,8 @@ import { getModal } from '../../composants/Modal.js';
 
 /**
  * Page « Éléments » : un clic sur une icône l'ouvre dans la modal,
- * en grand, sur fond sombre et à sa taille réelle.
+ * en grand, sur fond sombre et à sa taille réelle, avec un bouton pour la télécharger
+ * (pour la réutiliser dans un autre projet).
  */
 export class IconViewer {
     constructor(root) {
@@ -33,6 +34,10 @@ export class IconViewer {
         }
 
         viewer.querySelector('[data-icon-path]').textContent = `public/images/icones/${name}`;
+
+        const download = viewer.querySelector('[data-icon-download]');
+        download.href = url;
+        download.download = name;
         viewer.querySelector('[data-icon-natural]').addEventListener('load', showNaturalSize, { once: true });
 
         getModal().open({ title: name, content: viewer, size: 'medium' });

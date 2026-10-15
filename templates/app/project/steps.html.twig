@@ -7,11 +7,17 @@
 
 {% block app_body %}
 <main id="project-steps">
+    {# Filtre par statut, en liste déroulante dans l'en-tête (filtrage : assets/js/app/project/ProjectStepList.js) #}
+    {% set filters = [
+        {name: 'status', label: 'Statut', icon: 'filter-status.svg', color: 'blue', value: 'all', options: [{value: 'all', label: 'Toutes les tâches'}]|merge(statuses|map(status => {value: status.code, label: status.pluralLabel}))},
+    ] %}
+
     {{ include('app/project/_project_header.html.twig', {
         project: project,
         active: 'steps',
         lead: 'Clique sur une cellule pour la modifier, et fais glisser une ligne pour changer l\'ordre.',
         search: 'Rechercher une tâche…',
+        filters: filters,
         actions: [
             {label: 'Ajouter une tâche', icon: 'plus.svg', modal: 'project-step-add', modal_title: 'Nouvelle tâche', modal_size: 'medium'},
         ],
@@ -42,15 +48,6 @@
                 <p class="steps__stat-label">temps passé au total</p>
             </div>
         </section>
-
-        <div class="steps__toolbar">
-            <div class="steps__filters" role="group" aria-label="Filtrer les tâches par statut">
-                <button type="button" class="steps__filter steps__filter--active" data-filter="all" aria-pressed="true">Toutes</button>
-                {% for status in statuses %}
-                    <button type="button" class="steps__filter" data-filter="{{ status.code }}" aria-pressed="false">{{ status.pluralLabel }}</button>
-                {% endfor %}
-            </div>
-        </div>
 
         <div class="steps-table__wrapper">
             <table class="steps-table">

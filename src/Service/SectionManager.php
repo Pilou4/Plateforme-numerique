@@ -9,11 +9,11 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Ajout, modification, suppression et ordre des sections d'une page
- * (tutoriel de la documentation ou présentation d'un projet).
+ * Ajout, modification, suppression et ordre des sections en HTML d'une page
+ * (tutoriel de la documentation). Les sections d'un projet, faites de blocs,
+ * ont leur propre service : ProjectSectionManager.
  *
- * Le contrôleur crée la section du bon type (DocumentationSection ou ProjectSection)
- * et passe la liste des sections de la page : le reste est identique pour les deux.
+ * Le contrôleur crée la section et passe la liste des sections de la page.
  * Les positions sont toujours 0, 1, 2… dans l'ordre d'affichage.
  */
 final class SectionManager

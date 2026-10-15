@@ -24,9 +24,22 @@ export class PageSearch {
 
         this.handleInput = this.handleInput.bind(this);
         this.handleKeyDown = this.handleKeyDown.bind(this);
+        this.handleShortcut = this.handleShortcut.bind(this);
 
         input.addEventListener('input', this.handleInput);
         input.addEventListener('keydown', this.handleKeyDown);
+        document.addEventListener('keydown', this.handleShortcut);
+    }
+
+    /**
+     * Ctrl + K (Cmd + K sur Mac) place le curseur dans la recherche, depuis n'importe où dans la page.
+     */
+    handleShortcut(event) {
+        if ((event.ctrlKey || event.metaKey) && event.key?.toLowerCase() === 'k') {
+            event.preventDefault();
+            this.input.focus();
+            this.input.select();
+        }
     }
 
     handleInput() {

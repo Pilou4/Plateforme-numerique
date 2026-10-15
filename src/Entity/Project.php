@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\ProjectImage;
 use App\Repository\ProjectRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -39,6 +40,39 @@ class Project
      */
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $logo = null;
+
+    /**
+     * Logo long, horizontal (même stockage que le logo). Voir App\Enum\ProjectImage.
+     */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $logoWide = null;
+
+    /**
+     * Avatar, petite image ronde (même stockage que le logo). Voir App\Enum\ProjectImage.
+     */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $avatar = null;
+
+    /**
+     * État d'avancement (table project_state). Donné par ProjectManager à la création.
+     */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?ProjectState $state = null;
+
+    /**
+     * Catégorie (table project_category), facultative.
+     * Si la catégorie est supprimée de la table, le projet n'a simplement plus de catégorie.
+     */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?ProjectCategory $category = null;
+
+    /**
+     * Projet marqué d'une étoile dans la liste (filtre « Favoris »).
+     */
+    #[ORM\Column]
+    private bool $favorite = false;
 
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
@@ -134,6 +168,89 @@ class Project
     public function setLogo(?string $logo): static
     {
         $this->logo = $logo;
+
+        return $this;
+    }
+
+    public function getLogoWide(): ?string
+    {
+        return $this->logoWide;
+    }
+
+    public function setLogoWide(?string $logoWide): static
+    {
+        $this->logoWide = $logoWide;
+
+        return $this;
+    }
+
+    public function getAvatar(): ?string
+    {
+        return $this->avatar;
+    }
+
+    public function setAvatar(?string $avatar): static
+    {
+        $this->avatar = $avatar;
+
+        return $this;
+    }
+
+    /**
+     * Nom du fichier d'une des images du projet (logo, logo long ou avatar), null si elle n'existe pas.
+     */
+    public function getImage(ProjectImage $image): ?string
+    {
+        return match ($image) {
+            ProjectImage::Logo => $this->logo,
+            ProjectImage::LogoWide => $this->logoWide,
+            ProjectImage::Avatar => $this->avatar,
+        };
+    }
+
+    public function setImage(ProjectImage $image, ?string $fileName): static
+    {
+        match ($image) {
+            ProjectImage::Logo => $this->logo = $fileName,
+            ProjectImage::LogoWide => $this->logoWide = $fileName,
+            ProjectImage::Avatar => $this->avatar = $fileName,
+        };
+
+        return $this;
+    }
+
+    public function getState(): ?ProjectState
+    {
+        return $this->state;
+    }
+
+    public function setState(ProjectState $state): static
+    {
+        $this->state = $state;
+
+        return $this;
+    }
+
+    public function getCategory(): ?ProjectCategory
+    {
+        return $this->category;
+    }
+
+    public function setCategory(?ProjectCategory $category): static
+    {
+        $this->category = $category;
+
+        return $this;
+    }
+
+    public function isFavorite(): bool
+    {
+        return $this->favorite;
+    }
+
+    public function setFavorite(bool $favorite): static
+    {
+        $this->favorite = $favorite;
 
         return $this;
     }

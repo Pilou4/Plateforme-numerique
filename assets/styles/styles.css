@@ -15,6 +15,39 @@ html, body {
     overflow-x: clip;
 }
 
+/*
+ * Police Lexend (site public) : conçue pour faciliter la lecture.
+ * Fichiers dans assets/fonts/ (hébergés par le site, pas chargés depuis Google : pas de transfert
+ * de l'adresse IP des visiteurs). Licence libre SIL OFL : assets/fonts/LICENSE-lexend.txt
+ */
+@font-face {
+    font-family: "Lexend";
+    src: url("../fonts/lexend-latin-400-normal.woff2") format("woff2");
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Lexend";
+    src: url("../fonts/lexend-latin-500-normal.woff2") format("woff2");
+    font-weight: 500;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Lexend";
+    src: url("../fonts/lexend-latin-600-normal.woff2") format("woff2");
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Lexend";
+    src: url("../fonts/lexend-latin-700-normal.woff2") format("woff2");
+    font-weight: 700;
+    font-display: swap;
+}
+
 /* ==========================================================================
    Liens vers un autre site (site et app)
    ========================================================================== */
@@ -86,6 +119,26 @@ html, body {
     padding: 0 2rem;
 }
 
+/* Logo à gauche des liens (public/images/logo.svg) */
+.main-nav__logo {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    margin-right: 2rem;
+    border-radius: 8px;
+}
+
+.main-nav__logo-image {
+    display: block;
+    width: auto;
+    height: 48px;
+}
+
+.main-nav__logo:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 4px;
+}
+
 .main-nav__list {
     display: flex;
     flex-wrap: wrap;
@@ -133,6 +186,14 @@ html, body {
         padding: 0.45rem 1rem;
         font-size: 0.9rem;
     }
+
+    .main-nav__logo {
+        margin-right: 0.75rem;
+    }
+
+    .main-nav__logo-image {
+        height: 38px;
+    }
 }
 
 
@@ -146,9 +207,29 @@ html, body {
 #service,
 #legal-notice,
 #privacy-policy {
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     color: #e2e8f0;
     background-color: #0b1430;
+}
+
+/*
+ * Police Lexend sur les pages publiques, la nav du haut et le pied de page.
+ * Le « * » est nécessaire : la règle « *, ::before, ::after » en haut du fichier
+ * donne une police à chaque élément, qui n'hérite donc pas de celle de son parent.
+ */
+#home,
+#home *,
+#services,
+#services *,
+#service,
+#service *,
+#legal-notice,
+#legal-notice *,
+#privacy-policy,
+#privacy-policy *,
+.main-nav__link,
+.site-footer,
+.site-footer * {
+    font-family: "Lexend", system-ui, sans-serif;
 }
 
 /* Les champs de formulaire n'héritent pas de la police par défaut */
@@ -234,10 +315,10 @@ html, body {
 
 .home-hero__title {
     margin-bottom: 1.4rem;
-    font-size: clamp(2.2rem, 4.5vw, 3.6rem);
-    font-weight: 800;
-    line-height: 1.08;
-    letter-spacing: -0.02em;
+    font-size: clamp(2.1rem, 4vw, 3.3rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
 }
 
 /* Mot mis en avant : dégradé bleu → cyan dans le texte */
@@ -251,7 +332,7 @@ html, body {
 .home-hero__lead {
     max-width: 560px;
     margin-bottom: 2.2rem;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     line-height: 1.65;
     color: #a9b8d9;
 }
@@ -262,75 +343,119 @@ html, body {
     gap: 0.8rem;
 }
 
-/* Illustration : deux cartes superposées, façon fenêtre de code */
-.home-hero__visual {
-    position: relative;
-    height: 320px;
-}
-
-.home-hero__card {
-    position: absolute;
+/* Illustration : carte « tableau de bord » de la plateforme (suivi des tâches) */
+.home-board {
+    width: 100%;
+    max-width: 440px;
+    margin-left: auto;
+    padding: 1.4rem;
+    background-color: rgba(15, 30, 69, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.2);
     border-radius: 18px;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+    transform: rotate(-2deg);
 }
 
-.home-hero__card--back {
-    inset: 30px 0 0 60px;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(6, 182, 212, 0.25));
-    transform: rotate(6deg);
+.home-board__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #f8fafc;
 }
 
-.home-hero__card--front {
-    inset: 0 50px 40px 0;
+.home-board__count {
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: #8ea2c8;
+}
+
+.home-board__progress {
+    height: 8px;
+    margin-bottom: 1.2rem;
+    overflow: hidden;
+    background-color: rgba(148, 163, 184, 0.15);
+    border-radius: 99px;
+}
+
+/* La barre se remplit une fois, au chargement */
+.home-board__bar {
+    width: 68%;
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #22d3ee);
+    border-radius: 99px;
+    animation: home-board-fill 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s both;
+}
+
+.home-board__list {
     display: flex;
     flex-direction: column;
-    gap: 0.9rem;
-    padding: 1.6rem;
-    background-color: rgba(15, 30, 69, 0.85);
-    border: 1px solid rgba(96, 165, 250, 0.3);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+    gap: 0.6rem;
+    list-style: none;
 }
 
-.home-hero__dots {
+.home-board__task {
     display: flex;
-    gap: 6px;
-    margin-bottom: 0.6rem;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.88rem;
+    color: #e2e8f0;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
 }
 
-.home-hero__dot {
-    width: 10px;
-    height: 10px;
-    background-color: #334a80;
-    border-radius: 50%;
+/* Dernière tâche : apparaît juste après le remplissage de la barre */
+.home-board__task--new {
+    animation: home-board-new 0.6s ease-out 1.4s both;
 }
 
-.home-hero__line {
-    height: 10px;
-    background-color: rgba(148, 163, 184, 0.25);
+.home-board__status {
+    flex-shrink: 0;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.74rem;
+    font-weight: 600;
     border-radius: 99px;
 }
 
-.home-hero__line--long {
-    width: 85%;
+.home-board__status--done {
+    color: #86efac;
+    background-color: rgba(34, 197, 94, 0.15);
 }
 
-.home-hero__line--medium {
-    width: 60%;
-    background: linear-gradient(90deg, #3b82f6, #22d3ee);
+.home-board__status--doing {
+    color: #fcd34d;
+    background-color: rgba(245, 158, 11, 0.15);
 }
 
-.home-hero__line--short {
-    width: 40%;
+.home-board__status--todo {
+    color: #cbd5e1;
+    background-color: rgba(148, 163, 184, 0.15);
 }
 
-.home-hero__badge {
-    align-self: flex-start;
-    margin-top: auto;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #67e8f9;
-    background-color: rgba(34, 211, 238, 0.12);
-    border-radius: 99px;
+@keyframes home-board-fill {
+    from {
+        width: 8%;
+    }
+}
+
+@keyframes home-board-new {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+}
+
+/* Mouvements réduits (réglage de l'ordinateur) : la carte s'affiche directement dans son état final */
+@media (prefers-reduced-motion: reduce) {
+    .home-board__bar,
+    .home-board__task--new {
+        animation: none;
+    }
 }
 
 /* --- Sections --- */
@@ -362,7 +487,7 @@ html, body {
     max-width: 640px;
     margin-bottom: 2.8rem;
     font-size: clamp(1.7rem, 3vw, 2.4rem);
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1.15;
     letter-spacing: -0.015em;
     color: #f8fafc;
@@ -453,8 +578,8 @@ html, body {
 }
 
 .home-text__paragraph {
-    font-size: 1.08rem;
-    line-height: 1.7;
+    font-size: 1.1rem;
+    line-height: 1.75;
     color: #b6c3df;
 }
 
@@ -506,6 +631,35 @@ html, body {
     color: #9fb0d0;
 }
 
+/* Une couleur par domaine : bandeau à gauche de la carte et fond de l'icône */
+.home-domain--ia {
+    border-left: 3px solid #22d3ee;
+}
+
+.home-domain--dev {
+    border-left: 3px solid #60a5fa;
+}
+
+.home-domain--dev .home-domain__icon {
+    background-color: rgba(96, 165, 250, 0.12);
+}
+
+.home-domain--cyber {
+    border-left: 3px solid #a78bfa;
+}
+
+.home-domain--cyber .home-domain__icon {
+    background-color: rgba(167, 139, 250, 0.14);
+}
+
+.home-domain--formation {
+    border-left: 3px solid #34d399;
+}
+
+.home-domain--formation .home-domain__icon {
+    background-color: rgba(52, 211, 153, 0.12);
+}
+
 /* --- La plateforme en construction --- */
 
 .home-platform {
@@ -539,7 +693,12 @@ html, body {
     color: #38bdf8;
 }
 
-/* --- Vision --- */
+/* --- Vision : présentée comme une citation, avec un trait à gauche --- */
+
+.home-vision {
+    padding-left: 1.6rem;
+    border-left: 3px solid #22d3ee;
+}
 
 .home-vision__list {
     margin: 0.5rem 0;
@@ -867,7 +1026,7 @@ html, body {
 .site-footer__name {
     margin-bottom: 0.6rem;
     font-size: 1.15rem;
-    font-weight: 800;
+    font-weight: 700;
     color: #ffffff;
 }
 
@@ -1033,7 +1192,7 @@ html, body {
 .service-details__title {
     margin-bottom: 1.4rem;
     font-size: 1.5rem;
-    font-weight: 800;
+    font-weight: 700;
     color: #f8fafc;
 }
 
@@ -1057,7 +1216,7 @@ html, body {
     position: absolute;
     top: 0;
     left: 0;
-    font-weight: 800;
+    font-weight: 700;
     color: #22d3ee;
 }
 
@@ -1120,7 +1279,7 @@ html, body {
 .legal-content__title {
     margin: 2.4rem 0 0.9rem;
     font-size: 1.3rem;
-    font-weight: 800;
+    font-weight: 700;
     color: #f8fafc;
 }
 

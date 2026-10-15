@@ -11,6 +11,7 @@
  *      data-modal-open="mon-contenu"     (id du template, obligatoire)
  *      data-modal-title="Mon titre"      (facultatif)
  *      data-modal-size="small|medium|large" (facultatif, medium par défaut)
+ *      data-modal-icon="/images/icones/…svg" (facultatif, icône à gauche du titre)
  * 3. Un élément avec data-modal-close dans le contenu ferme la modal.
  *
  * ── Utilisation en JavaScript ──────────────────────────────────────────
@@ -18,6 +19,10 @@
  *      openModalFromTemplate('mon-contenu', { title: 'Mon titre', size: 'large' });
  *      getModal().open({ title: 'Info', content: unElementDuDom });
  *      getModal().close();
+ *
+ * ── Défilement ──────────────────────────────────────────────────────────
+ * Tant que la modal est ouverte, la page derrière ne défile plus (classe modal-open sur <html>) :
+ * la molette et le doigt font défiler le contenu de la modal s'il est trop long.
  *
  * ── Événements (déclenchés sur la modal, remontent jusqu'à document) ──
  *      modal:open  → event.detail = { modal, name }   (name = id du template)
@@ -28,12 +33,15 @@ const SIZES = ['small', 'medium', 'large'];
 const DEFAULT_SIZE = 'medium';
 const CLOSING_CLASS = 'modal--closing';
 const CLOSE_FALLBACK_DELAY = 300;
+const SCROLL_LOCK_CLASS = 'modal-open';
+const SCROLLBAR_WIDTH_VARIABLE = '--modal-scrollbar-width';
 
 export class Modal {
     constructor(dialog) {
         this.dialog = dialog;
         this.box = dialog.querySelector('[data-modal-box]');
         this.title = dialog.querySelector('[data-modal-title]');
+        this.icon = dialog.querySelector('[data-modal-icon]');
         this.body = dialog.querySelector('[data-modal-body]');
 
         this.name = null;
@@ -61,8 +69,9 @@ export class Modal {
      * @param {Node|string|null} [options.content] un élément du DOM, ou du texte simple
      * @param {'small'|'medium'|'large'} [options.size]
      * @param {string|null} [options.name] identifiant libre, renvoyé dans les événements
+     * @param {string|null} [options.icon] adresse d'une icône affichée à gauche du titre
      */
-    open({ title = '', content = null, size = DEFAULT_SIZE, name = null } = {}) {
+    open({ title = '', content = null, size = DEFAULT_SIZE, name = null, icon = null } = {}) {
         // Une modal déjà ouverte est remplacée immédiatement
         if (this.isOpen) {
             this.finishClose();
@@ -70,9 +79,11 @@ export class Modal {
 
         this.name = name;
         this.setTitle(title);
+        this.setIcon(icon);
         this.setContent(content);
         this.setSize(size);
 
+        lockPageScroll();
         this.dialog.showModal();
         this.dispatch('modal:open');
     }
@@ -106,6 +117,7 @@ export class Modal {
         }
 
         this.dialog.close();
+        unlockPageScroll();
         this.dispatch('modal:close');
         this.body.replaceChildren();
         this.name = null;
@@ -113,6 +125,15 @@ export class Modal {
 
     setTitle(title) {
         this.title.textContent = title;
+    }
+
+    setIcon(icon) {
+        if (!this.icon) {
+            return;
+        }
+
+        this.icon.hidden = !icon;
+        this.icon.querySelector('img').src = icon ?? '';
     }
 
     /**
@@ -157,6 +178,12 @@ export class Modal {
     }
 
     handleCancel(event) {
+        // Un champ fichier de la modal envoie lui aussi « cancel » quand on ferme la fenêtre de choix du fichier
+        // avec « Annuler » : l'événement remonte jusqu'ici, mais il ne doit pas fermer la modal
+        if (event.target !== this.dialog) {
+            return;
+        }
+
         // Touche Échap : on remplace la fermeture du navigateur par la nôtre (animée)
         event.preventDefault();
         this.close();
@@ -168,6 +195,26 @@ export class Modal {
             detail: { modal: this, name: this.name },
         }));
     }
+}
+
+/**
+ * Bloque le défilement de la page derrière la modal.
+ * La barre de défilement disparaît : sa largeur est gardée en marge (variable CSS)
+ * pour que la page ne se décale pas vers la droite à l'ouverture.
+ */
+function lockPageScroll() {
+    const root = document.documentElement;
+    const scrollbarWidth = window.innerWidth - root.clientWidth;
+
+    root.style.setProperty(SCROLLBAR_WIDTH_VARIABLE, `${scrollbarWidth}px`);
+    root.classList.add(SCROLL_LOCK_CLASS);
+}
+
+function unlockPageScroll() {
+    const root = document.documentElement;
+
+    root.classList.remove(SCROLL_LOCK_CLASS);
+    root.style.removeProperty(SCROLLBAR_WIDTH_VARIABLE);
 }
 
 let modalInstance = null;
@@ -192,7 +239,7 @@ export function getModal() {
 /**
  * Ouvre la modal avec le contenu d'un <template> de la page.
  */
-export function openModalFromTemplate(templateId, { title = '', size = DEFAULT_SIZE } = {}) {
+export function openModalFromTemplate(templateId, { title = '', size = DEFAULT_SIZE, icon = null } = {}) {
     const template = document.getElementById(templateId);
 
     if (!(template instanceof HTMLTemplateElement)) {
@@ -205,6 +252,7 @@ export function openModalFromTemplate(templateId, { title = '', size = DEFAULT_S
     modal.open({
         title,
         size,
+        icon,
         content: template.content.cloneNode(true),
         name: templateId,
     });
@@ -223,6 +271,7 @@ function handleModalTriggerClick(event) {
     openModalFromTemplate(trigger.dataset.modalOpen, {
         title: trigger.dataset.modalTitle ?? '',
         size: trigger.dataset.modalSize ?? DEFAULT_SIZE,
+        icon: trigger.dataset.modalIcon ?? null,
     });
 }
 

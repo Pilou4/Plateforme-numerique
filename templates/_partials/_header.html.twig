@@ -2,10 +2,20 @@
 
 <header class="site-header">
     <nav class="main-nav" aria-label="Navigation principale">
+        {#
+            Pages de l'app, sur mobile et tablette : bouton « burger » qui ouvre le menu de gauche en tiroir
+            (assets/js/app/MobileMenu.js). Caché sur grand écran (assets/styles/app.css).
+        #}
+        {% if current_route starts with 'app_' %}
+            <button type="button" class="main-nav__burger" data-app-menu-open aria-controls="app-sidebar" aria-expanded="false" aria-label="Ouvrir le menu de l'app">
+                <img src="{{ asset('images/icones/menu-light.svg') }}" alt="" width="20" height="20">
+            </button>
+        {% endif %}
+        {# Le logo mène à l'accueil (il remplace le lien « Accueil ») #}
+        <a href="{{ path('home') }}" class="main-nav__logo" {% if current_route == 'home' %}aria-current="page"{% endif %}>
+            <img src="{{ asset('images/logo.svg') }}" alt="Plateforme Numérique - accueil" class="main-nav__logo-image" height="48">
+        </a>
         <ul class="main-nav__list">
-            <li class="main-nav__item">
-                <a href="{{ path('home') }}" class="main-nav__link" {% if current_route == 'home' %}aria-current="page"{% endif %}>Accueil</a>
-            </li>
             <li class="main-nav__item">
                 <a href="{{ path('services') }}" class="main-nav__link" {% if current_route starts with 'services' %}aria-current="page"{% endif %}>Services</a>
             </li>

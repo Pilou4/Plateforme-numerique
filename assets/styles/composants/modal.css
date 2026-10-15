@@ -17,6 +17,15 @@
     border: none;
 }
 
+/*
+ * Modal ouverte : la page derrière ne défile plus (classe ajoutée par Modal.js).
+ * La marge remplace la barre de défilement cachée, pour que la page ne bouge pas.
+ */
+html.modal-open {
+    overflow: hidden;
+    padding-right: var(--modal-scrollbar-width, 0px);
+}
+
 .modal::backdrop {
     background-color: rgba(15, 23, 42, 0.5);
     backdrop-filter: blur(3px);
@@ -30,8 +39,8 @@
     max-height: calc(100vh - 2rem);
     overflow: hidden;
     background-color: #ffffff;
-    border-radius: 14px;
-    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.3);
+    border-radius: 20px;
+    box-shadow: 0 30px 70px rgba(11, 26, 58, 0.3);
 }
 
 /* --- Tailles --- */
@@ -44,25 +53,44 @@
     width: 860px;
 }
 
-/* --- En-tête --- */
+/* --- En-tête : fond bleu, titre en blanc --- */
 
 .modal__header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 1rem;
-    padding: 1.1rem 1.25rem 1.1rem 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
+    padding: 1.1rem 1.25rem 1.1rem 1.6rem;
+    background: linear-gradient(135deg, #2f7cf6 0%, #4f9cf9 100%);
+}
+
+/* Icône facultative à gauche du titre (data-modal-icon) */
+.modal__icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-right: -0.25rem;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(11, 26, 58, 0.15);
+}
+
+.modal__icon[hidden] {
+    display: none;
 }
 
 .modal__title {
-    font-size: 1.15rem;
+    font-size: 1.2rem;
     font-weight: 700;
     line-height: 1.3;
-    color: #0f172a;
+    color: #ffffff;
 }
 
 .modal__close {
+    margin-left: auto;
     display: flex;
     flex-shrink: 0;
     align-items: center;
@@ -72,35 +100,40 @@
     padding: 0;
     background: none;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     transition: background-color 150ms ease;
 }
 
 .modal__close:hover {
-    background-color: #f3f4f6;
+    background-color: rgba(255, 255, 255, 0.18);
 }
 
 .modal__close:focus-visible {
-    outline: 2px solid #3b82f6;
+    outline: 2px solid #ffffff;
     outline-offset: 2px;
 }
 
 /* --- Contenu --- */
 
 .modal__body {
-    padding: 1.5rem;
+    padding: 1.5rem 1.6rem;
     overflow-y: auto;
+    /* Arrivé en haut ou en bas du contenu, le défilement ne passe pas à la page derrière */
+    overscroll-behavior: contain;
 }
 
 /* Boutons d'action en bas du contenu (à utiliser dans les templates de contenu) */
+/* Le trait au-dessus des boutons : même bleu que l'en-tête, sur toute la largeur de la modal
+   (marges négatives = marges intérieures de .modal__body) */
 .modal__actions {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
-    margin-top: 1.5rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid #e5e7eb;
+    margin: 1.5rem -1.6rem 0;
+    padding: 1.25rem 1.6rem 0;
+    border-top: 2px solid #2f7cf6;
+    border-image: linear-gradient(135deg, #2f7cf6 0%, #4f9cf9 100%) 1;
 }
 
 /* --- Animations --- */
@@ -183,5 +216,12 @@
 
     .modal__body {
         padding: 1rem;
+    }
+
+    .modal__actions {
+        margin-right: -1rem;
+        margin-left: -1rem;
+        padding-right: 1rem;
+        padding-left: 1rem;
     }
 }

@@ -2,7 +2,7 @@
     En-tête des pages d'un projet (Présentation, Tâches, Fichiers) : même titre et mêmes onglets,
     seuls l'onglet actif, la phrase, la recherche et les boutons changent.
 
-    {{ include('app/project/_project_header.html.twig', {project: project, active: 'steps', lead: …, search: …, actions: […]}) }}
+    {{ include('app/project/_project_header.html.twig', {project: project, active: 'steps', lead: …, search: …, filters: …, actions: […]}) }}
     active : 'show', 'steps' ou 'files'
 #}
 {{ include('app/_partials/_page_header.html.twig', {
@@ -12,6 +12,7 @@
     logo_url: project.logo ? path('app_project_logo', {slug: project.slug}) : null,
     lead: lead ?? null,
     search: search ?? null,
+    filters: filters ?? [],
     actions: actions ?? [],
     tabs_label: 'Sections du projet',
     tabs: [

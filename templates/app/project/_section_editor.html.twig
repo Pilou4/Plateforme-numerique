@@ -1,0 +1,49 @@
+{#
+    Modèle de l'éditeur d'une section (titre + blocs), copié par le JavaScript
+    (assets/js/app/project/sections/SectionBlockEditor.js) à la place de la section modifiée,
+    ou à la fin de la présentation pour une nouvelle section.
+    Les blocs sont dessinés par le JavaScript ; les types de blocs viennent de App\Enum\ProjectSectionBlockType.
+#}
+{% set block_icons = {paragraphe: '¶', sous_titre: 'H3', liste: '•', tableau: '▦', tags: '#', definitions: 'dt', images: 'Img', documents: 'Doc'} %}
+{% set block_types = {} %}
+{% for type in enum_cases('App\\Enum\\ProjectSectionBlockType') %}
+    {% set block_types = block_types|merge({(type.value): {label: type.label, help: type.help, icon: block_icons[type.value]}}) %}
+{% endfor %}
+
+<template id="section-editor-template">
+    <form class="section-editor" data-section-editor-form data-block-types="{{ block_types|json_encode }}" data-icons-url="{{ asset('images/icones/') }}" novalidate>
+        <label class="section-editor__label" for="section-editor-title">Titre de la section</label>
+        <input type="text" id="section-editor-title" name="title" class="section-editor__title" maxlength="255" placeholder="Ex. : Base de données" required>
+
+        {# Mise en forme du texte sélectionné, dans n'importe quel champ de l'éditeur (FormatToolbar.js) #}
+        <div class="section-editor__toolbar" role="toolbar" aria-label="Mise en forme du texte">
+            <span class="section-editor__toolbar-label">Texte sélectionné :</span>
+            <button type="button" class="section-editor__format section-editor__format--bold" data-format="bold" title="Gras">B</button>
+            <button type="button" class="section-editor__format section-editor__format--italic" data-format="italic" title="Italique">I</button>
+            <button type="button" class="section-editor__format section-editor__format--code" data-format="code" title="Code">&lt;/&gt;</button>
+            <button type="button" class="section-editor__format" data-format="link" title="Lien">Lien</button>
+            <span class="section-editor__toolbar-help"><code class="section-editor__syntax">**gras**</code> <code class="section-editor__syntax">*italique*</code> <code class="section-editor__syntax">`code`</code> <code class="section-editor__syntax">[texte](https://…)</code></span>
+        </div>
+
+        <div class="section-editor__blocks" data-editor-blocks></div>
+
+        <div class="section-editor__add">
+            <button type="button" class="section-editor__add-button" data-action="toggle-menu">+ Ajouter un bloc</button>
+            <div class="section-editor__menu" data-editor-menu hidden>
+                {% for value, type in block_types %}
+                    <button type="button" class="section-editor__menu-item" data-action="add-block" data-type="{{ value }}">
+                        <span class="section-editor__menu-title"><span class="section-editor__icon" aria-hidden="true">{{ type.icon }}</span>{{ type.label }}</span>
+                        <span class="section-editor__menu-help">{{ type.help }}</span>
+                    </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <p class="section-editor__error" data-editor-error role="alert"></p>
+
+        <div class="section-editor__footer">
+            <button type="button" class="projects__button projects__button--ghost" data-action="cancel">Annuler</button>
+            <button type="submit" class="projects__button">Enregistrer la section</button>
+        </div>
+    </form>
+</template>

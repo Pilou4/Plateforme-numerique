@@ -4,7 +4,7 @@ namespace App\Tests\Unit\Service;
 
 use App\Dto\SectionMovePayload;
 use App\Dto\SectionPayload;
-use App\Entity\ProjectSection;
+use App\Entity\DocumentationSection;
 use App\Service\SectionManager;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,7 +19,7 @@ final class SectionManagerTest extends TestCase
     public function testAddPutsTheSectionAtTheEnd(): void
     {
         $sections = $this->createSections(3);
-        $section = new ProjectSection();
+        $section = new DocumentationSection();
         $sections->add($section);
 
         $entityManager = $this->createMock(EntityManagerInterface::class);
@@ -35,7 +35,7 @@ final class SectionManagerTest extends TestCase
 
     public function testAddToAnEmptyPageGivesPositionZero(): void
     {
-        $section = new ProjectSection();
+        $section = new DocumentationSection();
         $sections = new ArrayCollection([$section]);
 
         $this->createManager()->add($sections, $section, new SectionPayload('Titre', 'Contenu'));
@@ -45,7 +45,7 @@ final class SectionManagerTest extends TestCase
 
     public function testUpdateChangesTitleAndContent(): void
     {
-        $section = (new ProjectSection())->setTitle('Ancien')->setContent('Ancien');
+        $section = (new DocumentationSection())->setTitle('Ancien')->setContent('Ancien');
 
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects($this->once())->method('flush');
@@ -121,8 +121,8 @@ final class SectionManagerTest extends TestCase
     public function testMoveFollowsThePositionsNotTheListOrder(): void
     {
         // Liste dans le désordre : c'est la position qui compte
-        $top = (new ProjectSection())->setTitle('Haut')->setPosition(0);
-        $bottom = (new ProjectSection())->setTitle('Bas')->setPosition(1);
+        $top = (new DocumentationSection())->setTitle('Haut')->setPosition(0);
+        $bottom = (new DocumentationSection())->setTitle('Bas')->setPosition(1);
         $sections = new ArrayCollection([$bottom, $top]);
 
         $this->createManager()->move($sections, $bottom, SectionMovePayload::UP);
@@ -140,14 +140,14 @@ final class SectionManagerTest extends TestCase
     }
 
     /**
-     * @return ArrayCollection<int, ProjectSection> sections aux positions 0, 1, 2…
+     * @return ArrayCollection<int, DocumentationSection> sections aux positions 0, 1, 2…
      */
     private function createSections(int $count): ArrayCollection
     {
         $sections = new ArrayCollection();
 
         for ($position = 0; $position < $count; ++$position) {
-            $sections->add((new ProjectSection())->setTitle('Section '.$position)->setContent('Contenu')->setPosition($position));
+            $sections->add((new DocumentationSection())->setTitle('Section '.$position)->setContent('Contenu')->setPosition($position));
         }
 
         return $sections;

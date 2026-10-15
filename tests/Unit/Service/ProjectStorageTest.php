@@ -102,6 +102,36 @@ final class ProjectStorageTest extends TestCase
         $this->assertFalse($this->storage->exists($this->project, 'absent.png'));
     }
 
+    public function testDeleteProjectDirectoryRemovesEverything(): void
+    {
+        $logo = $this->storage->store($this->project, $this->createUploadedFile(), 'logo');
+        $image = $this->storage->store($this->project, $this->createUploadedFile(), 'image', 'images');
+
+        $this->storage->deleteProjectDirectory(42);
+
+        $this->assertFalse($this->storage->exists($this->project, $logo));
+        $this->assertFalse($this->storage->exists($this->project, $image, 'images'));
+        $this->assertDirectoryDoesNotExist($this->directory.'/42');
+    }
+
+    public function testDeleteProjectDirectoryKeepsTheOtherProjects(): void
+    {
+        $otherProject = new Project();
+        (new \ReflectionProperty(Project::class, 'id'))->setValue($otherProject, 7);
+        $otherLogo = $this->storage->store($otherProject, $this->createUploadedFile(), 'logo');
+
+        $this->storage->deleteProjectDirectory(42);
+
+        $this->assertTrue($this->storage->exists($otherProject, $otherLogo));
+    }
+
+    public function testDeleteAMissingProjectDirectoryDoesNothing(): void
+    {
+        $this->storage->deleteProjectDirectory(42);
+
+        $this->assertDirectoryDoesNotExist($this->directory.'/42');
+    }
+
     /**
      * Faux fichier envoyé par le navigateur : une vraie image PNG de 1 pixel.
      * Le dernier argument (true) indique à Symfony que c'est un test (pas un vrai envoi HTTP).

@@ -5,68 +5,59 @@
 {# JavaScript de l'app + celui de cette page uniquement #}
 {% block importmap %}{{ importmap(['app', 'app-space', 'app-projects']) }}{% endblock %}
 
+{#
+    projects   : les projets, triés par nom
+    states     : les états (table project_state), pour les filtres et le formulaire
+    categories : les catégories (table project_category), pour le formulaire et les cartes
+#}
 {% block app_body %}
 <main id="projects">
+    {# Filtres de la liste, en listes déroulantes dans l'en-tête (filtrage : assets/js/app/project/ProjectList.js) #}
+    {% set filters = [
+        {name: 'state', label: 'Statut', icon: 'filter-status.svg', color: 'blue',
+         options: [{value: '', label: 'Tous les statuts'}]|merge(states|map(state => {value: state.code, label: state.pluralLabel, color: state.color.cssModifier}))},
+        {name: 'category', label: 'Catégorie', icon: 'filter-category.svg', color: 'green',
+         options: [{value: '', label: 'Toutes les catégories'}]|merge(categories|map(category => {value: category.id, label: category.name}))},
+        {name: 'favorite', label: 'Favoris', icon: 'filter-favorite.svg', color: 'yellow',
+         options: [{value: '', label: 'Tous les projets'}, {value: 'oui', label: 'Favoris seulement'}]},
+    ] %}
+
     {{ include('app/_partials/_page_header.html.twig', {
         title: 'Mes projets',
+        icon: 'project.svg',
         count: projects|length,
         lead: 'Chaque projet a sa présentation, ses tâches et ses fichiers.',
+        search: 'Rechercher un projet…',
+        filters: filters,
         actions: [
-            {label: 'Ajouter un projet', icon: 'plus.svg', modal: 'project-create', modal_title: 'Nouveau projet', modal_size: 'medium'},
+            {label: 'Nouveau projet', icon: 'plus.svg', modal: 'project-create', modal_title: 'Créer un nouveau projet', modal_size: 'medium',
+             attributes: {'data-modal-icon': asset('images/icones/project.svg')}},
         ],
     }, with_context = false) }}
 
-    <div class="projects">
+    {# Listes proposées quand on change la catégorie ou le statut directement dans une carte (ProjectCardEditor.js) #}
+    <div class="projects" data-project-list
+         data-categories="{{ categories|map(category => {id: category.id, name: category.name})|json_encode }}"
+         data-states="{{ states|map(state => {code: state.code, label: state.label})|json_encode }}">
         {% if projects is empty %}
             <p class="projects__empty">Aucun projet pour l'instant.</p>
         {% else %}
             <ul class="projects__list">
                 {% for project in projects %}
-                    <li class="projects__item">
-                        <article class="project-card">
-                            <div class="project-card__header">
-                                {% if project.logo %}
-                                    <img src="{{ path('app_project_logo', {slug: project.slug}) }}" alt="" class="project-card__logo" width="48" height="48">
-                                {% else %}
-                                    {# Sans logo : initiale du projet #}
-                                    <span class="project-card__logo project-card__logo--initial" aria-hidden="true">{{ project.name|first|upper }}</span>
-                                {% endif %}
-                                <h2 class="project-card__title">{{ project.name }}</h2>
-                                <button type="button" class="project-card__edit"
-                                        data-modal-open="project-edit-{{ project.id }}"
-                                        data-modal-title="Modifier le projet"
-                                        aria-label="Modifier le projet « {{ project.name }} »">
-                                    <img src="{{ asset('images/icones/edit.svg') }}" alt="" width="16" height="16">
-                                </button>
-                            </div>
-                            {% if project.summary %}
-                                <p class="project-card__summary">{{ project.summary }}</p>
-                            {% endif %}
-                            <div class="project-card__links">
-                                <a href="{{ path('app_project_show', {slug: project.slug}) }}" class="project-card__link">
-                                    Voir le projet
-                                </a>
-                                <a href="{{ path('app_project_steps', {slug: project.slug}) }}" class="project-card__link project-card__link--primary">
-                                    Voir les tâches
-                                </a>
-                            </div>
-                        </article>
+                    <li class="projects__item" data-project-item>
+                        {{ include('app/project/_project_card.html.twig', {project: project}, with_context = false) }}
                     </li>
                 {% endfor %}
             </ul>
+
+            <p class="projects__empty" data-projects-empty hidden>Aucun projet ne correspond à ce filtre ou à cette recherche.</p>
         {% endif %}
 
-        {# Formulaire d'ajout, affiché dans la modal (bouton « Ajouter un projet ») #}
+        {# Formulaire d'ajout, affiché dans la modal (bouton « Nouveau projet ») #}
         <template id="project-create">
             {{ include('app/project/_project_form.html.twig') }}
         </template>
 
-        {# Formulaires de modification, un par projet (bouton crayon de chaque carte) #}
-        {% for project in projects %}
-            <template id="project-edit-{{ project.id }}">
-                {{ include('app/project/_project_form.html.twig', {project: project}) }}
-            </template>
-        {% endfor %}
     </div>
 </main>
 {% endblock %}

@@ -1,53 +1,108 @@
 {#
     Formulaire d'un projet, affiché dans la modal.
     - project = null : création
-    - project = un projet : modification (champs pré-remplis, logo actuel affiché)
+    - project = un projet : modification (champs pré-remplis, images actuelles affichées)
     - redirect_to_project = true : après l'enregistrement, on va sur la page du projet
       (utile en modification, car l'URL change si le nom change)
+    - states, categories : listes déroulantes (envoyées par ProjectController) ; le statut n'est proposé
+      qu'en modification, un nouveau projet prend le premier statut de la liste
 #}
 {% set project = project ?? null %}
+{% set field_id = 'project-' ~ (project.id ?? 'new') %}
 <form class="project-form"
       data-project-form
       data-api-url="{{ project ? path('api_projects_update', {slug: project.slug}) : path('api_projects_create') }}"
       {% if redirect_to_project ?? false %}data-redirect-to-project{% endif %}
       novalidate>
     <div class="project-form__fields">
-        <label class="project-form__field">
-            <span class="project-form__label">Nom du projet</span>
-            <input type="text" name="name" class="project-form__input" maxlength="255" value="{{ project.name ?? '' }}" required autofocus>
+        <div class="project-form__field">
+            <label class="project-form__label" for="{{ field_id }}-name">
+                Nom du projet <span class="project-form__required" aria-hidden="true">*</span>
+            </label>
+            <input type="text" id="{{ field_id }}-name" name="name" class="project-form__input" maxlength="255" value="{{ project.name ?? '' }}" placeholder="Ex. : Mon super projet" required autofocus>
             <span class="project-form__help">
                 L'adresse de la page est créée à partir du nom{{ project ? ' : la changer modifie aussi l\'adresse' }}.
             </span>
-        </label>
-        <label class="project-form__field">
-            <span class="project-form__label">Résumé <span class="project-form__optional">(facultatif)</span></span>
-            <input type="text" name="summary" class="project-form__input" maxlength="255" value="{{ project.summary ?? '' }}">
-            <span class="project-form__help">Une phrase, affichée dans la liste des projets.</span>
-        </label>
+        </div>
 
         <div class="project-form__field">
-            <label class="project-form__label" for="project-logo-{{ project.id ?? 'new' }}">
-                {{ project and project.logo ? 'Remplacer le logo' : 'Logo' }}
-                <span class="project-form__optional">(facultatif)</span>
-            </label>
+            <label class="project-form__label" for="{{ field_id }}-summary">Description</label>
+            <textarea id="{{ field_id }}-summary" name="summary" class="project-form__input project-form__input--textarea" rows="3" maxlength="255" placeholder="Décrivez brièvement votre projet…">{{ project.summary ?? '' }}</textarea>
+        </div>
 
-            {% if project and project.logo %}
-                <div class="project-form__current-logo">
-                    <img src="{{ path('app_project_logo', {slug: project.slug}) }}" alt="Logo actuel" class="project-form__logo-preview" width="48" height="48">
-                    <label class="project-form__checkbox">
-                        <input type="checkbox" name="removeLogo" value="1">
-                        <span>Supprimer le logo</span>
-                    </label>
+        {# À la création, pas de statut : le nouveau projet prend le premier statut de la liste (page Paramètres) #}
+        <div class="{{ project ? 'project-form__row' : 'project-form__single' }}">
+            <div class="project-form__field">
+                <label class="project-form__label" for="{{ field_id }}-category">Catégorie</label>
+                <select id="{{ field_id }}-category" name="category" class="project-form__input project-form__select">
+                    <option value="">Sélectionner une catégorie</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {{ project and project.category and project.category.id == category.id ? 'selected' }}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {% if project %}
+                <div class="project-form__field">
+                    <label class="project-form__label" for="{{ field_id }}-state">Statut</label>
+                    <select id="{{ field_id }}-state" name="state" class="project-form__input project-form__select">
+                        {% for state in states %}
+                            <option value="{{ state.code }}" {{ project.state.code == state.code ? 'selected' }}>{{ state.label }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             {% endif %}
-
-            <input type="file" id="project-logo-{{ project.id ?? 'new' }}" name="logo" class="project-form__input project-form__input--file" accept="image/png,image/jpeg,image/webp,image/svg+xml">
-            <span class="project-form__help">PNG, JPG, WebP ou SVG, 2 Mo maximum.</span>
         </div>
+
+        {#
+            Images : logo (carré), logo long (horizontal) et avatar (rond), toutes facultatives.
+            Un clic sur une image ouvre le choix du fichier ; l'aperçu prend sa place (ProjectImageFields.js).
+        #}
+        <fieldset class="project-form__images">
+            <legend class="project-form__label">Images <span class="project-form__optional">(facultatives)</span></legend>
+            <div class="project-form__image-list">
+                {{ _self.image_field(project, field_id, 'logo', 'Logo', 'app_project_logo', 'square') }}
+                {{ _self.image_field(project, field_id, 'logoWide', 'Logo long', 'app_project_logo_wide', 'wide') }}
+                {{ _self.image_field(project, field_id, 'avatar', 'Avatar', 'app_project_avatar', 'round') }}
+            </div>
+            <span class="project-form__help">Clique sur une image pour la choisir · PNG, JPG, WebP ou SVG, 2 Mo maximum.</span>
+        </fieldset>
     </div>
     <p class="project-form__error" data-form-error role="alert"></p>
     <div class="modal__actions">
         <button type="button" class="projects__button projects__button--ghost" data-modal-close>Annuler</button>
-        <button type="submit" class="projects__button">{{ project ? 'Enregistrer' : 'Créer le projet' }}</button>
+        <button type="submit" class="projects__button">
+            {{ project ? 'Enregistrer' : 'Créer le projet' }}
+        </button>
     </div>
 </form>
+
+{#
+    Un champ image du formulaire (voir App\Enum\ProjectImage) : une image cliquable qui ouvre le choix du fichier.
+    En modification, l'image actuelle est affichée ; la croix la retire (champ caché remove + Name = 1,
+    activé par ProjectImageFields.js). Choisir un fichier la remplace.
+    - name  : nom du champ (logo, logoWide, avatar)
+    - shape : forme de l'image (square, wide, round)
+#}
+{% macro image_field(project, field_id, name, label, route, shape) %}
+    {% set current = project ? attribute(project, name) : null %}
+    {% set input_id = field_id ~ '-' ~ name %}
+    <div class="project-form__image project-form__image--{{ shape }}{{ current ? ' project-form__image--filled' }}" data-image-field>
+        <div class="project-form__image-frame">
+            <label class="project-form__image-tile" for="{{ input_id }}" title="Choisir une image">
+                <input type="file" id="{{ input_id }}" name="{{ name }}" class="project-form__image-input" accept="image/png,image/jpeg,image/webp,image/svg+xml" aria-label="{{ label }}" data-image-input>
+                {# Image vide : icône et nom dans l'image ; une fois l'image choisie, l'aperçu les recouvre #}
+                <img src="{{ asset('images/icones/image-placeholder.svg') }}" alt="" class="project-form__image-placeholder" width="28" height="28">
+                <span class="project-form__image-name" aria-hidden="true">{{ label }}</span>
+                <img {% if current %}src="{{ path(route, {slug: project.slug}) }}"{% else %}hidden{% endif %} alt="" class="project-form__image-preview" data-image-preview>
+            </label>
+            <button type="button" class="project-form__image-remove" data-image-remove title="Retirer l'image" aria-label="Retirer : {{ label }}">
+                <img src="{{ asset('images/icones/close.svg') }}" alt="" width="12" height="12">
+            </button>
+        </div>
+        {% if current %}
+            {# Envoyé seulement si on retire l'image actuelle (le JavaScript l'active) #}
+            <input type="hidden" name="remove{{ name|first|upper ~ name|slice(1) }}" value="1" data-image-remove-flag disabled>
+        {% endif %}
+    </div>
+{% endmacro %}

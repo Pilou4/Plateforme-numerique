@@ -1,0 +1,132 @@
+{% extends 'app/base.html.twig' %}
+
+{% block title %}Paramètres · App{% endblock %}
+
+{# JavaScript de l'app + celui de cette page (ajout, modification, suppression) #}
+{% block importmap %}{{ importmap(['app', 'app-space', 'app-settings']) }}{% endblock %}
+
+{#
+    categories : [{entity: ProjectCategory, projectCount: int}]
+    states     : [{entity: ProjectState, projectCount: int}]
+    colors     : les couleurs possibles d'un statut (App\Enum\ProjectStateColor)
+#}
+{% block app_body %}
+<main id="settings">
+    {{ include('app/_partials/_page_header.html.twig', {
+        title: 'Paramètres',
+        icon: 'settings.svg',
+        lead: 'Les listes proposées dans le formulaire d\'un projet : ajoute, renomme, supprime ou change l\'ordre de leurs éléments.',
+    }, with_context = false) }}
+
+    <div class="settings" data-settings>
+        {# --- Catégories --- #}
+        <section class="settings-panel" aria-labelledby="settings-categories-title">
+            <header class="settings-panel__header">
+                <div>
+                    <h2 class="settings-panel__title" id="settings-categories-title">
+                        Catégories <span class="settings-panel__count">{{ categories|length }}</span>
+                    </h2>
+                    <p class="settings-panel__text">Le type de projet : application web, site vitrine, jeu…</p>
+                </div>
+                <button type="button" class="page-header__button settings-panel__add" data-modal-open="settings-category-add" data-modal-title="Nouvelle catégorie" data-modal-size="small">
+                    <span class="page-header__button-dot"><img src="{{ asset('images/icones/plus.svg') }}" alt="" width="16" height="16"></span>
+                    <span>Ajouter</span>
+                </button>
+            </header>
+
+            {% if categories is empty %}
+                <p class="settings-panel__empty">Aucune catégorie pour l'instant.</p>
+            {% else %}
+                <ul class="settings-list">
+                    {% for item in categories %}
+                        {% set category = item.entity %}
+                        <li class="settings-list__item"
+                            data-settings-item="category"
+                            data-url="{{ path('api_project_categories_update', {id: category.id}) }}"
+                            data-name="{{ category.name }}"
+                            data-project-count="{{ item.projectCount }}">
+                            <span class="settings-list__name">{{ category.name }}</span>
+                            <span class="settings-list__meta">{{ _self.project_count(item.projectCount) }}</span>
+                            {{ _self.actions(category.name, loop.first, loop.last) }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </section>
+
+        {# --- Statuts --- #}
+        <section class="settings-panel" aria-labelledby="settings-states-title">
+            <header class="settings-panel__header">
+                <div>
+                    <h2 class="settings-panel__title" id="settings-states-title">
+                        Statuts <span class="settings-panel__count">{{ states|length }}</span>
+                    </h2>
+                    <p class="settings-panel__text">L'avancement d'un projet. Un nouveau projet prend le premier de la liste.</p>
+                </div>
+                <button type="button" class="page-header__button settings-panel__add" data-modal-open="settings-state-add" data-modal-title="Nouveau statut" data-modal-size="small">
+                    <span class="page-header__button-dot"><img src="{{ asset('images/icones/plus.svg') }}" alt="" width="16" height="16"></span>
+                    <span>Ajouter</span>
+                </button>
+            </header>
+
+            <ul class="settings-list">
+                {% for item in states %}
+                    {% set state = item.entity %}
+                    <li class="settings-list__item"
+                        data-settings-item="state"
+                        data-url="{{ path('api_project_states_update', {id: state.id}) }}"
+                        data-name="{{ state.label }}"
+                        data-plural-label="{{ state.pluralLabel }}"
+                        data-color="{{ state.color.value }}"
+                        data-project-count="{{ item.projectCount }}">
+                        <span class="settings-list__name">
+                            <span class="settings-list__state project-state--{{ state.color.cssModifier }}">
+                                <span class="settings-list__state-dot" aria-hidden="true"></span>
+                                {{ state.label }}
+                            </span>
+                        </span>
+                        <span class="settings-list__meta">{{ _self.project_count(item.projectCount) }}</span>
+                        {{ _self.actions(state.label, loop.first, loop.last) }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    </div>
+
+    {# Formulaires (affichés dans la modal ; en modification, le JavaScript pré-remplit les champs) #}
+    <template id="settings-category-add">
+        {{ include('app/settings/_category_form.html.twig', {mode: 'add', api_url: path('api_project_categories_create')}, with_context = false) }}
+    </template>
+    <template id="settings-category-edit">
+        {{ include('app/settings/_category_form.html.twig', {mode: 'edit', api_url: ''}, with_context = false) }}
+    </template>
+    <template id="settings-state-add">
+        {{ include('app/settings/_state_form.html.twig', {mode: 'add', api_url: path('api_project_states_create'), colors: colors}, with_context = false) }}
+    </template>
+    <template id="settings-state-edit">
+        {{ include('app/settings/_state_form.html.twig', {mode: 'edit', api_url: '', colors: colors}, with_context = false) }}
+    </template>
+</main>
+{% endblock %}
+
+{% macro project_count(count) %}
+    {{- count == 0 ? 'Aucun projet' : (count == 1 ? '1 projet' : count ~ ' projets') -}}
+{% endmacro %}
+
+{# Boutons Monter, Descendre, Modifier et Supprimer d'une ligne (assets/js/app/settings/SettingsEditor.js) #}
+{% macro actions(name, is_first, is_last) %}
+    <span class="settings-list__actions">
+        <button type="button" class="settings-list__action" data-action="up" aria-label="Monter « {{ name }} »" title="Monter" {{ is_first ? 'disabled' }}>
+            <img src="{{ asset('images/icones/arrow-up.svg') }}" alt="" width="16" height="16">
+        </button>
+        <button type="button" class="settings-list__action" data-action="down" aria-label="Descendre « {{ name }} »" title="Descendre" {{ is_last ? 'disabled' }}>
+            <img src="{{ asset('images/icones/arrow-down.svg') }}" alt="" width="16" height="16">
+        </button>
+        <button type="button" class="settings-list__action" data-action="edit" aria-label="Modifier « {{ name }} »" title="Modifier">
+            <img src="{{ asset('images/icones/edit.svg') }}" alt="" width="16" height="16">
+        </button>
+        <button type="button" class="settings-list__action settings-list__action--delete" data-action="delete" aria-label="Supprimer « {{ name }} »" title="Supprimer">
+            <img src="{{ asset('images/icones/delete.svg') }}" alt="" width="16" height="16">
+        </button>
+    </span>
+{% endmacro %}
