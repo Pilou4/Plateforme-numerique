@@ -1,8 +1,11 @@
 import { apiPost, apiPut } from '../../../fonctions/api.js';
+import { EditorPreview } from '../../../composants/EditorPreview.js';
+import { htmlToMarkup } from '../../../fonctions/inlineMarkup.js';
 import { reloadAt } from '../../../fonctions/reloadAt.js';
 import { BlockFieldsRenderer } from './BlockFieldsRenderer.js';
 import { FormatToolbar } from './FormatToolbar.js';
 import { ProjectFilePicker } from './ProjectFilePicker.js';
+import { SectionPreview } from './SectionPreview.js';
 
 const TEMPLATE_ID = 'section-editor-template';
 const TITLE_FIELD_ID = 'section-editor-title';
@@ -10,14 +13,17 @@ const TITLE_FIELD_ID = 'section-editor-title';
 /**
  * Éditeur d'une section de projet : un titre (le <h2>) et une suite de blocs.
  *
- * L'éditeur est copié depuis <template id="section-editor-template"> (_section_editor.html.twig).
+ * L'éditeur est copié depuis <template id="section-editor-template"> (_section_editor.html.twig)
+ * et affiché dans la modal par ProjectSections.js. Le bouton « Aperçu » (EditorPreview.js) affiche à côté
+ * l'aperçu de la section (SectionPreview.js) : le formulaire n'est pas redessiné, rien n'est perdu.
  * Son état ({ title, blocks }) a le même format que ce qu'attend l'API (ProjectSectionPayload) :
  *   paragraphe  { text }                    sous_titre { text }
- *   liste       { ordered, items: [] }      tableau    { columns: [], rows: [[…]] }
- *   tags        { tags: [] }                definitions { items: [{ term, definition }] }
+ *   liste       { ordered, items: [] }      tableau    { style, columns: [{ label, sortable }], rows: [[…]] }
+ *   tags        { tags: [{ label, color }] } definitions { items: [{ term, definition }] }
  *   images / documents { files: [{ id, caption, title, extension, size, viewUrl }] }
  *
  * Saisir dans un champ met l'état à jour sans redessiner ; ajouter, retirer ou déplacer redessine les blocs.
+ * Les textes mis en forme (champs riches) sont convertis en marques simples (**gras**…) : voir inlineMarkup.js.
  * À l'enregistrement : POST (nouvelle section) ou PUT (section existante), puis la page est rechargée.
  */
 export class SectionBlockEditor {
@@ -26,7 +32,7 @@ export class SectionBlockEditor {
      * @param {object|null} options.section données de la section (ProjectSectionEditorData), null pour une nouvelle
      * @param {string} options.saveUrl POST pour une nouvelle section, PUT pour une section existante
      * @param {string} options.filesUrl API des fichiers du projet
-     * @param {function(): void} options.onCancel appelé quand on clique sur « Annuler »
+     * @param {function(): void} options.onCancel appelé quand on clique sur « Annuler » (ferme la modal)
      */
     constructor({ section, saveUrl, filesUrl, onCancel }) {
         this.isNew = section === null;
@@ -47,8 +53,15 @@ export class SectionBlockEditor {
         this.menu = this.form.querySelector('[data-editor-menu]');
         this.menuHome = this.menu.parentElement;
         this.error = this.form.querySelector('[data-editor-error]');
-        this.renderer = new BlockFieldsRenderer(JSON.parse(this.form.dataset.blockTypes), this.form.dataset.iconsUrl);
-        this.filePicker = new ProjectFilePicker(filesUrl);
+        // Styles d'un tableau (ProjectSectionTableStyle) : [{ value, label, modifier }], le premier par défaut
+        this.tableStyles = JSON.parse(this.form.dataset.tableStyles);
+        // Couleurs d'un tag (ProjectSectionTagColor) : [{ value, label, modifier }], la première par défaut
+        this.tagColors = JSON.parse(this.form.dataset.tagColors);
+        // Tag dont le choix de couleur est ouvert : { block, index } ou null
+        this.openTagColor = null;
+        this.renderer = new BlockFieldsRenderer(JSON.parse(this.form.dataset.blockTypes), this.form.dataset.iconsUrl, this.tableStyles, this.tagColors);
+        this.filePicker = new ProjectFilePicker(filesUrl, this.form);
+        this.preview = new SectionPreview(this.form.querySelector('[data-preview-content]'), this.form.dataset.iconsUrl, this.tableStyles, this.tagColors);
 
         this.handleClick = this.handleClick.bind(this);
         this.handleInput = this.handleInput.bind(this);
@@ -56,12 +69,16 @@ export class SectionBlockEditor {
         this.handleSubmit = this.handleSubmit.bind(this);
         this.updateField = this.updateField.bind(this);
         this.addFiles = this.addFiles.bind(this);
+        this.handlePaste = this.handlePaste.bind(this);
+        this.renderPreview = this.renderPreview.bind(this);
 
         this.form.addEventListener('click', this.handleClick);
         this.form.addEventListener('input', this.handleInput);
         this.form.addEventListener('keydown', this.handleKeyDown);
         this.form.addEventListener('submit', this.handleSubmit);
+        this.form.addEventListener('paste', this.handlePaste);
         new FormatToolbar(this.form, this.updateField);
+        this.previewer = new EditorPreview(this.form, { render: this.renderPreview });
 
         this.form.elements.title.value = this.state.title;
         this.render();
@@ -86,8 +103,37 @@ export class SectionBlockEditor {
     }
 
     focus() {
-        const field = this.isNew ? this.form.elements.title : this.blocksArea.querySelector('input, textarea') ?? this.form.elements.title;
+        const field = this.isNew ? this.form.elements.title : this.blocksArea.querySelector('[data-rich], input') ?? this.form.elements.title;
         field.focus();
+    }
+
+    /**
+     * Appelé avant la fermeture de la modal (Annuler, croix, Échap, clic sur le fond).
+     * Le panneau de choix des fichiers se ferme d'abord ; des modifications non enregistrées sont confirmées.
+     *
+     * @returns {boolean} false : la modal reste ouverte
+     */
+    confirmClose() {
+        if (this.filePicker.isOpen()) {
+            this.filePicker.close();
+
+            return false;
+        }
+
+        if (this.openTagColor !== null) {
+            this.closeTagColor();
+
+            return false;
+        }
+
+        return !this.isDirty || window.confirm('Abandonner les modifications de cette section ?');
+    }
+
+    /**
+     * Dessine l'aperçu (appelé par EditorPreview quand l'aperçu est affiché).
+     */
+    renderPreview() {
+        this.preview.render(this.state);
     }
 
     /**
@@ -103,6 +149,7 @@ export class SectionBlockEditor {
 
         const count = this.state.blocks.length;
         const elements = [];
+        this.renderer.setOpenTagColor(this.openTagColor);
 
         this.state.blocks.forEach((block, index) => {
             if (index > 0) {
@@ -113,9 +160,15 @@ export class SectionBlockEditor {
         });
 
         this.blocksArea.replaceChildren(...elements);
+        this.previewer.refresh();
     }
 
     handleClick(event) {
+        // Clic en dehors des pastilles de couleur d'un tag : elles se ferment
+        if (this.openTagColor !== null && !event.target.closest('[data-tag-color-popover], [data-action="tag-color"]')) {
+            this.closeTagColor(false);
+        }
+
         const button = event.target.closest('[data-action]');
 
         if (!button || button.disabled) {
@@ -137,7 +190,7 @@ export class SectionBlockEditor {
                 this.addBlock(button.dataset.type);
                 return;
             case 'cancel':
-                this.cancel();
+                this.onCancel();
                 return;
             case 'add-files':
                 this.chooseFiles(block);
@@ -166,7 +219,7 @@ export class SectionBlockEditor {
                 block.rows.splice(Number(button.dataset.row), 1);
                 break;
             case 'add-column':
-                block.columns.push('');
+                block.columns.push({ label: '', sortable: true });
                 block.rows.forEach((row) => row.push(''));
                 this.renderAndFocus(blockIndex, `[data-field="column"][data-col="${block.columns.length - 1}"]`);
                 return;
@@ -175,6 +228,14 @@ export class SectionBlockEditor {
                 break;
             case 'remove-tag':
                 block.tags.splice(index, 1);
+                this.openTagColor = null;
+                break;
+            case 'tag-color':
+                this.toggleTagColor(blockIndex, index);
+                return;
+            case 'set-tag-color':
+                block.tags[index].color = button.dataset.color;
+                this.openTagColor = null;
                 break;
             case 'remove-file':
                 block.files.splice(index, 1);
@@ -188,7 +249,24 @@ export class SectionBlockEditor {
     }
 
     handleInput(event) {
-        this.updateField(event.target);
+        const field = event.target.closest('[data-rich]') ?? event.target;
+
+        this.updateField(field);
+    }
+
+    /**
+     * Coller dans un texte riche : le texte seul (pas les couleurs, polices… de la page d'origine).
+     */
+    handlePaste(event) {
+        if (!event.target.closest('[data-rich]')) {
+            return;
+        }
+
+        event.preventDefault();
+        const text = event.clipboardData.getData('text/plain');
+        const isSingleLine = event.target.closest('[data-rich]').dataset.rich === 'single';
+
+        document.execCommand('insertText', false, isSingleLine ? text.replace(/\s*\n\s*/g, ' ') : text);
     }
 
     /**
@@ -196,6 +274,7 @@ export class SectionBlockEditor {
      */
     updateField(field) {
         this.isDirty = true;
+        this.previewer.refresh();
 
         if (field.name === 'title') {
             this.state.title = field.value;
@@ -210,28 +289,35 @@ export class SectionBlockEditor {
         }
 
         const index = Number(field.dataset.index);
+        const value = field.dataset.rich ? readRichField(field) : field.value;
 
         switch (field.dataset.field) {
             case 'text':
-                block.text = field.value;
+                block.text = value;
                 break;
             case 'item':
-                block.items[index] = field.value;
+                block.items[index] = value;
                 break;
             case 'column':
-                block.columns[Number(field.dataset.col)] = field.value;
+                block.columns[Number(field.dataset.col)].label = value;
+                break;
+            case 'column-sortable':
+                block.columns[Number(field.dataset.col)].sortable = field.checked;
+                break;
+            case 'table-style':
+                block.style = value;
                 break;
             case 'cell':
-                block.rows[Number(field.dataset.row)][Number(field.dataset.col)] = field.value;
+                block.rows[Number(field.dataset.row)][Number(field.dataset.col)] = value;
                 break;
             case 'term':
-                block.items[index].term = field.value;
+                block.items[index].term = value;
                 break;
             case 'definition':
-                block.items[index].definition = field.value;
+                block.items[index].definition = value;
                 break;
             case 'caption':
-                block.files[index].caption = field.value;
+                block.files[index].caption = value;
                 break;
         }
     }
@@ -241,7 +327,18 @@ export class SectionBlockEditor {
      * Entrée dans un autre champ d'une ligne n'envoie pas non plus le formulaire.
      */
     handleKeyDown(event) {
-        if (event.key !== 'Enter' || event.target.tagName !== 'INPUT') {
+        if (event.key !== 'Enter') {
+            return;
+        }
+
+        // Texte riche d'une seule ligne (élément de liste, case de tableau) : pas de retour à la ligne
+        if (event.target.closest('[data-rich="single"]')) {
+            event.preventDefault();
+
+            return;
+        }
+
+        if (event.target.tagName !== 'INPUT') {
             return;
         }
 
@@ -261,14 +358,54 @@ export class SectionBlockEditor {
             return;
         }
 
-        const exists = block.tags.some((existing) => existing.toLowerCase() === tag.toLowerCase());
+        const exists = block.tags.some((existing) => existing.label.toLowerCase() === tag.toLowerCase());
 
         if (!exists) {
-            block.tags.push(tag);
+            // Un nouveau tag prend la couleur du dernier tag ajouté
+            block.tags.push({ label: tag, color: block.tags.at(-1)?.color ?? this.tagColors[0].value });
             this.isDirty = true;
         }
 
         this.renderAndFocus(blockIndex, '[data-field="new-tag"]');
+    }
+
+    /**
+     * Ouvre (ou ferme) les pastilles de couleur sous un tag. Ouvrir ne compte pas comme une modification.
+     */
+    toggleTagColor(blockIndex, tagIndex) {
+        const isOpen = this.openTagColor?.block === blockIndex && this.openTagColor?.index === tagIndex;
+
+        if (isOpen) {
+            this.closeTagColor();
+
+            return;
+        }
+
+        const wasDirty = this.isDirty;
+        this.openTagColor = { block: blockIndex, index: tagIndex };
+        this.renderAndFocus(blockIndex, '[data-tag-color-popover] [aria-pressed="true"]');
+        this.isDirty = wasDirty;
+    }
+
+    /**
+     * Ferme les pastilles de couleur sans redessiner (le champ en cours de saisie garde le focus).
+     *
+     * @param {boolean} focusTag remet le focus sur le rond de couleur du tag (Échap)
+     */
+    closeTagColor(focusTag = true) {
+        const { block, index } = this.openTagColor;
+        const popover = this.blocksArea.querySelector('[data-tag-color-popover]');
+
+        const colorButton = this.blocksArea.querySelector(`[data-editor-block="${block}"] [data-action="tag-color"][data-index="${index}"]`);
+
+        this.openTagColor = null;
+        this.renderer.setOpenTagColor(null);
+        popover?.remove();
+        colorButton?.setAttribute('aria-expanded', 'false');
+
+        if (focusTag) {
+            colorButton?.focus();
+        }
     }
 
     removeColumn(block, columnIndex) {
@@ -296,9 +433,9 @@ export class SectionBlockEditor {
     addBlock(type) {
         const position = this.insertAt ?? this.state.blocks.length;
 
-        this.state.blocks.splice(position, 0, createEmptyBlock(type));
+        this.state.blocks.splice(position, 0, createEmptyBlock(type, this.tableStyles[0].value));
         this.isDirty = true;
-        this.renderAndFocus(position, 'input, textarea, [data-action="add-files"]');
+        this.renderAndFocus(position, 'input, [data-rich], [data-action="add-files"]');
     }
 
     /**
@@ -360,7 +497,7 @@ export class SectionBlockEditor {
     }
 
     /**
-     * Fichiers choisis dans la modal : ajoutés au bloc qui a ouvert la modal.
+     * Fichiers choisis dans le panneau : ajoutés au bloc qui l'a ouvert.
      */
     addFiles(files) {
         const block = this.fileBlock;
@@ -379,19 +516,6 @@ export class SectionBlockEditor {
 
         this.isDirty = true;
         this.render();
-    }
-
-    cancel() {
-        if (this.isDirty && !window.confirm('Abandonner les modifications de cette section ?')) {
-            return;
-        }
-
-        this.destroy();
-        this.onCancel();
-    }
-
-    destroy() {
-        this.form.remove();
     }
 
     async handleSubmit(event) {
@@ -431,9 +555,26 @@ export class SectionBlockEditor {
 }
 
 /**
- * Un bloc vide, prêt à remplir, pour chaque type.
+ * Texte d'un champ riche, avec ses marques de mise en forme. Un champ vidé redevient vraiment vide
+ * (le navigateur y laisse parfois un <br>) pour que son texte d'aide réapparaisse.
  */
-function createEmptyBlock(type) {
+function readRichField(field) {
+    if (field.textContent.trim() === '') {
+        field.replaceChildren();
+
+        return '';
+    }
+
+    return htmlToMarkup(field);
+}
+
+/**
+ * Un bloc vide, prêt à remplir, pour chaque type.
+ *
+ * @param {string} type
+ * @param {string} tableStyle style d'un nouveau tableau (le style par défaut)
+ */
+function createEmptyBlock(type, tableStyle) {
     switch (type) {
         case 'paragraphe':
         case 'sous_titre':
@@ -441,7 +582,12 @@ function createEmptyBlock(type) {
         case 'liste':
             return { type, ordered: false, items: [''] };
         case 'tableau':
-            return { type, columns: ['', ''], rows: [['', '']] };
+            return {
+                type,
+                style: tableStyle,
+                columns: [{ label: '', sortable: true }, { label: '', sortable: true }],
+                rows: [['', '']],
+            };
         case 'tags':
             return { type, tags: [] };
         case 'definitions':
@@ -454,8 +600,9 @@ function createEmptyBlock(type) {
 
 /**
  * Ce qu'on envoie à l'API : pour les fichiers, seulement l'id et la légende.
+ * Aussi utilisé par ProjectSections.js (retirer une image ou un document depuis la page).
  */
-function toPayloadBlock(block) {
+export function toPayloadBlock(block) {
     if (!Array.isArray(block.files)) {
         return block;
     }

@@ -6,6 +6,8 @@ use App\Entity\ProjectFile;
 use App\Entity\ProjectSection;
 use App\Entity\ProjectSectionBlock;
 use App\Enum\ProjectSectionBlockType;
+use App\Enum\ProjectSectionTableStyle;
+use App\Enum\ProjectSectionTagColor;
 use App\Repository\ProjectFileRepository;
 
 /**
@@ -119,12 +121,14 @@ final class ProjectSectionBlockBuilder
 
     /**
      * Les lignes entièrement vides sont ignorées ; il faut au moins une colonne et une ligne.
+     * Style absent : le style par défaut. Une colonne est { label, sortable } (ou juste son texte : triable).
      *
      * @param array<string, mixed> $data
      */
     private function fillTable(ProjectSectionBlock $block, array $data, string $context): void
     {
-        $columns = array_map(static fn (mixed $label): string => trim(\is_scalar($label) ? (string) $label : ''), $this->readList($data, 'columns'));
+        $style = $this->readTableStyle($data, $context);
+        $columns = array_map($this->readTableColumn(...), $this->readList($data, 'columns'));
 
         if ([] === $columns) {
             throw new \DomainException($context.' : le tableau doit avoir au moins une colonne.');
@@ -151,8 +155,10 @@ final class ProjectSectionBlockBuilder
 
         $this->assertMaxCount($rows, self::MAX_ITEMS, $context);
 
-        foreach ($columns as $label) {
-            $block->addTableColumn($this->limit($label, self::MAX_LABEL_LENGTH, $context));
+        $block->setTableStyle($style);
+
+        foreach ($columns as $column) {
+            $block->addTableColumn($this->limit($column['label'], self::MAX_LABEL_LENGTH, $context), $column['sortable']);
         }
 
         foreach ($rows as $cells) {
@@ -161,23 +167,75 @@ final class ProjectSectionBlockBuilder
     }
 
     /**
-     * Un tag en double (même mot, majuscules ou non) n'est gardé qu'une fois.
+     * @param array<string, mixed> $data
+     */
+    private function readTableStyle(array $data, string $context): ProjectSectionTableStyle
+    {
+        $value = $this->readString($data, 'style');
+
+        if ('' === $value) {
+            return ProjectSectionTableStyle::default();
+        }
+
+        return ProjectSectionTableStyle::tryFrom($value)
+            ?? throw new \DomainException($context.' : ce style de tableau n\'existe pas.');
+    }
+
+    /**
+     * @return array{label: string, sortable: bool}
+     */
+    private function readTableColumn(mixed $column): array
+    {
+        if (\is_array($column)) {
+            return [
+                'label' => trim(\is_scalar($column['label'] ?? null) ? (string) $column['label'] : ''),
+                'sortable' => false !== ($column['sortable'] ?? true),
+            ];
+        }
+
+        return ['label' => trim(\is_scalar($column) ? (string) $column : ''), 'sortable' => true];
+    }
+
+    /**
+     * Un tag est { label, color } (ou juste son texte : couleur par défaut). Les tags vides sont ignorés ;
+     * un tag en double (même mot, majuscules ou non) n'est gardé qu'une fois, avec sa première couleur.
      *
      * @param array<string, mixed> $data
      */
     private function fillTags(ProjectSectionBlock $block, array $data, string $context): void
     {
         $tags = [];
-        foreach ($this->cleanList($this->readList($data, 'tags')) as $tag) {
-            $tags[mb_strtolower($tag)] ??= $tag;
+        foreach ($this->readList($data, 'tags') as $item) {
+            $label = trim($this->readScalar(\is_array($item) ? ($item['label'] ?? null) : $item));
+
+            if ('' !== $label) {
+                $tags[mb_strtolower($label)] ??= [$label, $this->readTagColor(\is_array($item) ? ($item['color'] ?? null) : null, $context)];
+            }
         }
 
         $this->assertNotEmpty($tags, $context);
         $this->assertMaxCount($tags, self::MAX_ITEMS, $context);
 
-        foreach ($tags as $tag) {
-            $block->addTag($this->limit($tag, self::MAX_TAG_LENGTH, $context));
+        foreach ($tags as [$label, $color]) {
+            $block->addTag($this->limit($label, self::MAX_TAG_LENGTH, $context), $color);
         }
+    }
+
+    private function readTagColor(mixed $value, string $context): ProjectSectionTagColor
+    {
+        $value = $this->readScalar($value);
+
+        if ('' === $value) {
+            return ProjectSectionTagColor::default();
+        }
+
+        return ProjectSectionTagColor::tryFrom($value)
+            ?? throw new \DomainException($context.' : cette couleur de tag n\'existe pas.');
+    }
+
+    private function readScalar(mixed $value): string
+    {
+        return \is_scalar($value) ? (string) $value : '';
     }
 
     /**

@@ -1,7 +1,6 @@
 {#
     Modèle de l'éditeur d'une section (titre + blocs), copié par le JavaScript
-    (assets/js/app/project/sections/SectionBlockEditor.js) à la place de la section modifiée,
-    ou à la fin de la présentation pour une nouvelle section.
+    (assets/js/app/project/sections/SectionBlockEditor.js) et affiché dans la modal.
     Les blocs sont dessinés par le JavaScript ; les types de blocs viennent de App\Enum\ProjectSectionBlockType.
 #}
 {% set block_icons = {paragraphe: '¶', sous_titre: 'H3', liste: '•', tableau: '▦', tags: '#', definitions: 'dt', images: 'Img', documents: 'Doc'} %}
@@ -9,39 +8,68 @@
 {% for type in enum_cases('App\\Enum\\ProjectSectionBlockType') %}
     {% set block_types = block_types|merge({(type.value): {label: type.label, help: type.help, icon: block_icons[type.value]}}) %}
 {% endfor %}
+{# Styles d'un tableau (App\Enum\ProjectSectionTableStyle), dans l'ordre de la liste ; le premier est celui par défaut #}
+{% set table_styles = enum_cases('App\\Enum\\ProjectSectionTableStyle')|map(style => {value: style.value, label: style.label, modifier: style.cssModifier}) %}
+{# Couleurs d'un tag (App\Enum\ProjectSectionTagColor), dans l'ordre des pastilles ; la première est celle par défaut #}
+{% set tag_colors = enum_cases('App\\Enum\\ProjectSectionTagColor')|map(color => {value: color.value, label: color.label, modifier: color.cssModifier}) %}
 
 <template id="section-editor-template">
-    <form class="section-editor" data-section-editor-form data-block-types="{{ block_types|json_encode }}" data-icons-url="{{ asset('images/icones/') }}" novalidate>
-        <label class="section-editor__label" for="section-editor-title">Titre de la section</label>
-        <input type="text" id="section-editor-title" name="title" class="section-editor__title" maxlength="255" placeholder="Ex. : Base de données" required>
+    {#
+        Ouvert dans la modal (« Ajouter une section » ou crayon d'une section).
+        Le bouton « Aperçu » agrandit la modal et affiche à droite l'aperçu de la section,
+        mis à jour pendant qu'on écrit ; le formulaire reste tel quel.
+    #}
+    <form class="section-editor editor-preview" data-section-editor-form data-block-types="{{ block_types|json_encode }}" data-table-styles="{{ table_styles|json_encode }}" data-tag-colors="{{ tag_colors|json_encode }}" data-icons-url="{{ asset('images/icones/') }}" novalidate>
+        <div class="section-editor__main">
+            {# Mise en forme du texte sélectionné, directement visible dans les textes (FormatToolbar.js) #}
+            <div class="section-editor__toolbar" role="toolbar" aria-label="Mise en forme du texte">
+                <button type="button" class="section-editor__format section-editor__format--bold" data-format="bold" title="Gras (Ctrl + B)" aria-label="Gras">B</button>
+                <button type="button" class="section-editor__format section-editor__format--italic" data-format="italic" title="Italique (Ctrl + I)" aria-label="Italique">I</button>
+                <button type="button" class="section-editor__format section-editor__format--code" data-format="code" title="Code" aria-label="Code">&lt;/&gt;</button>
+                <button type="button" class="section-editor__format" data-format="link" title="Lien">Lien</button>
+                <span class="section-editor__toolbar-help">Sélectionne des mots, puis clique</span>
+                {# Aperçu à côté du formulaire (assets/js/composants/EditorPreview.js) #}
+                <button type="button" class="editor-preview__toggle" data-preview-toggle aria-pressed="false">
+                    <img src="{{ asset('images/icones/view.svg') }}" alt="" width="16" height="16">
+                    <span data-preview-toggle-label>Aperçu</span>
+                </button>
+            </div>
 
-        {# Mise en forme du texte sélectionné, dans n'importe quel champ de l'éditeur (FormatToolbar.js) #}
-        <div class="section-editor__toolbar" role="toolbar" aria-label="Mise en forme du texte">
-            <span class="section-editor__toolbar-label">Texte sélectionné :</span>
-            <button type="button" class="section-editor__format section-editor__format--bold" data-format="bold" title="Gras">B</button>
-            <button type="button" class="section-editor__format section-editor__format--italic" data-format="italic" title="Italique">I</button>
-            <button type="button" class="section-editor__format section-editor__format--code" data-format="code" title="Code">&lt;/&gt;</button>
-            <button type="button" class="section-editor__format" data-format="link" title="Lien">Lien</button>
-            <span class="section-editor__toolbar-help"><code class="section-editor__syntax">**gras**</code> <code class="section-editor__syntax">*italique*</code> <code class="section-editor__syntax">`code`</code> <code class="section-editor__syntax">[texte](https://…)</code></span>
-        </div>
+            <div class="section-editor__content">
+                <label class="section-editor__label" for="section-editor-title">Titre de la section</label>
+                <input type="text" id="section-editor-title" name="title" class="section-editor__title" maxlength="255" placeholder="Ex. : Base de données" required>
 
-        <div class="section-editor__blocks" data-editor-blocks></div>
+                <div class="section-editor__blocks" data-editor-blocks></div>
 
-        <div class="section-editor__add">
-            <button type="button" class="section-editor__add-button" data-action="toggle-menu">+ Ajouter un bloc</button>
-            <div class="section-editor__menu" data-editor-menu hidden>
-                {% for value, type in block_types %}
-                    <button type="button" class="section-editor__menu-item" data-action="add-block" data-type="{{ value }}">
-                        <span class="section-editor__menu-title"><span class="section-editor__icon" aria-hidden="true">{{ type.icon }}</span>{{ type.label }}</span>
-                        <span class="section-editor__menu-help">{{ type.help }}</span>
-                    </button>
-                {% endfor %}
+                <div class="section-editor__add">
+                    <button type="button" class="section-editor__add-button" data-action="toggle-menu">+ Ajouter un bloc</button>
+                    <div class="section-editor__menu" data-editor-menu hidden>
+                        {% for value, type in block_types %}
+                            <button type="button" class="section-editor__menu-item" data-action="add-block" data-type="{{ value }}">
+                                <span class="section-editor__menu-title"><span class="section-editor__icon" aria-hidden="true">{{ type.icon }}</span>{{ type.label }}</span>
+                                <span class="section-editor__menu-help">{{ type.help }}</span>
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <p class="section-editor__error" data-editor-error role="alert"></p>
             </div>
         </div>
 
-        <p class="section-editor__error" data-editor-error role="alert"></p>
+        {# Aperçu de la section (dessiné par SectionPreview.js), visible seulement en mode aperçu #}
+        <aside class="editor-preview__panel" aria-label="Aperçu de la section" data-preview-panel hidden>
+            <div class="editor-preview__head">
+                <p class="editor-preview__label">Aperçu</p>
+                <button type="button" class="editor-preview__close" data-preview-close>
+                    <img src="{{ asset('images/icones/close.svg') }}" alt="" width="14" height="14">
+                    Quitter l'aperçu
+                </button>
+            </div>
+            <div data-preview-content></div>
+        </aside>
 
-        <div class="section-editor__footer">
+        <div class="modal__actions section-editor__footer">
             <button type="button" class="projects__button projects__button--ghost" data-action="cancel">Annuler</button>
             <button type="submit" class="projects__button">Enregistrer la section</button>
         </div>

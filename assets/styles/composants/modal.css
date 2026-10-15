@@ -53,6 +53,12 @@ html.modal-open {
     width: 860px;
 }
 
+/* Presque tout l'écran (ex. éditeur d'une section avec son aperçu) */
+.modal--full .modal__box {
+    width: calc(100vw - 2rem);
+    height: calc(100vh - 2rem);
+}
+
 /* --- En-tête : fond bleu, titre en blanc --- */
 
 .modal__header {

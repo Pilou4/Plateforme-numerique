@@ -22,7 +22,7 @@
         ],
     }, with_context = false) }}
 
-    {# Éditeur des sections : assets/js/app/project/sections/ProjectSections.js #}
+    {# Sections et leur éditeur (dans la modal) : assets/js/app/project/sections/ProjectSections.js #}
     <article class="project"
              data-project-sections
              data-api-url="{{ path('api_project_sections_create', {slug: project.slug}) }}"
@@ -37,7 +37,7 @@
                 <h2 class="project__heading" id="project-section-{{ section.id }}">{{ section.title }}</h2>
                 <div class="section-blocks">
                     {% for block in section.blocks %}
-                        {{ include('app/project/_section_block.html.twig', {block: block, project: project}, with_context = false) }}
+                        {{ include('app/project/_section_block.html.twig', {block: block, block_index: loop.index0, project: project}, with_context = false) }}
                     {% else %}
                         <p class="section-blocks__empty">Cette section est vide : clique sur le crayon pour lui ajouter des blocs.</p>
                     {% endfor %}
@@ -47,9 +47,7 @@
             <p class="project__empty" data-sections-empty>Ce projet n'a pas encore de présentation : ajoute une première section avec le bouton « Ajouter une section ».</p>
         {% endfor %}
 
-        {# L'éditeur d'une nouvelle section s'ouvre ici, à la fin de la présentation #}
-        <div data-new-section-slot></div>
-
+        {# L'éditeur d'une section s'ouvre dans la modal (ProjectSections.js) #}
         {{ include('app/project/_section_editor.html.twig', {}, with_context = false) }}
     </article>
 

@@ -88,6 +88,94 @@
             </div>
         </section>
 
+        {#
+            --- Tableau : les styles des tableaux des sections (App\Enum\ProjectSectionTableStyle) ---
+            Même HTML que templates/app/project/_section_block.html.twig ; la liste change la classe du style
+            (TableStyleDemo.js). Clic sur un en-tête avec flèches : tri (TableSorter.js) ; « Rôle » n'est pas triable.
+        #}
+        {% set table_styles = enum_cases('App\\Enum\\ProjectSectionTableStyle') %}
+        {% set demo_columns = [
+            {label: 'Table', sortable: true},
+            {label: 'Rôle', sortable: false},
+            {label: 'Lignes', sortable: true},
+            {label: 'Liée à', sortable: true},
+        ] %}
+        {% set demo_rows = [
+            ['`project`', 'Un projet : nom, logo, statut', '12', '—'],
+            ['`project_section`', 'Les sections de la présentation', '48', '`project`'],
+            ['`project_step`', 'Les tâches et sous-tâches', '135', '`project`'],
+            ['`project_file`', 'Les fichiers envoyés', '27', '`project`'],
+            ['`project_category`', 'Les catégories', '6', '—'],
+        ] %}
+        <section class="elements__section" aria-labelledby="elements-table-title">
+            <h2 class="elements__section-title" id="elements-table-title">
+                Tableau <span class="elements__count">{{ table_styles|length }} styles</span>
+            </h2>
+            <p class="elements__section-text">
+                Bloc Tableau des sections d'un projet : le style se choisit dans l'éditeur.
+                Clique sur un en-tête avec des flèches pour trier (croissant, puis décroissant).
+            </p>
+
+            <div class="elements__field">
+                <label class="elements__field-label" for="elements-table-style">Style</label>
+                <select class="elements__select" id="elements-table-style" data-table-style-select>
+                    {% for style in table_styles %}
+                        <option value="{{ style.cssModifier }}">{{ style.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="section-block__table-wrap section-block__table-wrap--{{ (table_styles|first).cssModifier }}" data-table-style-target>
+                <table class="section-block__table" data-table-sort>
+                    <thead class="section-block__table-header">
+                        <tr>
+                            {% for column in demo_columns %}
+                                {% if column.sortable %}
+                                    <th scope="col" class="section-block__table-head" aria-sort="none" data-sortable>
+                                        <button type="button" class="table-sort">{{ column.label }}<span class="table-sort__icon" aria-hidden="true"><span class="table-sort__up"></span><span class="table-sort__down"></span></span></button>
+                                    </th>
+                                {% else %}
+                                    <th scope="col" class="section-block__table-head">{{ column.label }}</th>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in demo_rows %}
+                            <tr class="section-block__table-row">
+                                {% for text in row %}
+                                    <td class="section-block__table-cell">
+                                        {%- if loop.first -%}
+                                            <span class="section-block__table-label">{{ text|inline_format }}</span>
+                                        {%- else -%}
+                                            {{ text|inline_format }}
+                                        {%- endif -%}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        {# --- Tags : les couleurs des tags des sections (App\Enum\ProjectSectionTagColor), même HTML que _section_block.html.twig --- #}
+        {% set tag_colors = enum_cases('App\\Enum\\ProjectSectionTagColor') %}
+        <section class="elements__section" aria-labelledby="elements-tags-title">
+            <h2 class="elements__section-title" id="elements-tags-title">
+                Tags <span class="elements__count">{{ tag_colors|length }} couleurs</span>
+            </h2>
+            <p class="elements__section-text">
+                Bloc Tags des sections d'un projet : la couleur se choisit tag par tag dans l'éditeur (petit rond du tag).
+            </p>
+
+            <ul class="section-block__tags">
+                {% for color in tag_colors %}
+                    <li class="section-block__tag section-block__tag--{{ color.cssModifier }}">{{ color.label }}</li>
+                {% endfor %}
+            </ul>
+        </section>
+
         {# --- Icônes : tout le dossier public/images/icones --- #}
         <section class="elements__section" aria-labelledby="elements-icons-title">
             <h2 class="elements__section-title" id="elements-icons-title">

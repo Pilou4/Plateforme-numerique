@@ -1,5 +1,6 @@
 import { createElement } from '../../../fonctions/createElement.js';
 import { formatFileSize } from '../../../fonctions/fileSize.js';
+import { markupToHtml } from '../../../fonctions/inlineMarkup.js';
 
 /**
  * Dessine les champs de l'éditeur pour chaque bloc d'une section (paragraphe, liste, tableau…).
@@ -7,6 +8,10 @@ import { formatFileSize } from '../../../fonctions/fileSize.js';
  * Aucun événement n'est posé ici : chaque bouton porte data-action, et chaque champ data-block
  * (numéro du bloc) et data-field (ce qu'il modifie), plus data-index / data-row / data-col si besoin.
  * C'est SectionBlockEditor qui écoute l'éditeur entier et met son état à jour.
+ *
+ * Les textes qu'on peut mettre en forme (paragraphe, élément de liste, case de tableau, définition)
+ * sont des champs « riches » [data-rich] : le gras et l'italique s'y voient directement (FormatToolbar.js).
+ * Les autres (titres, en-têtes, tags, légendes) restent des champs texte simples.
  */
 
 const DOCUMENT_ICONS = {
@@ -30,10 +35,24 @@ export class BlockFieldsRenderer {
     /**
      * @param {Object<string, {label: string, help: string, icon: string}>} types types de blocs (ProjectSectionBlockType)
      * @param {string} iconsUrl adresse du dossier des icônes (public/images/icones/)
+     * @param {{value: string, label: string}[]} tableStyles styles d'un tableau (ProjectSectionTableStyle)
+     * @param {{value: string, label: string, modifier: string}[]} tagColors couleurs d'un tag (ProjectSectionTagColor)
      */
-    constructor(types, iconsUrl) {
+    constructor(types, iconsUrl, tableStyles, tagColors) {
         this.types = types;
         this.iconsUrl = iconsUrl.endsWith('/') ? iconsUrl : `${iconsUrl}/`;
+        this.tableStyles = tableStyles;
+        this.tagColors = tagColors;
+        // Tag dont les pastilles de couleur sont ouvertes : { block, index } ou null
+        this.openTagColor = null;
+    }
+
+    setOpenTagColor(openTagColor) {
+        this.openTagColor = openTagColor;
+    }
+
+    colorModifier(value) {
+        return (this.tagColors.find((color) => color.value === value) ?? this.tagColors[0]).modifier;
     }
 
     /**
@@ -93,8 +112,8 @@ export class BlockFieldsRenderer {
         switch (block.type) {
             case 'paragraphe':
                 body.append(
-                    this.textarea(index, 'text', block.text, 'Écris ton texte…'),
-                    this.hint('Chaque ligne devient un paragraphe. Sélectionne des mots puis utilise la barre B / I / code / lien.'),
+                    this.rich(index, 'text', block.text, 'Écris ton texte…', { multiLine: true }),
+                    this.hint('Entrée : nouveau paragraphe. Sélectionne des mots puis utilise la barre B / I / code / lien.'),
                 );
                 break;
             case 'sous_titre':
@@ -137,7 +156,7 @@ export class BlockFieldsRenderer {
                 className: 'section-editor__row',
                 children: [
                     createElement('span', { className: 'section-editor__row-mark', text: block.ordered ? `${itemIndex + 1}.` : '•', attributes: { 'aria-hidden': 'true' } }),
-                    this.input(index, 'item', item, 'Élément de la liste', { 'data-index': itemIndex }),
+                    this.rich(index, 'item', item, 'Élément de la liste', { attributes: { 'data-index': itemIndex } }),
                     this.removeButton('Retirer cet élément', { 'data-action': 'remove-item', 'data-block': index, 'data-index': itemIndex }),
                 ],
             })),
@@ -147,13 +166,22 @@ export class BlockFieldsRenderer {
     }
 
     /**
-     * Grille de champs : la première ligne contient les en-têtes (<th>), les suivantes les cases (<td>).
+     * Le style du tableau, puis une grille de champs : la première ligne contient les en-têtes (<th>)
+     * avec l'interrupteur « Triable » de chaque colonne, les suivantes les cases (<td>).
      */
     fillTable(body, block, index) {
-        const headCells = block.columns.map((label, columnIndex) => createElement('th', {
+        body.append(this.tableStyleField(block, index));
+
+        const headCells = block.columns.map((column, columnIndex) => createElement('th', {
             className: 'section-editor__grid-cell',
             attributes: { scope: 'col' },
-            children: [this.input(index, 'column', label, 'En-tête', { 'data-col': columnIndex, 'aria-label': `En-tête de la colonne ${columnIndex + 1}`, maxlength: '255' })],
+            children: [createElement('div', {
+                className: 'section-editor__grid-head',
+                children: [
+                    this.input(index, 'column', column.label, 'En-tête', { 'data-col': columnIndex, 'aria-label': `En-tête de la colonne ${columnIndex + 1}`, maxlength: '255' }),
+                    this.sortableSwitch(index, columnIndex, column.sortable),
+                ],
+            })],
         }));
 
         const rows = block.rows.map((row, rowIndex) => createElement('tr', {
@@ -164,12 +192,12 @@ export class BlockFieldsRenderer {
                 }),
                 ...row.map((text, columnIndex) => createElement('td', {
                     className: 'section-editor__grid-cell',
-                    children: [this.input(index, 'cell', text, 'Case', { 'data-row': rowIndex, 'data-col': columnIndex, 'aria-label': `Ligne ${rowIndex + 1}, colonne ${columnIndex + 1}` })],
+                    children: [this.rich(index, 'cell', text, 'Case', { attributes: { 'data-row': rowIndex, 'data-col': columnIndex, 'aria-label': `Ligne ${rowIndex + 1}, colonne ${columnIndex + 1}` } })],
                 })),
             ],
         }));
 
-        const removeColumns = block.columns.map((label, columnIndex) => createElement('td', {
+        const removeColumns = block.columns.map((column, columnIndex) => createElement('td', {
             className: 'section-editor__grid-cell',
             children: [createElement('button', {
                 className: 'section-editor__remove-column',
@@ -198,21 +226,107 @@ export class BlockFieldsRenderer {
             ],
         }));
 
-        body.append(this.hint('La première ligne (en bleu) contient les en-têtes du tableau. Les lignes vides sont ignorées.'));
+        body.append(this.hint('La première ligne (en bleu) contient les en-têtes du tableau. Triable : on peut trier le tableau en cliquant sur l\'en-tête. Les lignes vides sont ignorées.'));
     }
 
-    fillTags(body, block, index) {
-        const chips = block.tags.map((tag, tagIndex) => createElement('span', {
-            className: 'section-editor__chip',
+    /**
+     * Les 9 pastilles de couleur sous un tag ; la couleur actuelle est cochée.
+     */
+    tagColorPopover(tag, blockIndex, tagIndex) {
+        return createElement('span', {
+            className: 'section-editor__color-popover',
+            attributes: { role: 'group', 'aria-label': `Couleur de « ${tag.label} »`, 'data-tag-color-popover': '' },
+            children: this.tagColors.map((color) => createElement('button', {
+                className: `section-editor__swatch section-editor__swatch--${color.modifier}`,
+                attributes: {
+                    type: 'button',
+                    title: color.label,
+                    'aria-label': color.label,
+                    'aria-pressed': color.value === tag.color ? 'true' : 'false',
+                    'data-action': 'set-tag-color',
+                    'data-block': blockIndex,
+                    'data-index': tagIndex,
+                    'data-color': color.value,
+                },
+            })),
+        });
+    }
+
+    /**
+     * Liste « Style » du tableau (l'aperçu permet de voir le résultat).
+     */
+    tableStyleField(block, index) {
+        const id = `section-editor-table-style-${index}`;
+        const select = createElement('select', {
+            className: 'section-editor__select',
+            attributes: { id, 'data-block': index, 'data-field': 'table-style' },
+            children: this.tableStyles.map((style) => createElement('option', { text: style.label, attributes: { value: style.value } })),
+        });
+        select.value = block.style;
+
+        return createElement('div', {
+            className: 'section-editor__table-style',
             children: [
-                document.createTextNode(tag),
-                createElement('button', {
-                    className: 'section-editor__chip-remove',
-                    text: '×',
-                    attributes: { type: 'button', title: `Retirer « ${tag} »`, 'aria-label': `Retirer « ${tag} »`, 'data-action': 'remove-tag', 'data-block': index, 'data-index': tagIndex },
-                }),
+                createElement('label', { className: 'section-editor__table-style-label', text: 'Style', attributes: { for: id } }),
+                select,
             ],
-        }));
+        });
+    }
+
+    /**
+     * Interrupteur « Triable / Non triable » sous l'en-tête d'une colonne (le texte suit l'état, en CSS).
+     */
+    sortableSwitch(blockIndex, columnIndex, sortable) {
+        const checkbox = createElement('input', {
+            className: 'section-editor__toggle-input',
+            attributes: { type: 'checkbox', 'data-block': blockIndex, 'data-field': 'column-sortable', 'data-col': columnIndex },
+        });
+        checkbox.checked = sortable;
+
+        return createElement('label', {
+            className: 'section-editor__toggle',
+            attributes: { title: 'Trier le tableau en cliquant sur cet en-tête' },
+            children: [
+                checkbox,
+                createElement('span', { className: 'section-editor__toggle-track', attributes: { 'aria-hidden': 'true' } }),
+                createElement('span', { className: 'section-editor__toggle-text section-editor__toggle-text--on', text: 'Triable' }),
+                createElement('span', { className: 'section-editor__toggle-text section-editor__toggle-text--off', text: 'Non triable' }),
+            ],
+        });
+    }
+
+    /**
+     * Les tags en pastilles de leur couleur : le petit rond ouvre le choix de la couleur (9 pastilles).
+     */
+    fillTags(body, block, index) {
+        const chips = block.tags.map((tag, tagIndex) => {
+            const isOpen = this.openTagColor?.block === index && this.openTagColor?.index === tagIndex;
+
+            return createElement('span', {
+                className: `section-editor__chip section-editor__chip--${this.colorModifier(tag.color)}`,
+                children: [
+                    createElement('button', {
+                        className: 'section-editor__chip-color',
+                        attributes: {
+                            type: 'button',
+                            title: 'Changer la couleur',
+                            'aria-label': `Couleur de « ${tag.label} »`,
+                            'aria-expanded': isOpen ? 'true' : 'false',
+                            'data-action': 'tag-color',
+                            'data-block': index,
+                            'data-index': tagIndex,
+                        },
+                    }),
+                    document.createTextNode(tag.label),
+                    createElement('button', {
+                        className: 'section-editor__chip-remove',
+                        text: '×',
+                        attributes: { type: 'button', title: `Retirer « ${tag.label} »`, 'aria-label': `Retirer « ${tag.label} »`, 'data-action': 'remove-tag', 'data-block': index, 'data-index': tagIndex },
+                    }),
+                    ...(isOpen ? [this.tagColorPopover(tag, index, tagIndex)] : []),
+                ],
+            });
+        });
 
         body.append(createElement('div', {
             className: 'section-editor__chips',
@@ -227,8 +341,6 @@ export class BlockFieldsRenderer {
                         'aria-label': 'Nouveau tag',
                         'data-block': index,
                         'data-field': 'new-tag',
-                        // Pas de gras ni de lien dans un tag
-                        'data-no-format': '',
                     },
                 }),
             ],
@@ -241,8 +353,8 @@ export class BlockFieldsRenderer {
             children: block.items.map((item, itemIndex) => createElement('div', {
                 className: 'section-editor__definition',
                 children: [
-                    this.input(index, 'term', item.term, 'Terme', { 'data-index': itemIndex, maxlength: '255', 'data-no-format': '' }),
-                    this.textarea(index, 'definition', item.definition, 'Définition', { 'data-index': itemIndex, rows: '2' }),
+                    this.input(index, 'term', item.term, 'Terme', { 'data-index': itemIndex, maxlength: '255' }),
+                    this.rich(index, 'definition', item.definition, 'Définition', { multiLine: true, attributes: { 'data-index': itemIndex } }),
                     this.removeButton('Retirer cette définition', { 'data-action': 'remove-item', 'data-block': index, 'data-index': itemIndex }),
                 ],
             })),
@@ -266,7 +378,7 @@ export class BlockFieldsRenderer {
                                 this.removeButton('Retirer du bloc (le fichier reste dans Fichiers)', { 'data-action': 'remove-file', 'data-block': index, 'data-index': fileIndex }),
                             ],
                         }),
-                        this.input(index, 'caption', file.caption ?? '', 'Légende (facultative)', { 'data-index': fileIndex, maxlength: '255', 'data-no-format': '' }),
+                        this.input(index, 'caption', file.caption ?? '', 'Légende (facultative)', { 'data-index': fileIndex, maxlength: '255' }),
                     ],
                 }),
             ],
@@ -305,7 +417,7 @@ export class BlockFieldsRenderer {
                             createElement('span', { className: 'section-editor__document-meta', text: `${(file.extension ?? '').toUpperCase()} · ${formatFileSize(file.size)}` }),
                         ],
                     }),
-                    this.input(index, 'caption', file.caption ?? '', 'Nom affiché (facultatif)', { 'data-index': fileIndex, maxlength: '255', 'data-no-format': '' }),
+                    this.input(index, 'caption', file.caption ?? '', 'Nom affiché (facultatif)', { 'data-index': fileIndex, maxlength: '255' }),
                     this.removeButton('Retirer du bloc (le fichier reste dans Fichiers)', { 'data-action': 'remove-file', 'data-block': index, 'data-index': fileIndex }),
                 ],
             })),
@@ -324,14 +436,33 @@ export class BlockFieldsRenderer {
         return input;
     }
 
-    textarea(blockIndex, field, value, placeholder, attributes = {}) {
-        const textarea = createElement('textarea', {
-            className: 'section-editor__textarea',
-            attributes: { placeholder, rows: '4', 'data-block': blockIndex, 'data-field': field, ...attributes },
+    /**
+     * Champ riche : le texte est affiché mis en forme (gras, italique, code, lien).
+     * multiLine : Entrée crée une nouvelle ligne (paragraphe, définition) ; sinon Entrée est ignorée.
+     */
+    rich(blockIndex, field, value, placeholder, { multiLine = false, attributes = {} } = {}) {
+        const element = createElement('div', {
+            className: `section-editor__rich${multiLine ? ' section-editor__rich--multiline' : ''}`,
+            attributes: {
+                contenteditable: 'true',
+                role: 'textbox',
+                'aria-multiline': multiLine ? 'true' : 'false',
+                'aria-label': placeholder,
+                'data-placeholder': placeholder,
+                'data-rich': multiLine ? 'multiline' : 'single',
+                'data-block': blockIndex,
+                'data-field': field,
+                ...attributes,
+            },
         });
-        textarea.value = value ?? '';
 
-        return textarea;
+        // Une ligne par paragraphe : chaque ligne du texte devient un bloc <div> dans le champ
+        const lines = String(value ?? '').split('\n');
+        element.innerHTML = multiLine && lines.length > 1
+            ? lines.map((line) => `<div>${markupToHtml(line) || '<br>'}</div>`).join('')
+            : markupToHtml(value ?? '');
+
+        return element;
     }
 
     hint(text) {

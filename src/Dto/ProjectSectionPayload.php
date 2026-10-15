@@ -12,8 +12,10 @@ use Symfony\Component\Validator\Constraints as Assert;
  *   {"type": "paragraphe",  "text": "Ligne 1\nLigne 2"}
  *   {"type": "sous_titre",  "text": "Les tables"}
  *   {"type": "liste",       "ordered": false, "items": ["Docker", "Git"]}
- *   {"type": "tableau",     "columns": ["Table", "Rôle"], "rows": [["project", "Un projet"]]}
- *   {"type": "tags",        "tags": ["MySQL", "Doctrine"]}
+ *   {"type": "tableau",     "style": "liste_finder", "columns": [{"label": "Table", "sortable": true}, {"label": "Rôle", "sortable": false}],
+ *                           "rows": [["project", "Un projet"]]}       (style : ProjectSectionTableStyle)
+ *   {"type": "tags",        "tags": [{"label": "MySQL", "color": "bleu"}, {"label": "Doctrine", "color": "violet"}]}
+ *                                                                  (color : ProjectSectionTagColor)
  *   {"type": "definitions", "items": [{"term": "Entité", "definition": "Une classe…"}]}
  *   {"type": "images",      "files": [{"id": 12, "caption": "Schéma"}]}
  *   {"type": "documents",   "files": [{"id": 15, "caption": null}]}

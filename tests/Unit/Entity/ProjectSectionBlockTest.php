@@ -6,6 +6,8 @@ use App\Entity\ProjectFile;
 use App\Entity\ProjectSection;
 use App\Entity\ProjectSectionBlock;
 use App\Enum\ProjectSectionBlockType;
+use App\Enum\ProjectSectionTableStyle;
+use App\Enum\ProjectSectionTagColor;
 use PHPUnit\Framework\TestCase;
 
 final class ProjectSectionBlockTest extends TestCase
@@ -54,6 +56,17 @@ final class ProjectSectionBlockTest extends TestCase
         $this->assertSame($row, $cells[1]->getRow());
     }
 
+    public function testTableStyleAndSortableColumns(): void
+    {
+        $block = new ProjectSectionBlock(ProjectSectionBlockType::Table);
+
+        $this->assertSame(ProjectSectionTableStyle::default(), $block->getTableStyle());
+        $this->assertSame(ProjectSectionTableStyle::Dark, $block->setTableStyle(ProjectSectionTableStyle::Dark)->getTableStyle());
+
+        $this->assertTrue($block->addTableColumn('Table')->isSortable());
+        $this->assertFalse($block->addTableColumn('Rôle', false)->isSortable());
+    }
+
     public function testTableRowWithTheWrongNumberOfCellsIsRefused(): void
     {
         $block = new ProjectSectionBlock(ProjectSectionBlockType::Table);
@@ -63,6 +76,14 @@ final class ProjectSectionBlockTest extends TestCase
         $this->expectException(\LogicException::class);
 
         $block->addTableRow(['seulement une case']);
+    }
+
+    public function testTagColorIsBlueByDefault(): void
+    {
+        $block = (new ProjectSectionBlock(ProjectSectionBlockType::Tags))->addTag('MySQL')->addTag('Docker', ProjectSectionTagColor::Pink);
+
+        $this->assertSame(ProjectSectionTagColor::Blue, $block->getTags()[0]->getColor());
+        $this->assertSame(ProjectSectionTagColor::Pink, $block->getTags()[1]->getColor());
     }
 
     public function testTagsAndDefinitions(): void

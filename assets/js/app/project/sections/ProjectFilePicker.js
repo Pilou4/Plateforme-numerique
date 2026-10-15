@@ -1,25 +1,27 @@
 import { apiGet, apiPost } from '../../../fonctions/api.js';
 import { createElement } from '../../../fonctions/createElement.js';
 import { formatFileSize } from '../../../fonctions/fileSize.js';
-import { getModal } from '../../../composants/Modal.js';
 
 const IMAGE_TYPE = 'image';
 
 /**
- * Choix des fichiers d'un bloc images ou documents, dans la modal.
+ * Choix des fichiers d'un bloc images ou documents : un panneau qui s'ouvre par-dessus l'éditeur
+ * de la section (l'éditeur est lui-même dans la modal, et une seule modal peut être ouverte).
  *
  * Liste les fichiers du projet (page Fichiers) avec une case à cocher, et permet d'en envoyer
  * un nouveau : il est ajouté aux Fichiers du projet puis coché automatiquement.
  * Pour un bloc images, seules les images sont proposées.
  *
- *      new ProjectFilePicker(filesUrl).open({ imagesOnly: true, excludedIds: [3, 8], onSelect: (files) => … });
+ *      new ProjectFilePicker(filesUrl, editorElement).open({ imagesOnly: true, excludedIds: [3, 8], onSelect: (files) => … });
  */
 export class ProjectFilePicker {
     /**
      * @param {string} filesUrl API des fichiers du projet (GET : liste, POST : envoi d'un fichier)
+     * @param {HTMLElement} container élément qui reçoit le panneau (l'éditeur de la section)
      */
-    constructor(filesUrl) {
+    constructor(filesUrl, container) {
         this.filesUrl = filesUrl;
+        this.container = container;
         this.files = [];
         this.selectedIds = new Set();
         this.options = null;
@@ -38,13 +40,12 @@ export class ProjectFilePicker {
     open(options) {
         this.options = options;
         this.selectedIds.clear();
+        this.close();
         this.element = this.buildElement();
-
-        getModal().open({
-            title: options.imagesOnly ? 'Ajouter des images' : 'Ajouter des documents',
-            content: this.element,
-            size: 'large',
-        });
+        this.container.append(this.element);
+        // Le panneau couvre l'éditeur depuis son début : on remonte en haut de la modal
+        this.container.closest('[data-modal-body]')?.scrollTo({ top: 0 });
+        this.element.querySelector('[data-picker-upload]').focus();
 
         this.loadFiles();
     }
@@ -53,7 +54,9 @@ export class ProjectFilePicker {
         const accept = this.options.imagesOnly ? 'image/*' : '';
         const element = createElement('div', {
             className: 'file-picker',
+            attributes: { role: 'dialog', 'aria-label': this.options.imagesOnly ? 'Ajouter des images' : 'Ajouter des documents' },
             children: [
+                createElement('p', { className: 'file-picker__title-bar', text: this.options.imagesOnly ? 'Ajouter des images' : 'Ajouter des documents' }),
                 createElement('div', {
                     className: 'file-picker__upload',
                     children: [
@@ -68,7 +71,7 @@ export class ProjectFilePicker {
                 createElement('div', {
                     className: 'file-picker__footer',
                     children: [
-                        createElement('button', { className: 'projects__button projects__button--ghost', text: 'Annuler', attributes: { type: 'button', 'data-modal-close': '' } }),
+                        createElement('button', { className: 'projects__button projects__button--ghost', text: 'Annuler', attributes: { type: 'button', 'data-picker-close': '' } }),
                         createElement('button', { className: 'projects__button', text: 'Ajouter la sélection', attributes: { type: 'button', 'data-picker-confirm': '' } }),
                     ],
                 }),
@@ -152,7 +155,21 @@ export class ProjectFilePicker {
     handleClick(event) {
         if (event.target.closest('[data-picker-confirm]')) {
             this.confirm();
+        } else if (event.target.closest('[data-picker-close]')) {
+            this.close();
         }
+    }
+
+    /**
+     * Ferme le panneau sans rien ajouter.
+     */
+    close() {
+        this.element?.remove();
+        this.element = null;
+    }
+
+    isOpen() {
+        return this.element !== null;
     }
 
     async upload(input) {
@@ -203,7 +220,7 @@ export class ProjectFilePicker {
         }
 
         this.options.onSelect(selected);
-        getModal().close();
+        this.close();
     }
 
     setStatus(text) {

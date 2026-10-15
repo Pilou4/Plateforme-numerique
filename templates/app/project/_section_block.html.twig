@@ -3,8 +3,10 @@
     aucun HTML n'est saisi. Les textes passent par le filtre inline_format (gras, italique, code, lien),
     qui échappe tout le reste.
 
-    {{ include('app/project/_section_block.html.twig', {block: block, project: project}, with_context = false) }}
+    {{ include('app/project/_section_block.html.twig', {block: block, block_index: loop.index0, project: project}, with_context = false) }}
+    block_index : numéro du bloc dans la section (corbeille des images et des documents)
 #}
+{% import _self as section_block %}
 {% set type = block.type.value %}
 
 {% if type == 'paragraphe' %}
@@ -24,21 +26,38 @@
     </{{ list_tag }}>
 
 {% elseif type == 'tableau' %}
-    {# Le tableau défile sur le côté s'il est plus large que l'écran #}
-    <div class="section-block section-block__table-wrap">
-        <table class="section-block__table">
-            <thead>
+    {#
+        Le tableau défile sur le côté s'il est plus large que l'écran.
+        Style choisi dans l'éditeur (App\Enum\ProjectSectionTableStyle) ; une colonne triable a des flèches
+        dans son en-tête : clic pour trier (assets/js/composants/TableSorter.js).
+    #}
+    <div class="section-block section-block__table-wrap section-block__table-wrap--{{ block.tableStyle.cssModifier }}">
+        <table class="section-block__table" data-table-sort>
+            <thead class="section-block__table-header">
                 <tr>
                     {% for column in block.tableColumns %}
-                        <th scope="col" class="section-block__table-head">{{ column.label }}</th>
+                        {% if column.sortable %}
+                            <th scope="col" class="section-block__table-head" aria-sort="none" data-sortable>
+                                <button type="button" class="table-sort">{{ column.label }}<span class="table-sort__icon" aria-hidden="true"><span class="table-sort__up"></span><span class="table-sort__down"></span></span></button>
+                            </th>
+                        {% else %}
+                            <th scope="col" class="section-block__table-head">{{ column.label }}</th>
+                        {% endif %}
                     {% endfor %}
                 </tr>
             </thead>
             <tbody>
                 {% for row in block.tableRows %}
-                    <tr>
+                    <tr class="section-block__table-row">
                         {% for cell in row.orderedCells %}
-                            <td class="section-block__table-cell">{{ cell.text|inline_format }}</td>
+                            {# Première case dans une étiquette : mise en forme par le style « Fiche » seulement #}
+                            <td class="section-block__table-cell">
+                                {%- if loop.first and cell.text is not empty -%}
+                                    <span class="section-block__table-label">{{ cell.text|inline_format }}</span>
+                                {%- else -%}
+                                    {{ cell.text|inline_format }}
+                                {%- endif -%}
+                            </td>
                         {% endfor %}
                     </tr>
                 {% endfor %}
@@ -49,7 +68,8 @@
 {% elseif type == 'tags' %}
     <ul class="section-block section-block__tags">
         {% for tag in block.tags %}
-            <li class="section-block__tag">{{ tag.label }}</li>
+            {# Couleur choisie dans l'éditeur (App\Enum\ProjectSectionTagColor) #}
+            <li class="section-block__tag section-block__tag--{{ tag.color.cssModifier }}">{{ tag.label }}</li>
         {% endfor %}
     </ul>
 
@@ -64,11 +84,15 @@
     </dl>
 
 {% elseif type == 'images' %}
-    {# Un clic sur une image l'ouvre en grand (ProjectSections.js) #}
+    {#
+        Un clic sur une image l'ouvre en grand ; la corbeille (au survol, en haut à droite) la retire
+        de la section, le fichier reste dans Fichiers (ProjectSections.js). Idem pour les documents.
+    #}
     <div class="section-block section-block__gallery{{ block.files|length == 1 ? ' section-block__gallery--single' }}">
         {% for link in block.files %}
             {% set file = link.file %}
             <figure class="section-block__figure">
+                {{ section_block.remove_file_button(block_index, file, link.caption ?? file.title) }}
                 <button type="button" class="section-block__zoom" data-image-zoom="{{ path('app_project_file', {slug: project.slug, id: file.id}) }}" data-image-title="{{ link.caption ?? file.title }}" aria-label="Voir « {{ link.caption ?? file.title }} » en grand">
                     <img src="{{ path('app_project_file', {slug: project.slug, id: file.id}) }}" alt="{{ link.caption ?? file.title }}" class="section-block__image" loading="lazy">
                 </button>
@@ -80,21 +104,54 @@
     </div>
 
 {% elseif type == 'documents' %}
-    {% set icons = {pdf: 'file-pdf.svg', doc: 'file-word.svg', docx: 'file-word.svg', odt: 'file-word.svg', xls: 'file-excel.svg', xlsx: 'file-excel.svg', ods: 'file-excel.svg', csv: 'file-excel.svg', ppt: 'file-powerpoint.svg', pptx: 'file-powerpoint.svg', odp: 'file-powerpoint.svg', txt: 'file-text.svg', md: 'file-text.svg'} %}
+    {#
+        Cartes avec aperçu : la 1re page du PDF ou le texte dans une iframe, l'image elle-même ;
+        Word, Excel, PowerPoint… : étiquette de couleur (le navigateur ne sait pas les afficher).
+        Un clic sur l'aperçu ouvre le document en grand dans la modal (ProjectSections.js).
+    #}
     <ul class="section-block section-block__documents">
         {% for link in block.files %}
             {% set file = link.file %}
+            {% set title = link.caption ?? file.title %}
+            {% set preview = file_preview(file) %}
+            {% set view_url = path('app_project_file', {slug: project.slug, id: file.id}) %}
             <li class="section-block__document">
-                <img src="{{ asset('images/icones/' ~ (icons[file.extension] ?? 'file-other.svg')) }}" alt="" class="section-block__document-icon" width="32" height="32">
-                <span class="section-block__document-text">
-                    <span class="section-block__document-title">{{ link.caption ?? file.title }}</span>
-                    <span class="section-block__document-meta">{{ file.extension|upper }} · {{ file.size < 1048576 ? (file.size / 1024)|round ~ ' Ko' : (file.size / 1048576)|round(1) ~ ' Mo' }}</span>
-                </span>
-                <a href="{{ path('app_project_file_download', {slug: project.slug, id: file.id}) }}" class="section-block__download">
-                    <img src="{{ asset('images/icones/download.svg') }}" alt="" width="16" height="16">
-                    Télécharger
-                </a>
+                {{ section_block.remove_file_button(block_index, file, title) }}
+                <div class="section-block__document-preview">
+                    {% if preview == 'pdf' or preview == 'text' %}
+                        {#
+                            Aperçu seulement : l'iframe ne reçoit ni clic ni focus, le bouton par-dessus ouvre le document.
+                            PDF : barre d'outils et volet latéral fermés, page entière visible.
+                            Chrome lit toolbar, navpanes et view ; Firefox (pdf.js) lit pagemode et zoom.
+                        #}
+                        <iframe class="section-block__document-frame" src="{{ view_url }}{{ preview == 'pdf' ? '#toolbar=0&navpanes=0&view=Fit&pagemode=none&zoom=page-fit' }}" title="Aperçu de « {{ title }} »" loading="lazy" tabindex="-1" aria-hidden="true"></iframe>
+                    {% elseif preview == 'image' %}
+                        <img src="{{ view_url }}" alt="" class="section-block__document-image" loading="lazy">
+                    {% else %}
+                        <span class="section-block__document-empty">
+                            <span class="section-block__document-badge section-block__document-badge--{{ file_kind(file) }}">{{ file.extension|upper }}</span>
+                            Pas d'aperçu
+                        </span>
+                    {% endif %}
+                    {% if preview %}
+                        <button type="button" class="section-block__document-open" data-document-open="{{ view_url }}" data-document-preview="{{ preview }}" data-document-title="{{ title }}" aria-label="Ouvrir « {{ title }} » en grand"></button>
+                    {% endif %}
+                </div>
+                <div class="section-block__document-body">
+                    <p class="section-block__document-title" title="{{ title }}">{{ title }}</p>
+                    <p class="section-block__document-meta">
+                        <span>{{ file.extension|upper }} · {{ file.size < 1048576 ? (file.size / 1024)|round ~ ' Ko' : (file.size / 1048576)|round(1) ~ ' Mo' }}</span>
+                        <a href="{{ path('app_project_file_download', {slug: project.slug, id: file.id}) }}" class="section-block__download">Télécharger</a>
+                    </p>
+                </div>
             </li>
         {% endfor %}
     </ul>
 {% endif %}
+
+{# Corbeille d'une image ou d'un document : retire le fichier du bloc (le fichier reste dans Fichiers) #}
+{% macro remove_file_button(block_index, file, title) %}
+    <button type="button" class="section-block__remove" data-block-file-remove data-block-index="{{ block_index }}" data-file-id="{{ file.id }}" data-file-title="{{ title }}" title="Retirer de la section" aria-label="Retirer « {{ title }} » de la section">
+        <img src="{{ asset('images/icones/delete.svg') }}" alt="" width="15" height="15">
+    </button>
+{% endmacro %}

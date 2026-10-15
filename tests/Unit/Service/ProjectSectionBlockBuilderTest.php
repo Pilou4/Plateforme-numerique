@@ -8,6 +8,8 @@ use App\Entity\ProjectSection;
 use App\Entity\ProjectSectionBlock;
 use App\Enum\ProjectFileType;
 use App\Enum\ProjectSectionBlockType;
+use App\Enum\ProjectSectionTableStyle;
+use App\Enum\ProjectSectionTagColor;
 use App\Repository\ProjectFileRepository;
 use App\Service\ProjectSectionBlockBuilder;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -87,6 +89,35 @@ final class ProjectSectionBlockBuilderTest extends TestCase
         $this->assertSame('', $lastRow[1]->getText());
     }
 
+    public function testTableWithoutStyleGetsTheDefaultStyleAndSortableColumns(): void
+    {
+        $block = $this->buildOne(['type' => 'tableau', 'columns' => ['Table', 'Rôle'], 'rows' => [['project', 'Un projet']]]);
+
+        $this->assertSame(ProjectSectionTableStyle::Finder, $block->getTableStyle());
+        $this->assertSame([true, true], array_map(static fn ($column): bool => $column->isSortable(), $block->getTableColumns()->toArray()));
+    }
+
+    public function testTableKeepsItsStyleAndWhichColumnsAreSortable(): void
+    {
+        $block = $this->buildOne([
+            'type' => 'tableau',
+            'style' => 'gris_tableur',
+            'columns' => [['label' => ' Table ', 'sortable' => true], ['label' => 'Rôle', 'sortable' => false], ['label' => 'Lignes']],
+            'rows' => [['project', 'Un projet', '12']],
+        ]);
+
+        $this->assertSame(ProjectSectionTableStyle::Spreadsheet, $block->getTableStyle());
+        $this->assertSame(['Table', 'Rôle', 'Lignes'], array_map(static fn ($column): string => $column->getLabel(), $block->getTableColumns()->toArray()));
+        $this->assertSame([true, false, true], array_map(static fn ($column): bool => $column->isSortable(), $block->getTableColumns()->toArray()));
+    }
+
+    public function testTableWithAnUnknownStyleIsRefused(): void
+    {
+        $this->expectExceptionObject(new \DomainException('Bloc 1 (Tableau) : ce style de tableau n\'existe pas.'));
+
+        $this->build([['type' => 'tableau', 'style' => 'arc_en_ciel', 'columns' => ['A'], 'rows' => [['a']]]]);
+    }
+
     public function testTableWithoutColumnIsRefused(): void
     {
         $this->expectExceptionObject(new \DomainException('Bloc 1 (Tableau) : le tableau doit avoir au moins une colonne.'));
@@ -120,6 +151,30 @@ final class ProjectSectionBlockBuilderTest extends TestCase
     /* ------------------------------------------------------------------
        Tags et définitions
        ------------------------------------------------------------------ */
+
+    public function testTagsKeepTheirColor(): void
+    {
+        $block = $this->buildOne(['type' => 'tags', 'tags' => [
+            ['label' => 'MySQL', 'color' => 'vert'],
+            ['label' => ' Doctrine ', 'color' => 'rose'],
+            ['label' => 'Docker'],
+            ['label' => 'mysql', 'color' => 'rouge'],
+            ['label' => '  ', 'color' => 'jaune'],
+        ]]);
+
+        $this->assertSame(['MySQL', 'Doctrine', 'Docker'], array_map(static fn ($tag): string => $tag->getLabel(), $block->getTags()->toArray()));
+        $this->assertSame(
+            [ProjectSectionTagColor::Green, ProjectSectionTagColor::Pink, ProjectSectionTagColor::Blue],
+            array_map(static fn ($tag): ProjectSectionTagColor => $tag->getColor(), $block->getTags()->toArray()),
+        );
+    }
+
+    public function testTagWithAnUnknownColorIsRefused(): void
+    {
+        $this->expectExceptionObject(new \DomainException('Bloc 1 (Tags) : cette couleur de tag n\'existe pas.'));
+
+        $this->build([['type' => 'tags', 'tags' => [['label' => 'MySQL', 'color' => 'fluo']]]]);
+    }
 
     public function testDuplicateTagsAreKeptOnce(): void
     {

@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Enum\ProjectSectionBlockType;
+use App\Enum\ProjectSectionTableStyle;
+use App\Enum\ProjectSectionTagColor;
 use App\Repository\ProjectSectionBlockRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -16,7 +18,7 @@ use Doctrine\ORM\Mapping as ORM;
  *   paragraphe  → project_section_paragraph        (une ligne = un <p>)
  *   sous_titre  → colonne subtitle                 (un <h3>)
  *   liste       → project_section_list_item        (colonne ordered : <ol> ou <ul>)
- *   tableau     → project_section_table_column / _row / _cell
+ *   tableau     → project_section_table_column / _row / _cell (colonne table_style : son style)
  *   tags        → project_section_tag
  *   definitions → project_section_definition       (<dt> / <dd>)
  *   images      → project_section_block_file
@@ -54,6 +56,12 @@ class ProjectSectionBlock
      */
     #[ORM\Column(nullable: true)]
     private ?bool $ordered = null;
+
+    /**
+     * Style du tableau (type tableau uniquement) ; vide : le style par défaut.
+     */
+    #[ORM\Column(length: 20, nullable: true, enumType: ProjectSectionTableStyle::class)]
+    private ?ProjectSectionTableStyle $tableStyle = null;
 
     /**
      * @var Collection<int, ProjectSectionParagraph>
@@ -174,6 +182,18 @@ class ProjectSectionBlock
         return $this;
     }
 
+    public function getTableStyle(): ProjectSectionTableStyle
+    {
+        return $this->tableStyle ?? ProjectSectionTableStyle::default();
+    }
+
+    public function setTableStyle(?ProjectSectionTableStyle $tableStyle): static
+    {
+        $this->tableStyle = $tableStyle;
+
+        return $this;
+    }
+
     /**
      * @return Collection<int, ProjectSectionParagraph>
      */
@@ -212,9 +232,9 @@ class ProjectSectionBlock
         return $this->tableColumns;
     }
 
-    public function addTableColumn(string $label): ProjectSectionTableColumn
+    public function addTableColumn(string $label, bool $sortable = true): ProjectSectionTableColumn
     {
-        $column = new ProjectSectionTableColumn($this, $this->tableColumns->count(), $label);
+        $column = new ProjectSectionTableColumn($this, $this->tableColumns->count(), $label, $sortable);
         $this->tableColumns->add($column);
 
         return $column;
@@ -262,9 +282,9 @@ class ProjectSectionBlock
         return $this->tags;
     }
 
-    public function addTag(string $label): static
+    public function addTag(string $label, ?ProjectSectionTagColor $color = null): static
     {
-        $this->tags->add(new ProjectSectionTag($this, $this->tags->count(), $label));
+        $this->tags->add(new ProjectSectionTag($this, $this->tags->count(), $label, $color));
 
         return $this;
     }

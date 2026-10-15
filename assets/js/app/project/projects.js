@@ -2,6 +2,7 @@
 // Gère les formulaires d'ajout et de modification d'un projet, affichés dans la modal,
 // et les sections de la présentation (page d'un projet).
 import { apiPost } from '../../fonctions/api.js';
+import { initTableSorter } from '../../composants/TableSorter.js';
 import { initProjectCardEditor } from './ProjectCardEditor.js';
 import { initProjectImageFields } from './ProjectImageFields.js';
 import { initProjectList } from './ProjectList.js';
@@ -59,6 +60,8 @@ document.addEventListener('submit', handleProjectFormSubmit);
 initProjectImageFields();
 // Sections de la présentation en blocs (page d'un projet uniquement)
 document.addEventListener('DOMContentLoaded', initProjectSections);
+// Tri des tableaux des sections (clic sur un en-tête triable), aussi dans l'aperçu de l'éditeur
+initTableSorter();
 // Filtres, recherche et favoris (liste des projets uniquement)
 document.addEventListener('DOMContentLoaded', initProjectList);
 // Modification directe des cartes (liste des projets uniquement)

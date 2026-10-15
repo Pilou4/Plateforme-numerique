@@ -10,7 +10,7 @@
  * 2. Ajouter sur un bouton :
  *      data-modal-open="mon-contenu"     (id du template, obligatoire)
  *      data-modal-title="Mon titre"      (facultatif)
- *      data-modal-size="small|medium|large" (facultatif, medium par défaut)
+ *      data-modal-size="small|medium|large|full" (facultatif, medium par défaut ; full = presque tout l'écran)
  *      data-modal-icon="/images/icones/…svg" (facultatif, icône à gauche du titre)
  * 3. Un élément avec data-modal-close dans le contenu ferme la modal.
  *
@@ -19,6 +19,8 @@
  *      openModalFromTemplate('mon-contenu', { title: 'Mon titre', size: 'large' });
  *      getModal().open({ title: 'Info', content: unElementDuDom });
  *      getModal().close();
+ *      getModal().open({ …, beforeClose: () => window.confirm('Fermer ?') });   false = la modal reste ouverte
+ *      getModal().setSize('full');                                           change la taille, modal ouverte
  *
  * ── Défilement ──────────────────────────────────────────────────────────
  * Tant que la modal est ouverte, la page derrière ne défile plus (classe modal-open sur <html>) :
@@ -29,7 +31,7 @@
  *      modal:close → event.detail = { modal, name }
  */
 
-const SIZES = ['small', 'medium', 'large'];
+const SIZES = ['small', 'medium', 'large', 'full'];
 const DEFAULT_SIZE = 'medium';
 const CLOSING_CLASS = 'modal--closing';
 const CLOSE_FALLBACK_DELAY = 300;
@@ -45,6 +47,8 @@ export class Modal {
         this.body = dialog.querySelector('[data-modal-body]');
 
         this.name = null;
+        // Appelé avant chaque fermeture (croix, Échap, fond, bouton Annuler) : false empêche la fermeture
+        this.beforeClose = null;
         this.isClosing = false;
         this.isPointerDownOnBackdrop = false;
         this.closeTimer = null;
@@ -70,14 +74,16 @@ export class Modal {
      * @param {'small'|'medium'|'large'} [options.size]
      * @param {string|null} [options.name] identifiant libre, renvoyé dans les événements
      * @param {string|null} [options.icon] adresse d'une icône affichée à gauche du titre
+     * @param {function(): boolean|null} [options.beforeClose] appelé avant la fermeture ; false = la modal reste ouverte
      */
-    open({ title = '', content = null, size = DEFAULT_SIZE, name = null, icon = null } = {}) {
+    open({ title = '', content = null, size = DEFAULT_SIZE, name = null, icon = null, beforeClose = null } = {}) {
         // Une modal déjà ouverte est remplacée immédiatement
         if (this.isOpen) {
             this.finishClose();
         }
 
         this.name = name;
+        this.beforeClose = beforeClose;
         this.setTitle(title);
         this.setIcon(icon);
         this.setContent(content);
@@ -90,6 +96,10 @@ export class Modal {
 
     close() {
         if (!this.isOpen || this.isClosing) {
+            return;
+        }
+
+        if (this.beforeClose && this.beforeClose() === false) {
             return;
         }
 
@@ -121,6 +131,7 @@ export class Modal {
         this.dispatch('modal:close');
         this.body.replaceChildren();
         this.name = null;
+        this.beforeClose = null;
     }
 
     setTitle(title) {

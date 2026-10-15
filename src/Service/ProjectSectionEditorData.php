@@ -18,6 +18,7 @@ final class ProjectSectionEditorData
 {
     public function __construct(
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly ProjectFilePreview $projectFilePreview,
     ) {
     }
 
@@ -51,14 +52,21 @@ final class ProjectSectionEditorData
                 'items' => array_values(array_map(static fn ($item): string => $item->getText(), $block->getListItems()->toArray())),
             ],
             ProjectSectionBlockType::Table => [
-                'columns' => array_values(array_map(static fn ($column): string => $column->getLabel(), $block->getTableColumns()->toArray())),
+                'style' => $block->getTableStyle()->value,
+                'columns' => array_values(array_map(
+                    static fn ($column): array => ['label' => $column->getLabel(), 'sortable' => $column->isSortable()],
+                    $block->getTableColumns()->toArray(),
+                )),
                 'rows' => array_values(array_map(
                     static fn ($row): array => array_map(static fn ($cell): string => $cell->getText(), $row->getOrderedCells()),
                     $block->getTableRows()->toArray(),
                 )),
             ],
             ProjectSectionBlockType::Tags => [
-                'tags' => array_values(array_map(static fn ($tag): string => $tag->getLabel(), $block->getTags()->toArray())),
+                'tags' => array_values(array_map(
+                    static fn ($tag): array => ['label' => $tag->getLabel(), 'color' => $tag->getColor()->value],
+                    $block->getTags()->toArray(),
+                )),
             ],
             ProjectSectionBlockType::Definitions => [
                 'items' => array_values(array_map(
@@ -95,6 +103,8 @@ final class ProjectSectionEditorData
             'title' => $file->getTitle(),
             'extension' => $file->getExtension(),
             'size' => $file->getSize(),
+            // image, pdf, text, ou null si le navigateur ne sait pas l'afficher (Word, Excel…)
+            'preview' => $this->projectFilePreview->getPreviewKind($file),
             'viewUrl' => $this->urlGenerator->generate('app_project_file', $routeParameters),
         ];
     }

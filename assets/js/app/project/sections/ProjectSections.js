@@ -3,10 +3,10 @@ import { createElement } from '../../../fonctions/createElement.js';
 import { reloadAt } from '../../../fonctions/reloadAt.js';
 import { getModal } from '../../../composants/Modal.js';
 import { showNotice } from '../../../composants/Notice.js';
-import { SectionBlockEditor } from './SectionBlockEditor.js';
+import { SectionBlockEditor, toPayloadBlock } from './SectionBlockEditor.js';
 
-// Sur <html> pendant qu'un éditeur est ouvert : les champs ne passent pas sous les barres collantes (app.css)
-const EDITOR_OPEN_CLASS = 'section-editor-open';
+const EDITOR_NAME = 'section-editor';
+const EDITOR_SIZE = 'large';
 
 /**
  * Sections de la présentation d'un projet (templates/app/project/show.html.twig).
@@ -15,32 +15,35 @@ const EDITOR_OPEN_CLASS = 'section-editor-open';
  *     [data-section data-section-id data-section-title data-section-data="{…}"]
  *       [data-section-action="up|down|edit|delete"]   (_section_tools.html.twig)
  *       [data-image-zoom data-image-title]             image d'un bloc, ouverte en grand
- *     [data-new-section-slot]                           place de l'éditeur d'une nouvelle section
+ *       [data-document-open data-document-preview data-document-title]   document ouvert en grand
+ *       [data-block-file-remove data-block-index data-file-id data-file-title]
+ *                                                       corbeille d'une image ou d'un document (au survol)
  *   [data-section-add]                                  bouton « Ajouter une section » (en-tête de la page)
  *
- * Modifier une section remplace son affichage par l'éditeur de blocs (SectionBlockEditor) ;
- * un seul éditeur est ouvert à la fois.
+ * Ajouter ou modifier une section ouvre l'éditeur de blocs (SectionBlockEditor) dans la modal.
+ * Son bouton « Aperçu » (EditorPreview.js) agrandit la modal pour afficher l'aperçu à côté du formulaire.
+ * Fermer la modal (Annuler, croix, Échap) demande confirmation s'il y a des modifications.
  */
 export class ProjectSections {
     constructor(root) {
         this.root = root;
         this.apiUrl = root.dataset.apiUrl;
         this.filesUrl = root.dataset.filesUrl;
-        this.newSectionSlot = root.querySelector('[data-new-section-slot]');
-        this.emptyMessage = root.querySelector('[data-sections-empty]');
         this.editor = null;
-        // Section cachée pendant sa modification
-        this.editedSection = null;
 
         this.handleClick = this.handleClick.bind(this);
         this.handleAddClick = this.handleAddClick.bind(this);
-        this.closeEditor = this.closeEditor.bind(this);
+        this.handleModalClose = this.handleModalClose.bind(this);
+        this.closeModal = this.closeModal.bind(this);
+        this.confirmEditorClose = this.confirmEditorClose.bind(this);
     }
 
     init() {
         this.root.addEventListener('click', this.handleClick);
         // Le bouton « Ajouter une section » est dans l'en-tête, en dehors des sections
         document.addEventListener('click', this.handleAddClick);
+        // L'éditeur est oublié quand sa modal se ferme
+        document.addEventListener('modal:close', this.handleModalClose);
     }
 
     handleAddClick(event) {
@@ -53,10 +56,26 @@ export class ProjectSections {
     }
 
     handleClick(event) {
+        const remove = event.target.closest('[data-block-file-remove]');
+
+        if (remove) {
+            this.removeBlockFile(remove);
+
+            return;
+        }
+
         const zoom = event.target.closest('[data-image-zoom]');
 
         if (zoom) {
             this.zoomImage(zoom);
+
+            return;
+        }
+
+        const documentButton = event.target.closest('[data-document-open]');
+
+        if (documentButton) {
+            this.openDocument(documentButton);
 
             return;
         }
@@ -86,70 +105,38 @@ export class ProjectSections {
      * @param {HTMLElement|null} sectionElement la section à modifier, null pour une nouvelle section
      */
     openEditor(sectionElement) {
-        if (this.editor && !this.closeOpenEditor()) {
-            return;
-        }
-
         const isNew = sectionElement === null;
 
         this.editor = new SectionBlockEditor({
             section: isNew ? null : JSON.parse(sectionElement.dataset.sectionData),
             saveUrl: isNew ? this.apiUrl : this.getSectionUrl(sectionElement),
             filesUrl: this.filesUrl,
-            onCancel: this.closeEditor,
+            onCancel: this.closeModal,
         });
 
-        if (isNew) {
-            this.newSectionSlot.append(this.editor.getElement());
+        getModal().open({
+            title: isNew ? 'Nouvelle section' : `Modifier « ${sectionElement.dataset.sectionTitle} »`,
+            content: this.editor.getElement(),
+            size: EDITOR_SIZE,
+            name: EDITOR_NAME,
+            beforeClose: this.confirmEditorClose,
+        });
 
-            if (this.emptyMessage) {
-                this.emptyMessage.hidden = true;
-            }
-        } else {
-            this.editedSection = sectionElement;
-            sectionElement.after(this.editor.getElement());
-            sectionElement.hidden = true;
-        }
-
-        document.documentElement.classList.add(EDITOR_OPEN_CLASS);
-        this.editor.getElement().scrollIntoView({ block: 'start', behavior: 'smooth' });
         this.editor.focus();
     }
 
-    /**
-     * Ferme l'éditeur déjà ouvert avant d'en ouvrir un autre (après confirmation s'il a été modifié).
-     *
-     * @returns {boolean} false si la personne veut garder ses modifications
-     */
-    closeOpenEditor() {
-        if (this.editor.hasChanges() && !window.confirm('Une section est en cours de modification. Abandonner ses modifications ?')) {
-            this.editor.getElement().scrollIntoView({ block: 'start', behavior: 'smooth' });
-
-            return false;
-        }
-
-        this.editor.destroy();
-        this.closeEditor();
-
-        return true;
+    confirmEditorClose() {
+        return this.editor?.confirmClose() ?? true;
     }
 
-    /**
-     * L'éditeur est retiré : la section modifiée réapparaît.
-     */
-    closeEditor() {
-        if (this.editedSection) {
-            this.editedSection.hidden = false;
-            this.editedSection.scrollIntoView({ block: 'nearest' });
-        }
+    closeModal() {
+        getModal().close();
+    }
 
-        if (this.emptyMessage) {
-            this.emptyMessage.hidden = false;
+    handleModalClose(event) {
+        if (event.detail.name === EDITOR_NAME) {
+            this.editor = null;
         }
-
-        document.documentElement.classList.remove(EDITOR_OPEN_CLASS);
-        this.editor = null;
-        this.editedSection = null;
     }
 
     async move(element, direction) {
@@ -175,6 +162,36 @@ export class ProjectSections {
     }
 
     /**
+     * Retire une image ou un document de son bloc, directement depuis la page : la section est
+     * réenregistrée sans ce fichier (un bloc qui n'a plus de fichier disparaît).
+     * Le fichier reste dans la page Fichiers du projet.
+     */
+    async removeBlockFile(button) {
+        if (!window.confirm(`Retirer « ${button.dataset.fileTitle} » de la section ?\nLe fichier reste dans la page Fichiers.`)) {
+            return;
+        }
+
+        const element = button.closest('[data-section]');
+        const section = JSON.parse(element.dataset.sectionData);
+        const block = section.blocks[Number(button.dataset.blockIndex)];
+        const fileId = Number(button.dataset.fileId);
+
+        block.files = block.files.filter((file) => file.id !== fileId);
+
+        const blocks = section.blocks.filter((item) => !Array.isArray(item.files) || item.files.length > 0);
+
+        button.disabled = true;
+
+        try {
+            const result = await apiPut(this.getSectionUrl(element), { title: section.title, blocks: blocks.map(toPayloadBlock) });
+            reloadAt(result.url);
+        } catch (error) {
+            button.disabled = false;
+            showNotice('error', `Impossible de retirer le fichier : ${error.message}`);
+        }
+    }
+
+    /**
      * Une image d'un bloc, ouverte en grand dans la modal.
      */
     zoomImage(button) {
@@ -188,6 +205,20 @@ export class ProjectSections {
                 attributes: { src: button.dataset.imageZoom, alt: title },
             }),
         });
+    }
+
+    /**
+     * Un document d'un bloc, ouvert en grand dans la modal : PDF ou texte dans une iframe, image en grand.
+     */
+    openDocument(button) {
+        const title = button.dataset.documentTitle ?? '';
+        // PDF : volet latéral fermé au départ (Chrome : navpanes ; Firefox : pagemode), la barre d'outils reste
+        const url = button.dataset.documentPreview === 'pdf' ? `${button.dataset.documentOpen}#navpanes=0&pagemode=none` : button.dataset.documentOpen;
+        const content = button.dataset.documentPreview === 'image'
+            ? createElement('img', { className: 'section-block__zoomed-image', attributes: { src: url, alt: title } })
+            : createElement('iframe', { className: 'section-block__document-viewer', attributes: { src: url, title } });
+
+        getModal().open({ title, size: 'large', content });
     }
 
     getSectionUrl(element) {
