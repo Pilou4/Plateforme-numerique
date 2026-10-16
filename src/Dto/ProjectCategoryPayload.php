@@ -5,7 +5,7 @@ namespace App\Dto;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Données du formulaire d'une catégorie de projet (page Paramètres : ajout et modification).
+ * Données du formulaire d'une catégorie de projet (modal « Catégories » : ajout et renommage).
  */
 final readonly class ProjectCategoryPayload
 {

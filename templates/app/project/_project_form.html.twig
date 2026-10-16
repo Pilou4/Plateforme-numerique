@@ -30,7 +30,13 @@
             <textarea id="{{ field_id }}-summary" name="summary" class="project-form__input project-form__input--textarea" rows="3" maxlength="255" placeholder="Décrivez brièvement votre projet…">{{ project.summary ?? '' }}</textarea>
         </div>
 
-        {# À la création, pas de statut : le nouveau projet prend le premier statut de la liste (page Paramètres) #}
+        {# Liens facultatifs : affichés sur la carte et dans la fiche du projet (vide = pas de lien) #}
+        <div class="project-form__row">
+            {{ _self.url_field(field_id, 'repositoryUrl', 'Dépôt GitHub', 'link-repository.svg', 'https://github.com/…', project.repositoryUrl ?? '') }}
+            {{ _self.url_field(field_id, 'websiteUrl', 'Site', 'link-website.svg', 'https://…', project.websiteUrl ?? '') }}
+        </div>
+
+        {# À la création, pas de statut : le nouveau projet prend le premier statut de la liste (roue dentée › Statuts) #}
         <div class="{{ project ? 'project-form__row' : 'project-form__single' }}">
             <div class="project-form__field">
                 <label class="project-form__label" for="{{ field_id }}-category">Catégorie</label>
@@ -104,5 +110,16 @@
             {# Envoyé seulement si on retire l'image actuelle (le JavaScript l'active) #}
             <input type="hidden" name="remove{{ name|first|upper ~ name|slice(1) }}" value="1" data-image-remove-flag disabled>
         {% endif %}
+    </div>
+{% endmacro %}
+
+{# Un champ adresse (lien facultatif), avec son icône dans le champ #}
+{% macro url_field(field_id, name, label, icon, placeholder, value) %}
+    <div class="project-form__field">
+        <label class="project-form__label" for="{{ field_id }}-{{ name }}">{{ label }} <span class="project-form__optional">(facultatif)</span></label>
+        <span class="project-form__input project-form__input--icon">
+            <img src="{{ asset('images/icones/' ~ icon) }}" alt="" width="16" height="16" class="project-form__input-icon">
+            <input type="url" id="{{ field_id }}-{{ name }}" name="{{ name }}" class="project-form__input-field" maxlength="255" value="{{ value }}" placeholder="{{ placeholder }}" inputmode="url">
+        </span>
     </div>
 {% endmacro %}

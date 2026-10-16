@@ -30,6 +30,14 @@ final class ProjectImageTest extends TestCase
         $this->assertSame($route, $image->routeName());
     }
 
+    public function testImageFoundByTheEndOfItsAddress(): void
+    {
+        $this->assertSame(ProjectImage::Logo, ProjectImage::tryFromUrlName('logo'));
+        $this->assertSame(ProjectImage::LogoWide, ProjectImage::tryFromUrlName('logo-long'));
+        $this->assertSame(ProjectImage::Avatar, ProjectImage::tryFromUrlName('avatar'));
+        $this->assertNull(ProjectImage::tryFromUrlName('logoWide'));
+    }
+
     public function testLabels(): void
     {
         $this->assertSame(['Logo', 'Logo long', 'Avatar'], array_map(static fn (ProjectImage $image): string => $image->label(), ProjectImage::cases()));

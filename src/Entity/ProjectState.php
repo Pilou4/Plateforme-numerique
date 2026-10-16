@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
  * Statut (état d'avancement) d'un projet (table project_state) : pas commencé, en cours, terminé…
  * À ne pas confondre avec ProjectStatus, le statut d'une tâche.
  *
- * Les statuts se gèrent depuis la page Paramètres de l'app (ProjectStateManager) :
+ * Les statuts se gèrent depuis la liste des projets, roue dentée › Statuts (ProjectStateManager) :
  * - le code est calculé à partir du nom à la création, puis ne change plus (il sert aux filtres) ;
  * - le nom, le nom au pluriel, la couleur et l'ordre peuvent être modifiés.
  * Les trois statuts de départ sont créés par la migration Version20261009120000.

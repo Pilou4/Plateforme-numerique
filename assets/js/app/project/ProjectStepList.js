@@ -135,6 +135,13 @@ export class ProjectStepList {
         this.setStat('todo', String(this.countByStatus(STATUS_TODO)));
         this.setStat('time', totalTime > 0 ? formatDuration(totalTime) : '0 min');
 
+        // Onglet « Tâches » de l'en-tête (l'onglet actif) : suit les ajouts et les suppressions
+        const tabCount = document.querySelector('.page-tabs__link[aria-current="page"] .page-tabs__count');
+
+        if (tabCount) {
+            tabCount.textContent = String(total);
+        }
+
         this.progressBar.style.width = `${percent}%`;
         this.progress.setAttribute('aria-valuenow', String(percent));
     }

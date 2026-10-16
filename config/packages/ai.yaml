@@ -1,0 +1,16 @@
+# Symfony AI : modèles d'IA utilisés par les outils IA de l'app.
+# https://symfony.com/doc/current/ai/bundles/ai-bundle.html
+#
+# Pour l'instant : Ollama en local (service « ollama » de compose.override.yaml), gratuit.
+# Adresse et modèle dans .env (OLLAMA_URL, OLLAMA_MODEL) : on change de modèle sans toucher au code.
+ai:
+    platform:
+        ollama:
+            endpoint: '%env(OLLAMA_URL)%'
+
+    agent:
+        # Agent de test (commande app:ia:tester) ; chaque outil IA aura ensuite son agent et sa consigne
+        assistant:
+            platform: 'ai.platform.ollama'
+            model: '%env(OLLAMA_MODEL)%'
+            prompt: 'Tu es l''assistant de la Plateforme Numérique. Réponds toujours en français, simplement et brièvement.'

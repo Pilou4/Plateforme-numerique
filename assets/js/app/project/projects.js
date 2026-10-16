@@ -4,8 +4,11 @@
 import { apiPost } from '../../fonctions/api.js';
 import { initTableSorter } from '../../composants/TableSorter.js';
 import { initProjectCardEditor } from './ProjectCardEditor.js';
+import { initProjectIdentity } from './ProjectIdentity.js';
 import { initProjectImageFields } from './ProjectImageFields.js';
 import { initProjectList } from './ProjectList.js';
+import { initProjectSettings } from './ProjectSettings.js';
+import { initProjectToc } from './ProjectToc.js';
 import { initProjectSections } from './sections/ProjectSections.js';
 
 /**
@@ -60,9 +63,15 @@ document.addEventListener('submit', handleProjectFormSubmit);
 initProjectImageFields();
 // Sections de la présentation en blocs (page d'un projet uniquement)
 document.addEventListener('DOMContentLoaded', initProjectSections);
+// Fiche du projet (page d'un projet) : corbeille des images
+document.addEventListener('DOMContentLoaded', initProjectIdentity);
+// Sommaire de la présentation : défilement vers une section, section en cours surlignée
+document.addEventListener('DOMContentLoaded', initProjectToc);
 // Tri des tableaux des sections (clic sur un en-tête triable), aussi dans l'aperçu de l'éditeur
 initTableSorter();
 // Filtres, recherche et favoris (liste des projets uniquement)
 document.addEventListener('DOMContentLoaded', initProjectList);
+// Catégories et statuts, dans la modal (roue dentée de la liste des projets)
+document.addEventListener('DOMContentLoaded', initProjectSettings);
 // Modification directe des cartes (liste des projets uniquement)
 document.addEventListener('DOMContentLoaded', initProjectCardEditor);

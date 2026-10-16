@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * Catégorie d'un projet (table project_category) : Application web, Site vitrine, Jeu…
- * Les catégories se gèrent depuis la page Paramètres de l'app (ProjectCategoryManager).
+ * Les catégories se gèrent depuis la liste des projets, roue dentée › Catégories (ProjectCategoryManager).
  * La liste de départ est créée par la migration Version20261009120000.
  */
 #[ORM\Entity(repositoryClass: ProjectCategoryRepository::class)]
@@ -22,7 +22,7 @@ class ProjectCategory implements PositionedInterface
     private string $name;
 
     /**
-     * Ordre dans la liste déroulante du formulaire (modifiable depuis la page Paramètres).
+     * Ordre dans la liste déroulante du formulaire (modifiable depuis la modal « Catégories »).
      */
     #[ORM\Column]
     private int $position;

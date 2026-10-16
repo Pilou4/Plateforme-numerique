@@ -81,10 +81,16 @@ html, body {
  * Nav collée en haut de l'écran (site et app), cachée quand on descend,
  * visible dès qu'on remonte (classes ajoutées par assets/js/composants/AutoHideHeader.js).
  */
-.site-header--auto-hide {
+.site-header--auto-hide,
+/* Nav visible avant le rechargement : collée en haut dès l'affichage (site-header-state.js) */
+.site-header-shown .site-header {
     position: sticky;
     top: 0;
     z-index: 900;
+}
+
+/* Animée seulement une fois la page affichée (AutoHideHeader.js) : rien ne bouge au chargement */
+.animations-ready .site-header--auto-hide {
     transition: transform 250ms ease;
 }
 
@@ -93,7 +99,7 @@ html, body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .site-header--auto-hide {
+    .animations-ready .site-header--auto-hide {
         transition: none;
     }
 }

@@ -39,6 +39,20 @@ enum ProjectImage: string
     }
 
     /**
+     * L'image dont l'adresse se termine par ce nom (logo, logo-long, avatar), comme /app/projet/{slug}/logo-long.
+     */
+    public static function tryFromUrlName(string $name): ?self
+    {
+        foreach (self::cases() as $image) {
+            if ($image->filePrefix() === $name) {
+                return $image;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Case à cocher « Supprimer … » du formulaire de modification.
      */
     public function removeField(): string

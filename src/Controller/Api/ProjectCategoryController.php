@@ -15,8 +15,8 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * API des catégories de projet : /api/parametres/categories
  *
- * Après chaque action réussie, la page Paramètres est rechargée par le JavaScript :
- * le message de confirmation est enregistré en message flash, affiché en bandeau au rechargement.
+ * Utilisée par la modal « Catégories » de la page Projets (roue dentée, assets/js/app/project/ProjectSettings.js) :
+ * la liste est mise à jour sans recharger la page, donc pas de message flash.
  */
 #[Route('/api/parametres/categories', name: 'api_project_categories_', requirements: ['id' => '\d+'])]
 final class ProjectCategoryController extends AbstractController
@@ -35,8 +35,6 @@ final class ProjectCategoryController extends AbstractController
             return $this->json(['detail' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $this->addFlash('success', \sprintf('La catégorie « %s » a été ajoutée.', $category->getName()));
-
         return $this->json($this->serializeCategory($category), Response::HTTP_CREATED);
     }
 
@@ -48,8 +46,6 @@ final class ProjectCategoryController extends AbstractController
         } catch (\DomainException $exception) {
             return $this->json(['detail' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
-
-        $this->addFlash('success', \sprintf('La catégorie « %s » a été modifiée.', $category->getName()));
 
         return $this->json($this->serializeCategory($category));
     }
@@ -68,14 +64,8 @@ final class ProjectCategoryController extends AbstractController
     #[Route('/{id:category}', name: 'delete', methods: ['DELETE'])]
     public function delete(ProjectCategory $category): JsonResponse
     {
-        $name = $category->getName();
-        $projectCount = $this->projectCategoryManager->delete($category);
-
-        $this->addFlash('success', match ($projectCount) {
-            0 => \sprintf('La catégorie « %s » a été supprimée.', $name),
-            1 => \sprintf('La catégorie « %s » a été supprimée : 1 projet n\'a plus de catégorie.', $name),
-            default => \sprintf('La catégorie « %s » a été supprimée : %d projets n\'ont plus de catégorie.', $name, $projectCount),
-        });
+        // Les projets de cette catégorie n'ont plus de catégorie (la modal l'a dit avant de confirmer)
+        $this->projectCategoryManager->delete($category);
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }

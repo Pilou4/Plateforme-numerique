@@ -15,8 +15,8 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * API des statuts de projet : /api/parametres/statuts
  *
- * Après chaque action réussie, la page Paramètres est rechargée par le JavaScript :
- * le message de confirmation est enregistré en message flash, affiché en bandeau au rechargement.
+ * Utilisée par la modal « Statuts » de la page Projets (roue dentée, assets/js/app/project/ProjectSettings.js) :
+ * la liste est mise à jour sans recharger la page, donc pas de message flash.
  * Une suppression refusée (statut utilisé, dernier statut) renvoie une erreur 422 avec la raison.
  */
 #[Route('/api/parametres/statuts', name: 'api_project_states_', requirements: ['id' => '\d+'])]
@@ -36,8 +36,6 @@ final class ProjectStateController extends AbstractController
             return $this->json(['detail' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $this->addFlash('success', \sprintf('Le statut « %s » a été ajouté.', $state->getLabel()));
-
         return $this->json($this->serializeState($state), Response::HTTP_CREATED);
     }
 
@@ -49,8 +47,6 @@ final class ProjectStateController extends AbstractController
         } catch (\DomainException $exception) {
             return $this->json(['detail' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
-
-        $this->addFlash('success', \sprintf('Le statut « %s » a été modifié.', $state->getLabel()));
 
         return $this->json($this->serializeState($state));
     }
@@ -69,15 +65,11 @@ final class ProjectStateController extends AbstractController
     #[Route('/{id:state}', name: 'delete', methods: ['DELETE'])]
     public function delete(ProjectState $state): JsonResponse
     {
-        $label = $state->getLabel();
-
         try {
             $this->projectStateManager->delete($state);
         } catch (\DomainException $exception) {
             return $this->json(['detail' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
-
-        $this->addFlash('success', \sprintf('Le statut « %s » a été supprimé.', $label));
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }

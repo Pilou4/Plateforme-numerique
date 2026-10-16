@@ -36,6 +36,21 @@ final readonly class ProjectPayload
          */
         #[Assert\Regex(pattern: '/^\d*$/', message: 'Cette catégorie n\'existe pas.')]
         public ?string $category = null,
+
+        /**
+         * Adresse du dépôt (GitHub…). Absente : inchangée en modification (les cartes de la page Projets
+         * ne l'envoient pas) ; vide : retirée.
+         */
+        #[Assert\Url(message: 'L\'adresse du dépôt doit commencer par https:// ou http://.', protocols: ['http', 'https'], requireTld: true, normalizer: 'trim')]
+        #[Assert\Length(max: 255, maxMessage: 'L\'adresse du dépôt ne doit pas dépasser {{ limit }} caractères.')]
+        public ?string $repositoryUrl = null,
+
+        /**
+         * Adresse du site. Même règle que repositoryUrl.
+         */
+        #[Assert\Url(message: 'L\'adresse du site doit commencer par https:// ou http://.', protocols: ['http', 'https'], requireTld: true, normalizer: 'trim')]
+        #[Assert\Length(max: 255, maxMessage: 'L\'adresse du site ne doit pas dépasser {{ limit }} caractères.')]
+        public ?string $websiteUrl = null,
     ) {
     }
 }

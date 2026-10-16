@@ -12,8 +12,8 @@ const PREVIEW_TEXT = 'text';
 const ADD_FORM_TEMPLATE_ID = 'project-file-add';
 const EDIT_FORM_TEMPLATE_ID = 'project-file-edit';
 
-// Icône d'un document selon son extension (clé = data-icon-… de la page)
-const DOCUMENT_ICONS = {
+// Famille d'un document selon son extension : couleur de son étiquette (section-block__document-badge--…)
+const DOCUMENT_KINDS = {
     pdf: 'pdf',
     doc: 'word',
     docx: 'word',
@@ -21,6 +21,10 @@ const DOCUMENT_ICONS = {
     xlsx: 'excel',
     ppt: 'powerpoint',
     pptx: 'powerpoint',
+    odt: 'word',
+    ods: 'excel',
+    csv: 'excel',
+    odp: 'powerpoint',
     txt: 'text',
     md: 'text',
 };
@@ -41,7 +45,8 @@ const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 's
  * Page « Fichiers du projet » : chargement, ajout (modal), aperçu (modal),
  * modification du titre et de la description, suppression, recherche.
  *
- * Les images sont affichées en galerie, les documents en liste.
+ * Les images sont affichées en galerie, les documents en cartes avec aperçu (comme sur la page du projet).
+ * Le nombre de fichiers de l'onglet « Fichiers » suit les ajouts et les suppressions.
  */
 export class ProjectFileList {
     constructor(root) {
@@ -53,6 +58,8 @@ export class ProjectFileList {
             viewer: root.querySelector('[data-template="viewer"]'),
         };
 
+        // Nombre affiché dans l'onglet « Fichiers » (l'onglet actif de l'en-tête du projet)
+        this.tabCount = document.querySelector('.page-tabs__link[aria-current="page"] .page-tabs__count');
         this.files = [];
         // Fichier en cours de modification dans la modal
         this.editedFile = null;
@@ -89,6 +96,10 @@ export class ProjectFileList {
        ------------------------------------------------------------------ */
 
     render() {
+        if (this.tabCount) {
+            this.tabCount.textContent = String(this.files.length);
+        }
+
         for (const type of [TYPE_IMAGE, TYPE_DOCUMENT]) {
             const allFiles = this.files.filter((file) => file.type === type);
             const files = allFiles.filter(this.matchesSearch, this);
@@ -138,9 +149,54 @@ export class ProjectFileList {
         const description = item.querySelector('[data-field="description"]');
         description.textContent = file.description ?? '';
         description.hidden = !file.description;
-        item.querySelector('[data-field="icon"]').src = this.getDocumentIcon(file);
+        item.querySelector('[data-field="preview"]').replaceChildren(...this.createDocumentPreview(file));
         // Word, Excel, PowerPoint : pas d'aperçu possible dans le navigateur
-        item.querySelector('[data-action="view"]').hidden = file.preview === null;
+        item.querySelector('.files__actions [data-action="view"]').hidden = file.preview === null;
+    }
+
+    /**
+     * Aperçu d'un document dans sa carte : 1re page du PDF ou début du texte (iframe), l'image elle-même,
+     * sinon une étiquette de la couleur du type. Le bouton par-dessus ouvre le document en grand.
+     */
+    createDocumentPreview(file) {
+        if (file.preview === null) {
+            const badge = document.createElement('span');
+            badge.className = `section-block__document-badge section-block__document-badge--${DOCUMENT_KINDS[file.extension] ?? 'other'}`;
+            badge.textContent = (file.extension ?? '?').toUpperCase();
+
+            const empty = document.createElement('span');
+            empty.className = 'section-block__document-empty';
+            empty.append(badge, 'Pas d\'aperçu');
+
+            return [empty];
+        }
+
+        let preview;
+
+        if (file.preview === PREVIEW_IMAGE) {
+            preview = document.createElement('img');
+            preview.className = 'section-block__document-image';
+            preview.alt = '';
+            preview.loading = 'lazy';
+            preview.src = file.viewUrl;
+        } else {
+            // PDF : sans barre d'outils ni volet latéral, page entière (Chrome : toolbar, navpanes, view ; Firefox : pagemode, zoom)
+            preview = document.createElement('iframe');
+            preview.className = 'section-block__document-frame';
+            preview.src = file.preview === PREVIEW_PDF ? `${file.viewUrl}#toolbar=0&navpanes=0&view=Fit&pagemode=none&zoom=page-fit` : file.viewUrl;
+            preview.title = `Aperçu de « ${file.title} »`;
+            preview.loading = 'lazy';
+            preview.tabIndex = -1;
+            preview.setAttribute('aria-hidden', 'true');
+        }
+
+        const open = document.createElement('button');
+        open.type = 'button';
+        open.className = 'section-block__document-open';
+        open.dataset.action = 'view';
+        open.setAttribute('aria-label', `Afficher « ${file.title} »`);
+
+        return [preview, open];
     }
 
     setActionLabels(item, file) {
@@ -172,12 +228,6 @@ export class ProjectFileList {
         }
 
         return parts.join(' · ');
-    }
-
-    getDocumentIcon(file) {
-        const icon = DOCUMENT_ICONS[file.extension] ?? 'other';
-
-        return this.root.dataset[`icon${icon.charAt(0).toUpperCase()}${icon.slice(1)}`] ?? '';
     }
 
     /* ------------------------------------------------------------------

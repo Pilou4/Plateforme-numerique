@@ -1,63 +1,69 @@
 /**
- * En-tête des pages de l'app avec onglets : quand on fait défiler la page, l'en-tête remonte
- * jusqu'à ce qu'il ne reste que la barre d'onglets, qui reste ensuite visible en haut de l'écran.
+ * Barre d'onglets des pages de l'app (juste après l'en-tête, voir _page_header.html.twig) :
+ * elle reste collée en haut de l'écran grâce au CSS seul (.page-tabs--sticky dans app.css),
+ * dès l'affichage de la page.
  *
- * Le CSS (.page-header--sticky dans app.css) colle l'en-tête en haut avec un décalage négatif :
- * --page-header-offset = hauteur de l'en-tête moins hauteur des onglets, calculé ici
- * au chargement et quand la fenêtre change de taille (le titre peut passer sur deux lignes).
+ * Ce script ajoute seulement :
+ *   - l'ombre sous les onglets quand ils sont collés (.page-tabs--stuck) ;
+ *   - la variable --page-header-visible-height sur <html> : la hauteur des onglets, pour que d'autres
+ *     éléments collants se placent juste en dessous (fiche du projet, sections atteintes depuis le sommaire).
  */
 
-const STICKY_CLASS = 'page-header--sticky';
-const STUCK_CLASS = 'page-header--stuck';
-// Hauteur de l'en-tête restée visible une fois collé (les onglets), sur <html> : d'autres éléments
-// collants de la page se placent juste en dessous (barre de l'éditeur des sections d'un projet)
+const STUCK_CLASS = 'page-tabs--stuck';
 const VISIBLE_HEIGHT_VARIABLE = '--page-header-visible-height';
 
 export class StickyPageHeader {
-    constructor(header) {
-        this.header = header;
-        this.tabs = header.querySelector('.page-tabs');
-        this.offset = 0;
+    constructor(tabs) {
+        this.tabs = tabs;
+        this.frame = null;
 
-        this.updateOffset = this.updateOffset.bind(this);
+        this.updateHeight = this.updateHeight.bind(this);
+        this.requestStuckUpdate = this.requestStuckUpdate.bind(this);
         this.updateStuckState = this.updateStuckState.bind(this);
     }
 
     init() {
-        this.header.classList.add(STICKY_CLASS);
-        this.updateOffset();
+        this.updateHeight();
 
-        window.addEventListener('resize', this.updateOffset);
-        window.addEventListener('scroll', this.updateStuckState, { passive: true });
+        window.addEventListener('resize', this.updateHeight);
+        window.addEventListener('scroll', this.requestStuckUpdate, { passive: true });
     }
 
-    updateOffset() {
-        this.offset = this.header.offsetHeight - this.tabs.offsetHeight;
-        this.header.style.setProperty('--page-header-offset', `${-this.offset}px`);
+    updateHeight() {
         document.documentElement.style.setProperty(VISIBLE_HEIGHT_VARIABLE, `${this.tabs.offsetHeight}px`);
         this.updateStuckState();
+    }
+
+    /**
+     * Au plus un calcul par image (le défilement envoie beaucoup d'événements).
+     */
+    requestStuckUpdate() {
+        if (this.frame === null) {
+            this.frame = window.requestAnimationFrame(this.updateStuckState);
+        }
     }
 
     /**
      * Ombre sous les onglets seulement quand ils sont collés en haut de l'écran.
      */
     updateStuckState() {
+        this.frame = null;
+
         // Hauteur de la nav du haut quand elle est visible (variable gérée par AutoHideHeader.js)
         const siteHeaderHeight = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--site-header-height')) || 0;
-        const stuckTop = siteHeaderHeight - this.offset;
-        const isStuck = window.scrollY > 0 && this.header.getBoundingClientRect().top <= stuckTop + 1;
+        const isStuck = window.scrollY > 0 && this.tabs.getBoundingClientRect().top <= siteHeaderHeight + 1;
 
-        this.header.classList.toggle(STUCK_CLASS, isStuck);
+        this.tabs.classList.toggle(STUCK_CLASS, isStuck);
     }
 }
 
 /**
- * Active l'en-tête collant sur la page, si elle a des onglets.
+ * Active la barre d'onglets collante, si la page en a une.
  */
 export function initStickyPageHeader() {
-    const header = document.querySelector('.page-header--with-tabs');
+    const tabs = document.querySelector('[data-sticky-tabs]');
 
-    if (header?.querySelector('.page-tabs')) {
-        new StickyPageHeader(header).init();
+    if (tabs) {
+        new StickyPageHeader(tabs).init();
     }
 }

@@ -5,6 +5,7 @@
 
     {{ include('app/project/_project_card.html.twig', {project: project}, with_context = false) }}
 
+    Sous la description, les liens du projet (dépôt, site) s'ils sont renseignés : ouverts dans un nouvel onglet.
     En haut, la couverture : le logo long. Dessous, l'avatar et le logo chevauchent la couverture,
     le statut est à droite sur la même ligne. Le nombre de tâches mène à la page des tâches.
 #}
@@ -80,6 +81,23 @@
                 <span class="project-card__placeholder">Ajouter une description</span>
             {%- endif -%}
         </p>
+
+        {% if project.repositoryUrl or project.websiteUrl %}
+            <p class="project-card__links">
+                {% if project.repositoryUrl %}
+                    <a href="{{ project.repositoryUrl }}" class="project-card__link-out" target="_blank" rel="noopener noreferrer">
+                        <img src="{{ asset('images/icones/link-repository-blue.svg') }}" alt="" width="14" height="14">
+                        Dépôt GitHub
+                    </a>
+                {% endif %}
+                {% if project.websiteUrl %}
+                    <a href="{{ project.websiteUrl }}" class="project-card__link-out" target="_blank" rel="noopener noreferrer">
+                        <img src="{{ asset('images/icones/link-website-blue.svg') }}" alt="" width="14" height="14">
+                        {{ project.websiteUrl|replace({'https://': '', 'http://': ''})|trim('/', 'right') }}
+                    </a>
+                {% endif %}
+            </p>
+        {% endif %}
 
         <div class="project-card__footer">
             <a href="{{ path('app_project_steps', {slug: project.slug}) }}" class="project-card__tasks">

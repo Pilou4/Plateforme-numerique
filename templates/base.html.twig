@@ -18,6 +18,11 @@
             <link rel="stylesheet" href="{{ asset('styles/composants/modal.css') }}">
             <link rel="stylesheet" href="{{ asset('styles/composants/notice.css') }}">
         {% endblock %}
+        {#
+            Script classique (pas un module), exécuté avant l'affichage : remet la nav du haut
+            dans son état d'avant le rechargement (assets/js/composants/site-header-state.js)
+        #}
+        <script src="{{ asset('js/composants/site-header-state.js') }}"></script>
         {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}

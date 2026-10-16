@@ -13,7 +13,7 @@ const EDITOR_SIZE = 'large';
  *
  *   [data-project-sections data-api-url="…/sections" data-files-url="…/fichiers"]
  *     [data-section data-section-id data-section-title data-section-data="{…}"]
- *       [data-section-action="up|down|edit|delete"]   (_section_tools.html.twig)
+ *   [data-toc-action="up|down|edit|delete" data-section-target="{id}"]   boutons du sommaire (_project_identity.html.twig)
  *       [data-image-zoom data-image-title]             image d'un bloc, ouverte en grand
  *       [data-document-open data-document-preview data-document-title]   document ouvert en grand
  *       [data-block-file-remove data-block-index data-file-id data-file-title]
@@ -33,6 +33,7 @@ export class ProjectSections {
 
         this.handleClick = this.handleClick.bind(this);
         this.handleAddClick = this.handleAddClick.bind(this);
+        this.handleTocClick = this.handleTocClick.bind(this);
         this.handleModalClose = this.handleModalClose.bind(this);
         this.closeModal = this.closeModal.bind(this);
         this.confirmEditorClose = this.confirmEditorClose.bind(this);
@@ -40,8 +41,10 @@ export class ProjectSections {
 
     init() {
         this.root.addEventListener('click', this.handleClick);
-        // Le bouton « Ajouter une section » est dans l'en-tête, en dehors des sections
+        // Le bouton « Ajouter une section » est dans l'en-tête, et les boutons des sections dans le sommaire :
+        // en dehors des sections, écoute sur document
         document.addEventListener('click', this.handleAddClick);
+        document.addEventListener('click', this.handleTocClick);
         // L'éditeur est oublié quand sa modal se ferme
         document.addEventListener('modal:close', this.handleModalClose);
     }
@@ -53,6 +56,20 @@ export class ProjectSections {
 
         event.preventDefault();
         this.openEditor(null);
+    }
+
+    /**
+     * Bouton d'une ligne du sommaire : il agit sur la section dont l'id est dans data-section-target.
+     */
+    handleTocClick(event) {
+        const button = event.target.closest('[data-toc-action]');
+        const element = button ? document.getElementById(`section-${button.dataset.sectionTarget}`) : null;
+
+        if (!element || button.disabled) {
+            return;
+        }
+
+        this.runSectionAction(button.dataset.tocAction, element);
     }
 
     handleClick(event) {
@@ -87,10 +104,14 @@ export class ProjectSections {
             return;
         }
 
-        switch (button.dataset.sectionAction) {
+        this.runSectionAction(button.dataset.sectionAction, element);
+    }
+
+    runSectionAction(action, element) {
+        switch (action) {
             case 'up':
             case 'down':
-                this.move(element, button.dataset.sectionAction);
+                this.move(element, action);
                 break;
             case 'edit':
                 this.openEditor(element);

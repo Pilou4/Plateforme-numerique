@@ -1,3 +1,4 @@
+
 services:
 ###> doctrine/doctrine-bundle ###
   database:
@@ -28,3 +29,21 @@ services:
     depends_on:
       database:
         condition: service_healthy
+
+  # Ollama : modèles d'IA en local, gratuits (développement des outils IA)
+  # Premier lancement : docker compose up -d ollama, puis télécharger un modèle :
+  #   docker compose exec ollama ollama pull mistral
+  # API : http://127.0.0.1:11434 (OLLAMA_URL dans .env)
+  ollama:
+    image: ollama/ollama:0.40.5
+    ports:
+      - "127.0.0.1:11434:11434"
+    environment:
+      # Le modèle reste chargé en mémoire 10 minutes après la dernière question (réponses plus rapides)
+      OLLAMA_KEEP_ALIVE: 10m
+    volumes:
+      # Les modèles téléchargés (plusieurs Go) sont gardés entre deux redémarrages
+      - ollama_data:/root/.ollama
+
+volumes:
+  ollama_data:

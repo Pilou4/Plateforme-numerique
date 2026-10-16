@@ -72,6 +72,19 @@ final class ProjectTest extends TestCase
         $this->assertSame('avatar.png', $project->getImage(ProjectImage::Avatar));
     }
 
+    public function testLinksAreEmptyByDefault(): void
+    {
+        $project = new Project();
+
+        $this->assertNull($project->getRepositoryUrl());
+        $this->assertNull($project->getWebsiteUrl());
+
+        $project->setRepositoryUrl('https://github.com/fred/plateforme')->setWebsiteUrl('https://plateforme.fr');
+
+        $this->assertSame('https://github.com/fred/plateforme', $project->getRepositoryUrl());
+        $this->assertSame('https://plateforme.fr', $project->getWebsiteUrl());
+    }
+
     public function testRefreshUpdatedAtSetsTheDate(): void
     {
         $project = new Project();

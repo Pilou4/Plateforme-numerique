@@ -31,7 +31,6 @@ return [
     'app-glossary' => ['path' => './assets/js/app/documentation/glossary.js', 'entrypoint' => true],
     'app-elements' => ['path' => './assets/js/app/elements/elements.js', 'entrypoint' => true],
     'app-documentation' => ['path' => './assets/js/app/documentation/documentation.js', 'entrypoint' => true],
-    'app-settings' => ['path' => './assets/js/app/settings/settings.js', 'entrypoint' => true],
     '@hotwired/stimulus' => ['version' => '3.2.2'],
     '@symfony/stimulus-bundle' => ['path' => './vendor/symfony/stimulus-bundle/assets/dist/loader.js'],
     '@hotwired/turbo' => ['version' => '8.0.23'],

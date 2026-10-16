@@ -6,7 +6,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Déplacement d'un cran vers le haut ou vers le bas : sections (tutoriels, projets),
- * catégories et statuts des projets (page Paramètres).
+ * catégories et statuts des projets (modals de la liste des projets).
  */
 final readonly class SectionMovePayload
 {

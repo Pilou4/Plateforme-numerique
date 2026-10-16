@@ -53,6 +53,34 @@ final class ProjectPayloadTest extends TestCase
         $this->assertCount(0, $this->validate(new ProjectPayload('Plateforme', null, ProjectState::CODE_DONE, '3')));
     }
 
+    public function testLinksAreOptionalAndCanBeEmpty(): void
+    {
+        $this->assertCount(0, $this->validate(new ProjectPayload('Plateforme', repositoryUrl: '', websiteUrl: '')));
+        $this->assertCount(0, $this->validate(new ProjectPayload(
+            'Plateforme',
+            repositoryUrl: 'https://github.com/fred/plateforme-numerique',
+            websiteUrl: ' http://plateforme-numerique.fr/ ',
+        )));
+    }
+
+    public function testLinkWithoutHttpIsRefused(): void
+    {
+        $violations = $this->validate(new ProjectPayload('Plateforme', repositoryUrl: 'github.com/fred', websiteUrl: 'javascript:alert(1)'));
+
+        $this->assertCount(2, $violations);
+        $this->assertSame('repositoryUrl', $violations[0]->getPropertyPath());
+        $this->assertSame('L\'adresse du dépôt doit commencer par https:// ou http://.', $violations[0]->getMessage());
+        $this->assertSame('websiteUrl', $violations[1]->getPropertyPath());
+    }
+
+    public function testLinkTooLongIsRefused(): void
+    {
+        $violations = $this->validate(new ProjectPayload('Plateforme', websiteUrl: 'https://plateforme.fr/'.str_repeat('a', 250)));
+
+        $this->assertCount(1, $violations);
+        $this->assertSame('websiteUrl', $violations[0]->getPropertyPath());
+    }
+
     public function testEmptyCategoryMeansNoCategory(): void
     {
         $this->assertCount(0, $this->validate(new ProjectPayload('Plateforme', null, null, '')));

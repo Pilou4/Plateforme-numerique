@@ -41,6 +41,8 @@ final class ProjectManager
         $project->setSummary($this->cleanSummary($payload->summary));
         $project->setState($this->findState($payload->state));
         $this->applyCategory($project, $payload->category);
+        $project->setRepositoryUrl($this->cleanUrl($payload->repositoryUrl));
+        $project->setWebsiteUrl($this->cleanUrl($payload->websiteUrl));
 
         $this->entityManager->persist($project);
         // Le projet doit avoir un id avant d'enregistrer ses images (son dossier porte l'id)
@@ -79,6 +81,15 @@ final class ProjectManager
         // Le formulaire de modification envoie toujours la catégorie (vide = aucune)
         if (null !== $payload->category) {
             $this->applyCategory($project, $payload->category);
+        }
+
+        // Liens : envoyés par le formulaire (vide = retiré), pas par les cartes de la page Projets (inchangés)
+        if (null !== $payload->repositoryUrl) {
+            $project->setRepositoryUrl($this->cleanUrl($payload->repositoryUrl));
+        }
+
+        if (null !== $payload->websiteUrl) {
+            $project->setWebsiteUrl($this->cleanUrl($payload->websiteUrl));
         }
 
         foreach (ProjectImage::cases() as $image) {
@@ -151,13 +162,22 @@ final class ProjectManager
             : $this->projectStateRepository->findOneBy(['code' => $code]);
 
         return $state ?? throw new \DomainException(null === $code
-            ? 'Aucun statut de projet n\'existe : ajoute-en un dans les Paramètres.'
+            ? 'Aucun statut de projet n\'existe : ajoute-en un depuis la liste des projets (roue dentée › Statuts).'
             : 'Ce statut n\'existe pas.');
     }
 
     /**
      * Change une image et supprime l'ancien fichier du stockage.
      */
+    /**
+     * Supprime une image du projet (corbeille de la page du projet) : le fichier est effacé du stockage.
+     */
+    public function removeImage(Project $project, ProjectImage $image): void
+    {
+        $this->replaceImage($project, $image, null);
+        $this->entityManager->flush();
+    }
+
     private function replaceImage(Project $project, ProjectImage $image, ?string $newFileName): void
     {
         $oldFileName = $project->getImage($image);
@@ -208,6 +228,13 @@ final class ProjectManager
         $existingProject = $this->projectRepository->findOneBy(['slug' => $slug]);
 
         return null !== $existingProject && $existingProject !== $project;
+    }
+
+    private function cleanUrl(?string $url): ?string
+    {
+        $url = trim((string) $url);
+
+        return '' === $url ? null : $url;
     }
 
     private function cleanSummary(?string $summary): ?string

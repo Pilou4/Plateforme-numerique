@@ -22,13 +22,7 @@
 
     <div class="files"
          data-project-files
-         data-api-url="{{ path('api_project_files_list', {slug: project.slug}) }}"
-         data-icon-pdf="{{ asset('images/icones/file-pdf.svg') }}"
-         data-icon-word="{{ asset('images/icones/file-word.svg') }}"
-         data-icon-excel="{{ asset('images/icones/file-excel.svg') }}"
-         data-icon-powerpoint="{{ asset('images/icones/file-powerpoint.svg') }}"
-         data-icon-text="{{ asset('images/icones/file-text.svg') }}"
-         data-icon-other="{{ asset('images/icones/file-other.svg') }}">
+         data-api-url="{{ path('api_project_files_list', {slug: project.slug}) }}">
 
         {# --- Images : galerie --- #}
         <section class="files__block" aria-labelledby="files-images-title">
@@ -39,12 +33,12 @@
             <p class="files__empty" data-empty="image">Chargement…</p>
         </section>
 
-        {# --- Documents : liste --- #}
+        {# --- Documents : cartes avec aperçu, comme sur la page du projet (classes section-block__document…) --- #}
         <section class="files__block" aria-labelledby="files-documents-title">
             <h2 class="files__block-title" id="files-documents-title">
                 Documents <span class="files__count" data-count="document">0</span>
             </h2>
-            <ul class="files-list" data-list="document"></ul>
+            <ul class="section-block__documents files-documents" data-list="document"></ul>
             <p class="files__empty" data-empty="document">Chargement…</p>
         </section>
 
@@ -72,16 +66,19 @@
             </li>
         </template>
 
-        {# Modèle d'un document de la liste #}
+        {#
+            Modèle d'un document : l'aperçu (iframe d'un PDF ou d'un texte, sinon étiquette de couleur)
+            est ajouté par le JavaScript ; un clic dessus ouvre le document en grand.
+        #}
         <template data-template="document">
-            <li class="files-list__item" data-file>
-                <img src="" alt="" class="files-list__icon" data-field="icon" width="40" height="40">
-                <div class="files-list__body">
-                    <p class="files-list__title" data-field="title"></p>
-                    <p class="files-list__description" data-field="description"></p>
+            <li class="section-block__document files-document" data-file>
+                <div class="section-block__document-preview" data-field="preview"></div>
+                <div class="section-block__document-body">
+                    <p class="section-block__document-title" data-field="title"></p>
+                    <p class="files-document__description" data-field="description"></p>
                     <p class="files__meta" data-field="meta"></p>
                 </div>
-                <div class="files__actions">
+                <div class="files__actions files-document__actions">
                     <button type="button" class="files__action" data-action="view">
                         <img src="{{ asset('images/icones/view.svg') }}" alt="" width="16" height="16">
                     </button>

@@ -9,7 +9,7 @@ use App\Repository\ProjectRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Ajout, modification, suppression et ordre des catégories de projet (page Paramètres).
+ * Ajout, modification, suppression et ordre des catégories de projet (modal « Catégories » de la liste des projets).
  */
 final class ProjectCategoryManager
 {

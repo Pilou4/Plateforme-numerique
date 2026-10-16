@@ -6,7 +6,7 @@ use App\Enum\ProjectStateColor;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Données du formulaire d'un statut de projet (page Paramètres : ajout et modification).
+ * Données du formulaire d'un statut de projet (modal « Statuts » : ajout, renommage et couleur).
  */
 final readonly class ProjectStatePayload
 {

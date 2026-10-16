@@ -1,0 +1,100 @@
+{#
+    Fiche du projet, en colonne à droite de la page « Présentation » (au-dessus des sections sur petit écran) :
+    avatar, logo et logo long, les liens (dépôt, site) s'ils sont renseignés, puis le sommaire des sections.
+
+    Sommaire : un clic sur un titre mène à la section (ProjectToc.js, qui surligne aussi la section en cours de lecture) ;
+    chaque ligne a les boutons de la section (monter, descendre, modifier, supprimer : ProjectSections.js).
+
+    {{ include('app/project/_project_identity.html.twig', {project: project}, with_context = false) }}
+
+    Corbeille d'une image (au survol) : l'image est supprimée après confirmation (ProjectIdentity.js).
+    Image absente : case en pointillés avec son nom, qui ouvre le formulaire du projet (modal « project-edit »).
+    Pas de nom sous les images (comme dans le formulaire : le nom n'apparaît que dans une case vide).
+#}
+{% import _self as identity %}
+<aside class="project-identity" aria-label="Fiche du projet" data-project-identity>
+    <div class="project-identity__images">
+        {{ identity.image(project, project.avatar, 'Avatar', 'avatar', 'app_project_avatar', 'round') }}
+        {{ identity.image(project, project.logo, 'Logo', 'logo', 'app_project_logo', 'square') }}
+        {{ identity.image(project, project.logoWide, 'Logo long', 'logo-long', 'app_project_logo_wide', 'wide') }}
+    </div>
+
+    {% if project.repositoryUrl or project.websiteUrl %}
+        <div class="project-identity__links">
+            <p class="project-identity__title">Liens</p>
+            {% if project.repositoryUrl %}
+                {{ identity.link(project.repositoryUrl, 'Dépôt GitHub', 'link-repository.svg') }}
+            {% endif %}
+            {% if project.websiteUrl %}
+                {{ identity.link(project.websiteUrl, 'Site', 'link-website.svg') }}
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if project.sections is not empty %}
+        <nav class="project-identity__toc" aria-label="Sommaire de la présentation">
+            <p class="project-identity__title">Sommaire</p>
+            <ol class="project-toc" data-project-toc>
+                {% for section in project.sections %}
+                    <li class="project-toc__item" data-toc-item="{{ section.id }}">
+                        <a href="#section-{{ section.id }}" class="project-toc__link" data-toc-link title="{{ section.title }}">{{ section.title }}</a>
+                        <span class="project-toc__tools" role="group" aria-label="Actions sur la section « {{ section.title }} »">
+                            {{ identity.toc_button(section, 'up', 'arrow-up.svg', 'Monter', loop.first) }}
+                            {{ identity.toc_button(section, 'down', 'arrow-down.svg', 'Descendre', loop.last) }}
+                            {{ identity.toc_button(section, 'edit', 'edit.svg', 'Modifier', false) }}
+                            {{ identity.toc_button(section, 'delete', 'delete.svg', 'Supprimer', false) }}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ol>
+        </nav>
+    {% endif %}
+</aside>
+
+{# Un bouton d'une ligne du sommaire : agit sur la section (data-toc-action, data-section-target) #}
+{% macro toc_button(section, action, icon, label, disabled) %}
+    <button type="button" class="project-toc__button{{ action == 'delete' ? ' project-toc__button--delete' }}"
+            data-toc-action="{{ action }}" data-section-target="{{ section.id }}"
+            title="{{ label }}" aria-label="{{ label }} « {{ section.title }} »" {{ disabled ? 'disabled' }}>
+        <img src="{{ asset('images/icones/' ~ icon) }}" alt="" width="15" height="15">
+    </button>
+{% endmacro %}
+
+{#
+    Une image du projet. url_name : fin de l'adresse de l'API (logo, logo-long, avatar) ; shape : round, square, wide.
+#}
+{% macro image(project, file_name, label, url_name, route, shape) %}
+    <figure class="project-identity__image project-identity__image--{{ shape }}">
+        {% if file_name %}
+            <span class="project-identity__frame">
+                <img src="{{ path(route, {slug: project.slug}) }}" alt="{{ label }} de {{ project.name }}" class="project-identity__picture">
+                <button type="button" class="project-identity__delete"
+                        data-project-image-delete="{{ path('api_projects_image_delete', {slug: project.slug, image: url_name}) }}"
+                        data-image-label="{{ label }}"
+                        title="Supprimer l'image"
+                        aria-label="Supprimer l'image « {{ label }} » du projet">
+                    <img src="{{ asset('images/icones/delete.svg') }}" alt="" width="14" height="14">
+                </button>
+            </span>
+        {% else %}
+            <button type="button" class="project-identity__frame project-identity__empty"
+                    data-modal-open="project-edit" data-modal-title="Modifier le projet"
+                    data-modal-icon="{{ asset('images/icones/project.svg') }}"
+                    aria-label="Ajouter l'image « {{ label }} » (ouvre le formulaire du projet)">
+                + {{ label }}
+            </button>
+        {% endif %}
+    </figure>
+{% endmacro %}
+
+{# Un lien externe (nouvel onglet) : libellé, adresse sans « https:// », flèche de sortie #}
+{% macro link(url, label, icon) %}
+    <a href="{{ url }}" class="project-identity__link" target="_blank" rel="noopener noreferrer">
+        <img src="{{ asset('images/icones/' ~ icon) }}" alt="" width="18" height="18" class="project-identity__link-icon">
+        <span class="project-identity__link-text">
+            {{ label }}
+            <span class="project-identity__link-url">{{ url|replace({'https://': '', 'http://': ''})|trim('/', 'right') }}</span>
+        </span>
+        <img src="{{ asset('images/icones/external-link.svg') }}" alt="" width="16" height="16" class="project-identity__link-out">
+    </a>
+{% endmacro %}

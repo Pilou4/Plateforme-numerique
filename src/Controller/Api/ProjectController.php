@@ -95,6 +95,20 @@ final class ProjectController extends AbstractController
     }
 
     /**
+     * Suppression d'une image (corbeille de la page du projet) : DELETE /api/projet/{slug}/images/logo-long
+     * Le fichier est effacé ; la réponse donne la page du projet à recharger.
+     */
+    #[Route('/{slug:project}/images/{image}', name: 'image_delete', requirements: ['slug' => '[a-z0-9-]+', 'image' => 'logo|logo-long|avatar'], methods: ['DELETE'])]
+    public function deleteImage(Project $project, string $image, ProjectManager $projectManager): JsonResponse
+    {
+        $projectImage = ProjectImage::tryFromUrlName($image) ?? throw $this->createNotFoundException();
+
+        $projectManager->removeImage($project, $projectImage);
+
+        return $this->json(['url' => $this->generateUrl('app_project_show', ['slug' => $project->getSlug()])]);
+    }
+
+    /**
      * Ajout ou retrait des favoris (étoile de la carte) : PUT { "favorite": true }
      */
     #[Route('/{slug:project}/favori', name: 'favorite', requirements: ['slug' => '[a-z0-9-]+'], methods: ['PUT'])]

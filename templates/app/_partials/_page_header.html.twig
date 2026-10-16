@@ -22,6 +22,9 @@
             {label: 'Modifier', href: path(…), variant: 'ghost'},
             {label: 'Supprimer', variant: 'ghost', attributes: {'data-topic-delete': ''}},   attributs libres (pour le JavaScript)
         ],
+        menu: {label: 'Réglages des projets', icon: 'settings-dark.svg', items: [  petit bouton rond à droite de la recherche,
+            {label: 'Catégories', icon: 'filter-category.svg', attributes: {'data-project-settings': 'categories'}},   qui ouvre un menu (DropdownMenu.js)
+        ]},
         tabs: [
             {label: 'Tutoriels', url: path('app_documentation'), count: 3},
             {label: 'Glossaire', url: path('app_documentation_glossary'), count: 48, active: true},
@@ -37,6 +40,7 @@
 {% set filters = filters ?? [] %}
 {% set actions = actions ?? [] %}
 {% set tabs = tabs ?? [] %}
+{% set menu = menu ?? null %}
 {# Le bouton rond « + » à gauche du titre : la première action principale. Les autres actions vont à droite. #}
 {% set add_action = actions|filter(action => (action.variant ?? 'primary') != 'ghost')|first %}
 {% set other_actions = actions|filter(action => action is not same as(add_action)) %}
@@ -71,7 +75,7 @@
             {% endif %}
         </div>
 
-        {% if search or other_actions is not empty %}
+        {% if search or other_actions is not empty or menu %}
             <div class="page-header__actions">
                 {% for action in other_actions %}
                     {{ _self.action_button(action) }}
@@ -83,6 +87,10 @@
                         <input type="search" class="page-search__input" data-page-search placeholder="{{ search }}" aria-label="{{ search }}" aria-keyshortcuts="Control+K" autocomplete="off">
                         <kbd class="page-search__shortcut" aria-hidden="true">Ctrl K</kbd>
                     </label>
+                {% endif %}
+
+                {% if menu %}
+                    {{ _self.menu(menu) }}
                 {% endif %}
             </div>
         {% endif %}
@@ -99,21 +107,25 @@
             {% endfor %}
         </div>
     {% endif %}
-
-    {# Ligne 3 : onglets #}
-    {% if tabs is not empty %}
-        <nav class="page-tabs" aria-label="{{ tabs_label ?? 'Onglets de la page' }}">
-            {% for tab in tabs %}
-                <a href="{{ tab.url }}" class="page-tabs__link" {% if tab.active ?? false %}aria-current="page"{% endif %}>
-                    {{ tab.label }}
-                    {% if (tab.count ?? null) is not null %}
-                        <span class="page-tabs__count">{{ tab.count }}</span>
-                    {% endif %}
-                </a>
-            {% endfor %}
-        </nav>
-    {% endif %}
 </header>
+
+{#
+    Ligne 3 : onglets. Juste après l'en-tête (et non dedans) : ils restent collés en haut de l'écran
+    dès l'affichage de la page, en CSS seul (.page-tabs--sticky), sans attendre le JavaScript.
+    StickyPageHeader.js ajoute seulement l'ombre une fois collés.
+#}
+{% if tabs is not empty %}
+    <nav class="page-tabs page-tabs--sticky" aria-label="{{ tabs_label ?? 'Onglets de la page' }}" data-sticky-tabs>
+        {% for tab in tabs %}
+            <a href="{{ tab.url }}" class="page-tabs__link" {% if tab.active ?? false %}aria-current="page"{% endif %}>
+                {{ tab.label }}
+                {% if (tab.count ?? null) is not null %}
+                    <span class="page-tabs__count">{{ tab.count }}</span>
+                {% endif %}
+            </a>
+        {% endfor %}
+    </nav>
+{% endif %}
 
 {#
     Bouton rond « + » de l'action principale : le texte du bouton devient son infobulle et son nom pour les lecteurs d'écran.
@@ -195,4 +207,25 @@
 
 {% macro dot(color) %}
     {%- if color -%}<span class="page-filter__dot page-filter__dot--{{ color }}" aria-hidden="true"></span>{%- endif -%}
+{% endmacro %}
+
+{#
+    Petit bouton rond (icône seule, son nom en infobulle) qui ouvre un menu de choix (assets/js/composants/DropdownMenu.js).
+    Chaque choix est un bouton : ses attributs libres disent au JavaScript de la page quoi faire.
+#}
+{% macro menu(menu) %}
+    <div class="page-header__menu">
+        <button type="button" class="page-header__menu-toggle" data-menu-toggle aria-expanded="false" aria-controls="page-header-menu"
+                title="{{ menu.label }}" aria-label="{{ menu.label }}">
+            <img src="{{ asset('images/icones/' ~ (menu.icon ?? 'settings-dark.svg')) }}" alt="" width="18" height="18">
+        </button>
+        <div class="page-header__menu-list" id="page-header-menu" data-menu hidden>
+            {% for item in menu.items %}
+                <button type="button" class="page-header__menu-item"{% for name, value in item.attributes ?? {} %} {{ name }}="{{ value }}"{% endfor %}>
+                    {% if item.icon ?? null %}<img src="{{ asset('images/icones/' ~ item.icon) }}" alt="" width="16" height="16">{% endif %}
+                    {{ item.label }}
+                </button>
+            {% endfor %}
+        </div>
+    </div>
 {% endmacro %}

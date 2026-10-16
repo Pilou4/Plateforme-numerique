@@ -22,6 +22,7 @@
          options: [{value: '', label: 'Tous les projets'}, {value: 'oui', label: 'Favoris seulement'}]},
     ] %}
 
+    {# menu : la roue dentée, pour gérer les catégories et les statuts dans la modal (ProjectSettings.js) #}
     {{ include('app/_partials/_page_header.html.twig', {
         title: 'Mes projets',
         icon: 'project.svg',
@@ -29,6 +30,10 @@
         lead: 'Chaque projet a sa présentation, ses tâches et ses fichiers.',
         search: 'Rechercher un projet…',
         filters: filters,
+        menu: {label: 'Réglages des projets', icon: 'settings-dark.svg', items: [
+            {label: 'Catégories', icon: 'filter-category.svg', attributes: {'data-project-settings': 'categories'}},
+            {label: 'Statuts', icon: 'filter-status.svg', attributes: {'data-project-settings': 'states'}},
+        ]},
         actions: [
             {label: 'Nouveau projet', icon: 'plus.svg', modal: 'project-create', modal_title: 'Créer un nouveau projet', modal_size: 'medium',
              attributes: {'data-modal-icon': asset('images/icones/project.svg')}},
@@ -52,6 +57,29 @@
 
             <p class="projects__empty" data-projects-empty hidden>Aucun projet ne correspond à ce filtre ou à cette recherche.</p>
         {% endif %}
+
+        {#
+            Catégories et statuts, gérés dans la modal (roue dentée de l'en-tête, ProjectSettings.js).
+            Chaque élément donne le nombre de projets qui l'utilisent (aide avant une suppression).
+        #}
+        <div hidden
+             data-project-settings-data
+             data-icons-url="{{ asset('images/icones/') }}"
+             data-category-api="{{ path('api_project_categories_create') }}"
+             data-state-api="{{ path('api_project_states_create') }}"
+             data-colors="{{ enum_cases('App\\Enum\\ProjectStateColor')|map(color => {value: color.value, label: color.label, modifier: color.cssModifier})|json_encode }}"
+             data-categories="{{ categories|map(category => {
+                 id: category.id,
+                 name: category.name,
+                 projectCount: projects|filter(project => project.category and project.category.id == category.id)|length,
+             })|json_encode }}"
+             data-states="{{ states|map(state => {
+                 id: state.id,
+                 label: state.label,
+                 pluralLabel: state.pluralLabel,
+                 color: state.color.value,
+                 projectCount: projects|filter(project => project.state and project.state.id == state.id)|length,
+             })|json_encode }}"></div>
 
         {# Formulaire d'ajout, affiché dans la modal (bouton « Nouveau projet ») #}
         <template id="project-create">

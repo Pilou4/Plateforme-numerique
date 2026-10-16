@@ -11,7 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 /**
- * Ajout, modification, suppression et ordre des statuts de projet (page Paramètres).
+ * Ajout, modification, suppression et ordre des statuts de projet (modal « Statuts » de la liste des projets).
  *
  * Règles :
  * - le code est calculé à partir du nom à la création (« En pause » → en_pause), puis ne change plus ;

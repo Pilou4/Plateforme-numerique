@@ -167,6 +167,59 @@ final class ProjectManagerTest extends TestCase
     }
 
     /* ------------------------------------------------------------------
+       Liens et suppression d'une image depuis la page du projet
+       ------------------------------------------------------------------ */
+
+    public function testCreateWithLinks(): void
+    {
+        $project = $this->createManager()->create(new ProjectPayload('Plateforme', repositoryUrl: ' https://github.com/fred/plateforme ', websiteUrl: ''));
+
+        $this->assertSame('https://github.com/fred/plateforme', $project->getRepositoryUrl());
+        $this->assertNull($project->getWebsiteUrl());
+    }
+
+    public function testUpdateChangesOrRemovesTheLinks(): void
+    {
+        $project = $this->createProject()->setRepositoryUrl('https://github.com/fred/ancien')->setWebsiteUrl('https://ancien.fr');
+
+        $this->createManager()->update($project, new ProjectPayload('Plateforme', repositoryUrl: 'https://github.com/fred/nouveau', websiteUrl: ''));
+
+        $this->assertSame('https://github.com/fred/nouveau', $project->getRepositoryUrl());
+        $this->assertNull($project->getWebsiteUrl());
+    }
+
+    /**
+     * Les cartes de la page Projets n'envoient pas les liens : ils ne doivent pas être effacés.
+     */
+    public function testUpdateWithoutLinksKeepsThem(): void
+    {
+        $project = $this->createProject()->setRepositoryUrl('https://github.com/fred/plateforme')->setWebsiteUrl('https://plateforme.fr');
+
+        $this->createManager()->update($project, new ProjectPayload('Plateforme', 'Nouvelle description'));
+
+        $this->assertSame('https://github.com/fred/plateforme', $project->getRepositoryUrl());
+        $this->assertSame('https://plateforme.fr', $project->getWebsiteUrl());
+    }
+
+    public function testRemoveImageDeletesOnlyThisImage(): void
+    {
+        $project = $this->createProject();
+        $logoWide = $this->storage->store($project, $this->createUploadedFile(), 'logo-long');
+        $avatar = $this->storage->store($project, $this->createUploadedFile(), 'avatar');
+        $project->setLogoWide($logoWide)->setAvatar($avatar);
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->once())->method('flush');
+
+        $this->createManager($entityManager)->removeImage($project, ProjectImage::LogoWide);
+
+        $this->assertNull($project->getLogoWide());
+        $this->assertFalse($this->storage->exists($project, $logoWide));
+        $this->assertSame($avatar, $project->getAvatar());
+        $this->assertTrue($this->storage->exists($project, $avatar));
+    }
+
+    /* ------------------------------------------------------------------
        État, catégorie et favori
        ------------------------------------------------------------------ */
 
@@ -245,13 +298,13 @@ final class ProjectManagerTest extends TestCase
         $this->states = [];
 
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Aucun statut de projet n\'existe : ajoute-en un dans les Paramètres.');
+        $this->expectExceptionMessage('Aucun statut de projet n\'existe : ajoute-en un depuis la liste des projets (roue dentée › Statuts).');
 
         $this->createManager()->create(new ProjectPayload('Plateforme'));
     }
 
     /**
-     * Un statut ajouté depuis les Paramètres (son code n'est pas un des trois de départ) est accepté.
+     * Un statut ajouté depuis la liste des projets (son code n'est pas un des trois de départ) est accepté.
      */
     public function testStateCreatedFromTheSettingsIsAccepted(): void
     {

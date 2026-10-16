@@ -1,0 +1,7 @@
+# Client HTTP de Symfony (utilisé par Symfony AI pour parler à Ollama).
+# Un modèle local, sans carte graphique, peut mettre plus d'une minute à répondre :
+# on attend jusqu'à 3 minutes avant d'abandonner (60 secondes par défaut).
+framework:
+    http_client:
+        default_options:
+            timeout: 180

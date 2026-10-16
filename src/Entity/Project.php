@@ -54,6 +54,18 @@ class Project
     private ?string $avatar = null;
 
     /**
+     * Adresse du dépôt de code (GitHub…), facultative.
+     */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $repositoryUrl = null;
+
+    /**
+     * Adresse du site en ligne (ou de la démo), facultative.
+     */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $websiteUrl = null;
+
+    /**
      * État d'avancement (table project_state). Donné par ProjectManager à la création.
      */
     #[ORM\ManyToOne]
@@ -156,6 +168,30 @@ class Project
     public function setSummary(?string $summary): static
     {
         $this->summary = $summary;
+
+        return $this;
+    }
+
+    public function getRepositoryUrl(): ?string
+    {
+        return $this->repositoryUrl;
+    }
+
+    public function setRepositoryUrl(?string $repositoryUrl): static
+    {
+        $this->repositoryUrl = $repositoryUrl;
+
+        return $this;
+    }
+
+    public function getWebsiteUrl(): ?string
+    {
+        return $this->websiteUrl;
+    }
+
+    public function setWebsiteUrl(?string $websiteUrl): static
+    {
+        $this->websiteUrl = $websiteUrl;
 
         return $this;
     }
